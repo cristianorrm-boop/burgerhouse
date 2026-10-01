@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <title>Recibo</title>
+  <style>
+    body{display:flex;justify-content:center;padding:2rem 1rem}
+    .recibo-card{
+      width:100%;max-width:420px;background:#fff;border:1px solid var(--border-color);
+      border-radius:14px;padding:1.75rem;box-shadow:0 10px 30px rgba(2,6,23,.08);
+    }
+    .recibo-card h1{font-family:'Montserrat',sans-serif;font-size:1.2rem;color:var(--secondary-color);text-align:center;margin-bottom:.2rem}
+    .recibo-sub{text-align:center;color:#6b7280;font-size:.85rem;margin-bottom:1.2rem}
+    .recibo-info{font-size:.85rem;color:#6b7280;text-align:center;margin-bottom:.2rem}
+    .recibo-hr{border:none;border-top:1px dashed var(--border-color);margin:1rem 0}
+    .recibo-item{display:flex;justify-content:space-between;font-size:.9rem;padding:.25rem 0}
+    .recibo-item span:first-child{color:var(--text-color)}
+    .recibo-item span:last-child{font-weight:600}
+    .recibo-total{font-size:1.15rem;font-weight:800;color:var(--primary-color)}
+    .recibo-pagamento{font-size:.85rem;color:#6b7280;margin-top:.4rem}
+    .recibo-fiado-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .7rem;border-radius:999px;font-weight:700;font-size:.8rem}
+    .recibo-fiado-badge.devendo{background:#fdecea;color:#c0392b}
+    .recibo-fiado-badge.quitado{background:#e3f6e8;color:#1e8a4c}
+    .recibo-obrigado{text-align:center;font-size:.85rem;color:#6b7280;margin-top:1.2rem}
+    .recibo-print-btn{
+      width:100%;margin-top:1.5rem;padding:.8rem;border:none;border-radius:.6rem;
+      background:var(--secondary-color);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer;
+    }
+    .recibo-erro{text-align:center;color:#6b7280;padding:2rem 0}
+    .recibo-erro i{font-size:2.4rem;margin-bottom:1rem;display:block;color:#d1d5db}
+    @media print{
+      body{padding:0}
+      .recibo-card{box-shadow:none;border:none;max-width:100%}
+      .recibo-print-btn{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<div class="recibo-card" id="recibo-card">
+  <div class="recibo-erro">
+    <i class="fa-solid fa-receipt"></i>
+    <p>Carregando recibo...</p>
+  </div>
+</div>
+
+<script>
+const PAG_LABEL = { dinheiro: "Dinheiro", pix: "Pix", debito: "Débito", credito: "Crédito" };
+const fmt = (v) => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+
+function decodificarRecibo() {
+  const hash = location.hash.slice(1);
+  if (!hash) return null;
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(hash))));
+  } catch (e) {
+    return null;
+  }
+}
+
+function renderizarErro() {
+  document.getElementById("recibo-card").innerHTML = `
+    <div class="recibo-erro">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <p>Não foi possível abrir este recibo.<br>O link pode estar incompleto ou corrompido.</p>
+    </div>`;
+}
+
+function renderizarRecibo(r) {
+  const dt = r.data ? new Date(r.data) : null;
+  const dataTexto = dt ? `${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : "";
+  const itensHtml = (r.itens || []).map(i => `
+    <div class="recibo-item"><span>${i.q}x ${i.n}</span><span>${fmt(i.q * i.p)}</span></div>
+  `).join("");
+  const pagamentoTexto = Array.isArray(r.pagamentos)
+    ? r.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma}: ${fmt(p.valor)}`).join(" + ")
+    : "";
+
+  document.title = `Recibo · ${r.loja || "Loja"}`;
+  document.getElementById("recibo-card").innerHTML = `
+    <h1>${r.loja || "Loja"}</h1>
+    <p class="recibo-sub">Recibo de compra</p>
+    ${dataTexto ? `<p class="recibo-info">${dataTexto}</p>` : ""}
+    ${r.cliente ? `<p class="recibo-info">Cliente: ${r.cliente}</p>` : ""}
+    <hr class="recibo-hr">
+    ${itensHtml}
+    <hr class="recibo-hr">
+    <div class="recibo-item"><span>Subtotal</span><span>${fmt(r.subtotal)}</span></div>
+    ${r.desconto ? `<div class="recibo-item"><span>Desconto${r.cupom ? ` (${r.cupom})` : ""}</span><span>-${fmt(r.desconto)}</span></div>` : ""}
+    <div class="recibo-item recibo-total"><span>Total</span><span>${fmt(r.total)}</span></div>
+    <hr class="recibo-hr">
+    ${r.fiado ? `
+      <p class="recibo-pagamento">${r.deve > 0.004 ? '<span class="recibo-fiado-badge devendo"><i class="fa-solid fa-handshake"></i> Pagamento a Prazo — em aberto</span>' : '<span class="recibo-fiado-badge quitado"><i class="fa-solid fa-circle-check"></i> Pagamento a Prazo — quitado</span>'}</p>
+      <div class="recibo-item"><span>Pago até agora</span><span>${fmt(r.pago)}</span></div>
+      <div class="recibo-item"><span>Falta pagar</span><span>${fmt(r.deve)}</span></div>
+    ` : `
+      <p class="recibo-pagamento">${pagamentoTexto}</p>
+      ${r.troco != null ? `
+        <div class="recibo-item"><span>Recebido</span><span>${fmt(r.recebido)}</span></div>
+        <div class="recibo-item"><span>Troco</span><span>${fmt(r.troco)}</span></div>
+      ` : ""}
+    `}
+    <p class="recibo-obrigado">Obrigado pela preferência!</p>
+    <button class="recibo-print-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir / salvar como PDF</button>
+  `;
+}
+
+const recibo = decodificarRecibo();
+if (recibo) renderizarRecibo(recibo);
+else renderizarErro();
+</script>
+
+</body>
+</html>

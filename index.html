@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css?v=00.006" />
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#1C1C1C" />
+    <link rel="apple-touch-icon" href="./assets/logo-burger-house.png" />
+    <title>Burger House</title>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img id="logo-img" src="" alt="Logo da loja" style="display:none">
+            <i class="fa-solid fa-burger" id="logo-icon" aria-hidden="true"></i>
+            <h1>Burger House</h1>
+        </div>
+
+        <div class="search-container" role="search">
+            <input placeholder="Buscar produto..." class="search-input" aria-label="Buscar Produto" />
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </div>
+
+        <div class="header-actions">
+            <button class="favorites-toggle-btn" id="favorites-toggle-btn" aria-pressed="false" aria-label="Mostrar somente favoritos" title="Favoritos">
+                <i class="fa-regular fa-heart" aria-hidden="true"></i>
+            </button>
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Alternar modo escuro" title="Modo escuro">
+                <i class="fa-solid fa-moon" aria-hidden="true"></i>
+            </button>
+            <div class="cart-icon" aria-label="Abrir carrinho" role="button" tabindex="0">
+                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                <span class="cart-badge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <div id="loja-fechada-banner" style="display:none">
+        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+        A loja está fechada no momento. Você pode ver o cardápio, mas não é possível finalizar pedidos agora.
+    </div>
+
+    <div id="mesa-banner" style="display:none">
+        <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+        Você está na <strong id="mesa-banner-nome"></strong> — seu pedido vai direto para a cozinha
+    </div>
+
+    <div class="categories-container">
+        <nav class="categories-bar" id="categories-bar" aria-label="Categorias de produtos">
+            <button class="category-btn active" data-category="all">
+                <i class="fa-solid fa-border-all" aria-hidden="true"></i> Todos
+            </button>
+        </nav>
+    </div>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <span class="hero-tag">Burger House</span>
+            <h2>O mestre do seu cardápio.</h2>
+            <p>Peça pelo site, direto na mesa ou retire no balcão</p>
+        </div>
+    </section>
+
+    <section class="destaques-section" id="destaques-section" style="display:none">
+        <h2 class="destaques-title"><i class="fa-solid fa-star" aria-hidden="true"></i> Destaques</h2>
+        <div class="destaques-container"><!-- cards gerados pelo script --></div>
+    </section>
+
+    <main class="products">
+        <div class="products-container"><!-- cards gerados pelo script --></div>
+    </main>
+
+    <div class="cart-overlay"></div>
+
+    <aside class="cart-sidebar" aria-label="Carrinho">
+        <div class="cart-header">
+            <h3>Meu Carrinho <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i></h3>
+            <button class="close-cart-btn" aria-label="Fechar carrinho">&times;</button>
+        </div>
+
+        <div class="cart-scroll">
+        <div class="cart-body"></div>
+
+        <div class="cart-footer">
+            <div class="options-toggle" role="tablist">
+                <button class="delivery-btn active" data-option="delivery" role="tab" aria-selected="true">
+                    <i class="fa-solid fa-truck-fast" aria-hidden="true"></i> Entrega
+                </button>
+                <button class="delivery-btn" data-option="pickup" role="tab" aria-selected="false">
+                    <i class="fa-solid fa-store" aria-hidden="true"></i> Retirada
+                </button>
+            </div>
+
+            <p id="delivery-indisponivel-aviso" class="delivery-unavailable-notice" style="display:none">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                Um item do seu carrinho está disponível só para retirada, então a entrega não pode ser usada neste pedido.
+            </p>
+
+            <div id="delivery-form-container">
+                <div class="form-group">
+                    <label for="delivery-name">Seu Nome</label>
+                    <input type="text" id="delivery-name" placeholder="Nome e sobrenome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery-phone">Seu Telefone (WhatsApp)</label>
+                    <input type="tel" id="delivery-phone" placeholder="(XX) XXXXX-XXXX" maxlength="15" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery-cep">CEP</label>
+                    <input type="text" id="delivery-cep" placeholder="00000-000" maxlength="9" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery-address">Endereço</label>
+                    <textarea id="delivery-address" placeholder="Lote, Quadra, Número" required></textarea>
+                </div>
+
+                <div class="delivery-fee-notice">
+                    A taxa de entrega será calculada de acordo com a sua região e Tipo escolhido.
+                </div>
+
+                <div class="payment-options-container">
+                    <h4>Como prefere receber?</h4>
+
+                    <label class="payment-option selected">
+                        <input type="radio" name="delivery-mode" value="Motoboy da loja" checked>
+                        <i class="fa-solid fa-motorcycle" aria-hidden="true"></i> Motoboy da loja <small style="font-weight:400;color:#9aa3b2">(Verificar Valor de taxa)</small>
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="delivery-mode" value="App de entrega (Uber Entregas, etc.)">
+                        <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> App de entrega (Uber Entregas, etc.) <small style="font-weight:400;color:#9aa3b2">(Verificar Valor de taxa)</small>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery-horario">Horário desejado para entrega <small style="font-weight:400;color:#9aa3b2">(opcional)</small></label>
+                    <input type="time" id="delivery-horario">
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery-recebedor">Nome de quem vai receber <small style="font-weight:400;color:#9aa3b2">(se for diferente de você)</small></label>
+                    <input type="text" id="delivery-recebedor" placeholder="Ex: porteiro, vizinho, familiar...">
+                </div>
+
+                <div class="payment-options-container">
+                    <h4>Forma de Pagamento</h4>
+
+                    <label class="payment-option selected">
+                        <input type="radio" name="payment" value="PIX" checked> PIX
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Cartão de Crédito"> Cartão de Crédito
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Cartão de Débito"> Cartão de Débito
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Dinheiro"> Dinheiro
+                    </label>
+
+                    <div id="troco-container">
+                        <div class="form-group">
+                            <label for="troco-para">Precisa de troco para quanto?</label>
+                            <input type="number" id="troco-para" placeholder="Ex: 50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pickup-form-container" style="display: none;">
+                <div class="form-group">
+                    <label for="pickup-name">Nome para Retirada</label>
+                    <input type="text" id="pickup-name" placeholder="Digite nome e sobrenome" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Agende a Data e Hora</label>
+                    <div class="date-time-row">
+                        <input type="date" id="pickup-date" required>
+                        <select id="pickup-time" required>
+                            <option value="" disabled selected>Selecione</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                            <option value="17:00">17:00</option>
+                            <option value="18:00">18:00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coupon-container">
+                <input type="text" id="coupon-input" placeholder="Cupom de desconto">
+                <button id="apply-coupon-btn">Aplicar</button>
+            </div>
+
+            <p id="coupon-feedback" class="coupon-feedback"></p>
+
+            <div class="cart-summary">
+                <div class="summary-line"><span>Subtotal</span><span id="cart-subtotal">R$ 0,00</span></div>
+                <div class="summary-line delivery-fee-line" id="delivery-fee-line" style="display: none;">
+                    <span>Taxa de entrega</span><span id="cart-delivery-fee">R$ 0,00</span>
+                </div>
+                <div class="summary-line discount-line" style="display: none;">
+                    <span>Desconto</span><span id="cart-discount">- R$ 0,00</span>
+                </div>
+                <div class="summary-line total"><span>Total</span><span id="cart-total">R$ 0,00</span></div>
+            </div>
+        </div>
+        </div>
+
+        <div class="finish-order-btn-container">
+            <button id="finish-order-btn" class="finish-order-btn" disabled>
+                <i class="fab fa-whatsapp" aria-hidden="true"></i> Finalizar Pedido
+            </button>
+        </div>
+    </aside>
+
+    <div class="view-cart-banner" aria-live="polite">
+        <p>Total: <span id="banner-total">R$ 0,00</span></p>
+        <button class="view-cart-banner-btn">Ver Carrinho</button>
+    </div>
+
+    <div class="product-modal-overlay" id="product-modal-overlay">
+        <div class="product-modal" role="dialog" aria-modal="true">
+            <button class="product-modal-close" id="product-modal-close" aria-label="Fechar">&times;</button>
+            <div class="product-modal-img-wrap">
+                <img id="product-modal-img" src="" alt="" loading="lazy"
+                     onerror="this.onerror=null;this.src='./assets/placeholder.svg'">
+                <span class="destaque-badge" id="product-modal-destaque" style="display:none">
+                    <i class="fa-solid fa-star" aria-hidden="true"></i> Destaque
+                </span>
+            </div>
+            <div class="product-modal-info">
+                <h3 id="product-modal-nome"></h3>
+                <p id="product-modal-descricao" class="product-modal-descricao"></p>
+                <p id="product-modal-entrega-note" class="product-delivery-note" style="display:none">
+                    <i class="fa-solid fa-store" aria-hidden="true"></i> Disponível só para retirada
+                </p>
+                <div id="product-modal-variacoes"></div>
+                <div id="product-modal-adicionais"></div>
+                <div class="form-group">
+                    <label for="product-modal-observacao">Observação <small style="font-weight:400;color:#9aa3b2">(opcional, ex: sem cebola)</small></label>
+                    <textarea id="product-modal-observacao" placeholder="Alguma observação para este item?" rows="2"></textarea>
+                </div>
+                <p id="product-modal-preco" class="product-modal-preco"></p>
+                <button id="product-modal-comprar" class="product-button">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>2026 - Burger House. Todos os direitos reservados</p>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="./firebase-config.js"></script>
+    <script src="./script.js?v=00,006"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js").catch(() => { });
+            });
+        }
+    </script>
+</body>
+
+</html>

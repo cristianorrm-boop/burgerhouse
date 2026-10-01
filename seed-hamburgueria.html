@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importar Cardápio – Hamburgueria</title>
+  <!-- Script de importação em lote do cardápio. Vai crescendo conforme novas
+       categorias chegam (lanches/porções, depois bebidas, combos...).
+       Rodar de novo é seguro: usa .set() com o mesmo ID, atualiza em vez de duplicar. -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    h1 { font-size: 1.4rem; margin-bottom: 8px; color: #f0c040; }
+    p  { font-size: .9rem; color: #aaa; margin-bottom: 24px; text-align: center; max-width: 540px; }
+    #btn { padding: 14px 36px; background: #f0c040; color: #000; font-size: 1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: opacity .2s; }
+    #btn:disabled { opacity: .45; cursor: not-allowed; }
+    #log  { margin-top: 24px; width: 100%; max-width: 560px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 16px; font-size: .8rem; font-family: monospace; max-height: 400px; overflow-y: auto; }
+    #login-box { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; margin-bottom: 20px; }
+    #login-box input { padding: 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: .9rem; }
+    #login-error { color: #f44336; font-size: .8rem; display: none; }
+    .ok   { color: #4caf50; }
+    .err  { color: #f44336; }
+    .info { color: #90caf9; }
+    .preview { display: flex; flex-wrap: wrap; gap: 10px; max-width: 700px; margin-bottom: 20px; justify-content: center; }
+    .preview img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #333; }
+  </style>
+</head>
+<body>
+
+<h1>🍔🥤🍰 Importar Cardápio — Cardápio Completo</h1>
+<p>Faça login com o usuário admin (mesmo usado no <code>admin.html</code>) e clique no botão pra cadastrar/atualizar todos os produtos de uma vez, já com foto, categoria e adicionais vinculados. Pode rodar quantas vezes quiser — sempre atualiza os mesmos produtos, nunca duplica.</p>
+
+<div class="preview" id="preview"></div>
+
+<div id="login-box">
+  <input type="email" id="email-input" placeholder="E-mail do admin">
+  <input type="password" id="senha-input" placeholder="Senha">
+  <button id="login-btn">🔐 Entrar</button>
+  <span id="login-error">E-mail ou senha inválidos.</span>
+</div>
+
+<button id="btn" disabled>🚀 Importar Produtos</button>
+
+<div id="log"><span class="info">Faça login para habilitar a importação.</span></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="./firebase-config.js"></script>
+
+<script>
+// IDs dos grupos de adicionais já cadastrados (Produtos → Adicionais)
+const GRUPO_ADICIONAIS_LANCHE = "Trsm6CCEesEcxp6eVQaj"; // Adicionais Lanche
+const GRUPO_MOLHOS_EXTRAS     = "uvdhZSamOqe63pXMj9QY"; // Molhos Extras
+const GRUPO_ADICIONAIS_PORCAO = "LjdVgkpWhUqUebOY8rin"; // Adicionais Porção
+const GRUPO_BEBIDAS_ADICIONAIS = "7LltEp45xUDBNRtroGcX"; // Bebidas - Adicionais (Gelo extra, Limão)
+const GRUPO_SOBREMESA_COBERTURAS = "7XX76kJnmR7YSw3kJpUE"; // Sobremesa - Coberturas
+
+const produtos = [
+  // ── LANCHES ──────────────────────────────────────────────────────────────
+  {
+    id: 9, categoria: "lanches", nome: "X-Burger Clássico", preco: 22.00,
+    imagem: "./assets/hamburgueria/x-burguer-tradicional.jpg",
+    descricao: "Pão brioche, hambúrguer artesanal 150g, queijo cheddar, alface, tomate e molho da casa.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 10, categoria: "lanches", nome: "X-Bacon", preco: 28.00,
+    imagem: "./assets/hamburgueria/x-bacon.jpeg",
+    descricao: "Pão brioche, hambúrguer 150g, cheddar derretido, fatias crocantes de bacon e molho barbecue.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 11, categoria: "lanches", nome: "X-Tudo", preco: 35.00,
+    imagem: "./assets/hamburgueria/x-tudo.avif",
+    descricao: "Pão, hambúrguer 150g, ovo, presunto, queijo, bacon, alface, tomate, milho e batata palha.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 12, categoria: "lanches", nome: "X-Salada", preco: 24.00,
+    imagem: "./assets/hamburgueria/x-salada.jpeg",
+    descricao: "Pão, hambúrguer 150g, queijo mussarela, alface, tomate e maionese da casa.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 13, categoria: "lanches", nome: "X-Egg", preco: 26.00,
+    imagem: "./assets/hamburgueria/x-egg.jpeg",
+    descricao: "Pão, hambúrguer 150g, queijo, ovo frito e molho especial.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 14, categoria: "lanches", nome: "X-Calabresa", preco: 27.00,
+    imagem: "./assets/hamburgueria/x-calabresa.jpeg",
+    descricao: "Pão, hambúrguer 150g, queijo, calabresa fatiada grelhada e cebola caramelizada.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 15, categoria: "lanches", nome: "Frango Catupiry", preco: 29.00,
+    imagem: "./assets/hamburgueria/x-frango-catupiry.jpeg",
+    descricao: "Pão, filé de frango grelhado, catupiry cremoso, alface e tomate.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 16, categoria: "lanches", nome: "Vegetariano", preco: 25.00,
+    imagem: "./assets/hamburgueria/x-vegetariano.jpg",
+    descricao: "Pão, hambúrguer de grão-de-bico, queijo, alface, tomate, cenoura ralada e molho especial.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_LANCHE, GRUPO_MOLHOS_EXTRAS],
+  },
+
+  // ── PORÇÕES ──────────────────────────────────────────────────────────────
+  {
+    id: 17, categoria: "porcoes", nome: "Batata Frita Simples", preco: 20.00,
+    imagem: "./assets/hamburgueria/batata-frita.jpg",
+    descricao: "Porção de batata frita crocante, sequinha, com sal e orégano.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_PORCAO, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 18, categoria: "porcoes", nome: "Batata Frita com Cheddar e Bacon", preco: 35.00,
+    imagem: "./assets/hamburgueria/batata-frita-cheddar-bacon.jpg",
+    descricao: "Batata frita coberta com cheddar cremoso e bacon crocante picado.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_PORCAO, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 19, categoria: "porcoes", nome: "Batata Frita Completa", preco: 40.00,
+    imagem: "./assets/hamburgueria/batata-frita-completa.jpeg",
+    descricao: "Batata frita com cheddar, catupiry, bacon, calabresa e cebola crispy.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_PORCAO, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 20, categoria: "porcoes", nome: "Frango a Passarinho", preco: 38.00,
+    imagem: "./assets/hamburgueria/frango-a-passarinho.webp",
+    descricao: "Pedacinhos de frango fritos com alho crocante e tempero da casa, acompanha limão.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_PORCAO, GRUPO_MOLHOS_EXTRAS],
+  },
+  {
+    id: 21, categoria: "porcoes", nome: "Calabresa Acebolada", preco: 35.00,
+    imagem: "./assets/hamburgueria/calabresa-acebolada.jpg",
+    descricao: "Calabresa fatiada grelhada com cebola caramelizada e pão francês.",
+    adicionaisGrupos: [GRUPO_ADICIONAIS_PORCAO, GRUPO_MOLHOS_EXTRAS],
+  },
+
+  // ── BEBIDAS ──────────────────────────────────────────────────────────────
+  {
+    id: 22, categoria: "bebidas", nome: "Coca-Cola Lata 350ml", preco: 8.00,
+    imagem: "./assets/hamburgueria/bebidas/coca-cola-lata-350ml.webp",
+    descricao: "Refrigerante Coca-Cola gelado em lata 350ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 23, categoria: "bebidas", nome: "Coca-Cola 1 Litro", preco: 14.00,
+    imagem: "./assets/hamburgueria/bebidas/coca-cola-1-litro.jpeg",
+    descricao: "Refrigerante Coca-Cola gelado em garrafa 1 litro.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 24, categoria: "bebidas", nome: "Guaraná Antarctica Lata 350ml", preco: 7.00,
+    imagem: "./assets/hamburgueria/bebidas/guarana-antarctica-lata-350ml.jpeg",
+    descricao: "Refrigerante Guaraná Antarctica gelado em lata 350ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 25, categoria: "bebidas", nome: "Guaraná Antarctica 1 Litro", preco: 12.00,
+    imagem: "./assets/hamburgueria/bebidas/guarana-antarctica-1-litro.jpeg",
+    descricao: "Refrigerante Guaraná Antarctica gelado em garrafa 1 litro.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 26, categoria: "bebidas", nome: "Cerveja Antarctica Lata 350ml", preco: 10.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-antarctica-lata-350ml.jpeg",
+    descricao: "Cerveja Antarctica gelada em lata 350ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 27, categoria: "bebidas", nome: "Cerveja Antarctica 600ml", preco: 15.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-antarctica-600ml.webp",
+    descricao: "Cerveja Antarctica gelada em garrafa 600ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 28, categoria: "bebidas", nome: "Cerveja Heineken Long Neck 330ml", preco: 15.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-heineken-long-neck-330ml.webp",
+    descricao: "Cerveja Heineken gelada em long neck 330ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 29, categoria: "bebidas", nome: "Cerveja Heineken 600ml", preco: 22.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-heineken-600ml.png",
+    descricao: "Cerveja Heineken gelada em garrafa 600ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 30, categoria: "bebidas", nome: "Cerveja Brahma Lata 350ml", preco: 10.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-brahma-lata-350ml.webp",
+    descricao: "Cerveja Brahma gelada em lata 350ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 31, categoria: "bebidas", nome: "Cerveja Brahma 600ml", preco: 18.00,
+    imagem: "./assets/hamburgueria/bebidas/cerveja-brahma-600ml.webp",
+    descricao: "Cerveja Brahma gelada em garrafa 600ml.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 32, categoria: "bebidas", nome: "Água Mineral 500ml", preco: 5.00,
+    imagem: "./assets/hamburgueria/bebidas/agua-mineral-500ml.jpeg",
+    descricao: "Água mineral sem gás gelada.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 33, categoria: "bebidas", nome: "Água com Gás 500ml", preco: 6.00,
+    imagem: "./assets/hamburgueria/bebidas/agua-com-gas-500ml.webp",
+    descricao: "Água mineral com gás gelada.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+  {
+    id: 34, categoria: "bebidas", nome: "Suco Natural 500ml", preco: 12.00,
+    imagem: "./assets/hamburgueria/bebidas/suco-natural-500ml.jpeg",
+    descricao: "Suco natural da fruta (laranja, limão ou abacaxi), feito na hora.",
+    adicionaisGrupos: [GRUPO_BEBIDAS_ADICIONAIS],
+  },
+
+  // ── COMBOS ───────────────────────────────────────────────────────────────
+  // Sem adicionais vinculados de propósito — é um combo fechado, não dá pra
+  // customizar os itens dele (pedido do dono).
+  {
+    id: 35, categoria: "combos", nome: "Combo Clássico", preco: 35.00,
+    imagem: "./assets/hamburgueria/combos/combo-classico.jpeg",
+    descricao: "X-Burger Clássico + Batata Frita Simples + Refrigerante Lata 350ml. Economia de R$ 5,00 em relação ao pedido separado.",
+    adicionaisGrupos: [],
+  },
+  {
+    id: 36, categoria: "combos", nome: "Combo Bacon", preco: 45.00,
+    imagem: "./assets/hamburgueria/combos/combo-bacon.jpeg",
+    descricao: "X-Bacon + Batata Frita com Cheddar e Bacon + Refrigerante Lata 350ml. Economia de R$ 6,00.",
+    adicionaisGrupos: [],
+  },
+  {
+    id: 37, categoria: "combos", nome: "Combo Casal", preco: 75.00,
+    imagem: "./assets/hamburgueria/combos/combo-casal.jpeg",
+    descricao: "2 X-Burger Clássico + 1 Batata Frita Completa + 1 Refrigerante 1 Litro. Ideal pra dividir — economia de R$ 10,00.",
+    adicionaisGrupos: [],
+  },
+  {
+    id: 38, categoria: "combos", nome: "Combo Frango", preco: 42.00,
+    imagem: "./assets/hamburgueria/combos/combo-frango.webp",
+    descricao: "Frango Catupiry + Batata Frita Simples + Refrigerante Lata 350ml. Economia de R$ 5,00.",
+    adicionaisGrupos: [],
+  },
+  {
+    id: 39, categoria: "combos", nome: "Combo Cerveja", preco: 55.00,
+    imagem: "./assets/hamburgueria/combos/combo-cerveja.jpeg",
+    descricao: "X-Bacon + Porção de Calabresa Acebolada + Cerveja Heineken Long Neck. Perfeito pra happy hour — economia de R$ 8,00.",
+    adicionaisGrupos: [],
+  },
+
+  // ── SOBREMESAS ───────────────────────────────────────────────────────────
+  {
+    id: 40, categoria: "sobremesas", nome: "Açaí 300ml", preco: 18.00,
+    imagem: "./assets/hamburgueria/sobremesas/acai-300ml.jpeg",
+    descricao: "Açaí cremoso no copo de 300ml, acompanha granola e banana.",
+    adicionaisGrupos: [GRUPO_SOBREMESA_COBERTURAS],
+  },
+  {
+    id: 41, categoria: "sobremesas", nome: "Açaí 500ml", preco: 25.00,
+    imagem: "./assets/hamburgueria/sobremesas/acai-500ml.jpeg",
+    descricao: "Açaí cremoso no copo de 500ml, acompanha granola, banana e leite condensado.",
+    adicionaisGrupos: [GRUPO_SOBREMESA_COBERTURAS],
+  },
+  {
+    id: 42, categoria: "sobremesas", nome: "Petit Gateau", preco: 22.00,
+    imagem: "./assets/hamburgueria/sobremesas/petit-gateau.webp",
+    descricao: "Bolinho quente de chocolate com recheio cremoso, acompanha bola de sorvete de creme.",
+    adicionaisGrupos: [GRUPO_SOBREMESA_COBERTURAS],
+  },
+  {
+    id: 43, categoria: "sobremesas", nome: "Brownie com Sorvete", preco: 20.00,
+    imagem: "./assets/hamburgueria/sobremesas/brownie-com-sorvete.jpg",
+    descricao: "Brownie de chocolate servido quente com bola de sorvete de creme.",
+    adicionaisGrupos: [GRUPO_SOBREMESA_COBERTURAS],
+  },
+];
+
+// Preview das fotos antes mesmo de logar, só pra conferir visualmente
+const previewEl = document.getElementById("preview");
+previewEl.innerHTML = produtos
+  .filter(p => p.imagem)
+  .map(p => `<img src="${p.imagem}" alt="${p.nome}" title="${p.nome}">`)
+  .join("");
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const log = document.getElementById("log");
+const btn = document.getElementById("btn");
+const loginBtn = document.getElementById("login-btn");
+const loginBox = document.getElementById("login-box");
+const loginError = document.getElementById("login-error");
+
+const addLog = (msg, tipo = "ok") => {
+  const span = document.createElement("span");
+  span.className = tipo;
+  span.textContent = msg;
+  log.appendChild(span);
+  log.appendChild(document.createElement("br"));
+  log.scrollTop = log.scrollHeight;
+};
+
+loginBtn.addEventListener("click", () => {
+  const email = document.getElementById("email-input").value.trim();
+  const senha = document.getElementById("senha-input").value;
+  loginError.style.display = "none";
+  auth.signInWithEmailAndPassword(email, senha).catch(() => {
+    loginError.style.display = "block";
+  });
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginBox.style.display = "none";
+    btn.disabled = false;
+    log.innerHTML = "";
+    addLog(`✔ Logado como ${user.email}. Pronto pra importar.`, "ok");
+  } else {
+    loginBox.style.display = "flex";
+    btn.disabled = true;
+  }
+});
+
+btn.addEventListener("click", async () => {
+  btn.disabled = true;
+  log.innerHTML = "";
+  addLog("▶ Iniciando importação...", "info");
+
+  let ok = 0, erros = 0;
+
+  for (const p of produtos) {
+    try {
+      await db.collection("produtos").doc(String(p.id)).set({
+        ...p,
+        codigoBarras: null,
+        ativo: true,
+        destaque: false,
+        entrega: true,
+        variacoes: [],
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      addLog(`✔ [${p.id}] ${p.nome}`, "ok");
+      ok++;
+    } catch (e) {
+      addLog(`✘ [${p.id}] ${p.nome} — ${e.message}`, "err");
+      erros++;
+    }
+  }
+
+  addLog("", "info");
+  addLog(`━━━ CONCLUÍDO: ${ok} produtos importados, ${erros} erros ━━━`, erros > 0 ? "err" : "info");
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg:      #ffffff;
+      --surface: #f2f6fa;
+      --card:    #ffffff;
+      --border:  #e1e8ef;
+      --gold:    #0d47a1;
+      --gold2:   #1565c0;
+      --text:    #182236;
+      --muted:   #64748b;
+      --red:     #f44336;
+      --green:   #4caf50;
+      --blue:    #2196f3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 16px; }
+    #login-screen h1 { font-size: 1.6rem; color: var(--gold); }
+    #login-screen p  { color: var(--muted); font-size: .9rem; }
+    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 320px; display: flex; flex-direction: column; gap: 14px; }
+    .login-box input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; color: var(--text); font-size: .95rem; outline: none; }
+    .login-box input:focus { border-color: var(--gold); }
+    #login-error { color: var(--red); font-size: .82rem; display: none; }
+    #app { display: none; }
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .topbar-brand { font-weight: 700; font-size: 1.05rem; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+    .topbar-right  { display: flex; align-items: center; gap: 12px; }
+    .logout-btn { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: .82rem; transition: .2s; }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+    .app-body { display: flex; align-items: flex-start; }
+    .sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 16px 10px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; }
+    .side-btn { display: flex; align-items: center; gap: 12px; text-align: left; background: none; border: none; color: var(--muted); padding: 12px 14px; border-radius: 8px; cursor: pointer; font-size: .88rem; transition: .2s; width: 100%; }
+    .side-btn i { width: 18px; text-align: center; font-size: .95rem; }
+    .side-btn:hover { background: var(--card); color: var(--text); }
+    .side-btn.active { background: #e3f0fb; color: var(--gold); font-weight: 600; }
+    .content { padding: 24px; flex: 1; min-width: 0; max-width: 100%; overflow-x: hidden; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .hamburger-btn { display: none; background: none; border: none; color: var(--text); font-size: 1.3rem; cursor: pointer; padding: 6px 10px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 199; }
+    .sidebar-overlay.show { display: block; }
+    @media (max-width: 800px) {
+      .hamburger-btn { display: inline-flex; }
+      .app-body { flex-direction: column; }
+      .sidebar {
+        position: fixed; top: 0; left: 0; height: 100vh; width: 240px;
+        transform: translateX(-100%); transition: transform .25s ease;
+        z-index: 200; flex-direction: column; overflow-x: hidden; overflow-y: auto;
+        border-right: 1px solid var(--border); border-bottom: none;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .side-btn { width: 100%; white-space: normal; }
+    }
+    .mesa-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
+    .mesa-card.ocupada { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+    .mesa-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .mesa-nome { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .mesa-total { font-size: .88rem; margin-bottom: 6px; }
+    .mesa-pedidos-detalhe { font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+    .mesa-pedidos-detalhe summary { cursor: pointer; color: var(--text); font-weight: 600; }
+    .mesa-pedido-item { padding: 6px 0; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 2px; }
+    .pedido-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .pedido-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .pedido-card-hora { font-size: .76rem; color: var(--muted); margin-bottom: 8px; }
+    .pedido-card-itens { font-size: .85rem; line-height: 1.5; margin-bottom: 8px; }
+    .pedido-card-total { font-weight: 700; color: var(--gold); }
+    .pedidos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .74rem; font-weight: 600; }
+    .status-recebido { background: #fdecea; color: var(--red); }
+    .status-em_preparo { background: #fff8ea; color: #8a610a; }
+    .status-pronto { background: #e3f0fb; color: var(--gold); }
+    .status-entregue { background: #e3f6e8; color: var(--green); }
+    .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .toolbar input[type=text], .toolbar input[type=month], .toolbar select { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; color: var(--text); font-size: .88rem; outline: none; }
+    .toolbar input[type=month]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+    .toolbar input[type=text] { flex: 1; min-width: 180px; }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--gold); }
+    .toolbar select option { background: var(--card); }
+    .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: .88rem; font-weight: 600; transition: .15s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary  { background: var(--gold); color: #fff; }
+    .btn-primary:hover  { background: var(--gold2); }
+    .btn-danger   { background: #fdecea; color: var(--red); border: 1px solid #f5c6c6; }
+    .btn-danger:hover   { background: #f9d4d4; }
+    .btn-ghost    { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover    { border-color: var(--gold); color: var(--gold); }
+    .btn-sm { padding: 5px 10px; font-size: .78rem; border-radius: 6px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 140px; }
+    .stat-card .num { font-size: 1.6rem; font-weight: 700; color: var(--gold); }
+    .stat-card .lbl { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid var(--border); }
+    /* min-width impede a tabela de espremer as colunas no celular — em vez
+       disso, o .table-wrap acima rola pro lado (é pra isso que ele existe) */
+    table { width: 100%; min-width: 680px; border-collapse: collapse; }
+    thead tr { background: var(--surface); }
+    th { padding: 11px 14px; text-align: left; font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); font-size: .85rem; vertical-align: middle; }
+    tr:hover td { background: #f2f6fa; }
+    .prod-img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+    .prod-img-placeholder { width: 44px; height: 44px; background: var(--surface); border-radius: 6px; border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: .7rem; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+    .badge-ativo    { background: #e3f6e8; color: var(--green); }
+    .badge-inativo  { background: #fdecea; color: var(--red); }
+    .badge-destaque { background: #e3f0fb; color: var(--gold); }
+    .actions-cell { display: flex; gap: 6px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 14px; width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 28px; position: relative; }
+    .modal h2 { font-size: 1.1rem; margin-bottom: 20px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; transition: .2s; }
+    .modal-close:hover { color: var(--text); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: .8rem; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: .88rem; outline: none; font-family: inherit; }
+    .form-group input[type=color] { width: 64px; height: 40px; padding: 3px; cursor: pointer; }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-group select option { background: var(--card); }
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
+    .toggle-row input[type=checkbox] { accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    #confirm-modal .modal { width: 360px; }
+    #confirm-modal p { font-size: .9rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .cat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .cat-card-left { display: flex; align-items: center; gap: 10px; }
+    .cat-icon { width: 36px; height: 36px; background: var(--surface); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: .9rem; }
+    .cat-name { font-size: .9rem; font-weight: 600; }
+    .cat-id   { font-size: .75rem; color: var(--muted); }
+    .tipo-var-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .tipo-var-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .tipo-var-nome { font-size: .95rem; font-weight: 700; }
+    .tipo-var-opcoes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip-opcao { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px; font-size: .76rem; color: var(--muted); }
+    .chip-opcao-editavel { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: .82rem; }
+    .chip-opcao-editavel button { background: none; border: none; color: var(--red); cursor: pointer; font-size: .8rem; padding: 2px 4px; }
+    .form-variacao-tipo { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .form-variacao-tipo-nome { font-size: .82rem; font-weight: 700; margin-bottom: 8px; }
+    .form-variacao-opcoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .form-variacao-opcoes label { display: flex; align-items: center; gap: 5px; font-size: .82rem; cursor: pointer; }
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: .88rem; z-index: 9999; transform: translateY(80px); opacity: 0; transition: .3s; max-width: 320px; display: flex; align-items: center; gap: 10px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.ok  { border-color: var(--green); color: var(--green); }
+    #toast.err { border-color: var(--red);   color: var(--red);   }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
+    .empty-state i { font-size: 2rem; margin-bottom: 12px; display: block; }
+    .loader { text-align: center; padding: 40px; color: var(--muted); }
+    .loader i { font-size: 1.4rem; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── UPLOAD DE IMAGEM ── */
+    .img-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .upload-btn-area { background: var(--surface); border: 2px dashed var(--border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; transition: .2s; color: var(--muted); font-size: .88rem; }
+    .upload-btn-area:hover { border-color: var(--gold); color: var(--gold); }
+    .upload-preview { margin-top: 10px; display: none; }
+    .upload-preview img { width: 100%; max-height: 160px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); }
+    .upload-preview p { font-size: .75rem; color: var(--muted); margin-top: 6px; text-align: center; }
+    .progress-bar { display: none; margin-top: 8px; background: var(--border); border-radius: 999px; height: 6px; }
+    .progress-fill { height: 6px; background: var(--gold); border-radius: 999px; width: 0%; transition: width .3s; }
+    /* ── PDV ── */
+    .pdv-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+    .pdv-products { min-width: 0; }
+    .pdv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 62vh; overflow-y: auto; margin-top: 14px; padding-right: 4px; }
+    .pdv-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; text-align: center; transition: .15s; }
+    .pdv-item:hover { border-color: var(--gold); transform: translateY(-1px); }
+    .pdv-item img, .pdv-item .pdv-item-noimg { width: 100%; height: 74px; object-fit: contain; margin-bottom: 8px; border-radius: 6px; }
+    .pdv-item .pdv-item-noimg { background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted); border: 1px dashed var(--border); }
+    .pdv-item-nome { font-size: .78rem; font-weight: 600; line-height: 1.25; height: 2.5em; overflow: hidden; }
+    .pdv-item-preco { font-size: .82rem; color: var(--gold); font-weight: 700; margin-top: 4px; }
+    .pdv-cart { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 76px; max-height: calc(100vh - 100px); overflow-y: auto; }
+    .pdv-cart h3 { font-size: 1rem; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+    .pdv-cart-empty { text-align: center; color: var(--muted); font-size: .85rem; padding: 24px 0; }
+    .pdv-cart-item { display: flex; align-items: center; gap: 8px; font-size: .82rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .pdv-cart-item-info { flex: 1; min-width: 0; }
+    .pdv-cart-item-nome { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pdv-cart-item-preco { color: var(--muted); font-size: .76rem; }
+    .pdv-qty { display: flex; align-items: center; gap: 6px; }
+    .pdv-qty-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: .8rem; line-height: 1; }
+    .pdv-qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .pdv-cart-item-total { font-weight: 700; color: var(--gold); min-width: 62px; text-align: right; }
+    .pdv-remove-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: .85rem; padding: 4px; }
+    .pdv-totals-row { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+    .pdv-totals-row.total { font-size: 1.1rem; font-weight: 700; color: var(--gold); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 2px; }
+    #pdv-busca { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; color: var(--text); font-size: .88rem; outline: none; }
+    #pdv-busca:focus { border-color: var(--gold); }
+    .pdv-cupom-row { display: flex; gap: 8px; }
+    .pdv-cupom-row input { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: .88rem; outline: none; }
+    .pdv-cupom-row input:focus { border-color: var(--gold); }
+    .pdv-cupom-row input::placeholder { color: var(--muted); }
+    .pdv-history { margin-top: 28px; }
+    .pdv-history h3 { font-size: 1rem; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    @media (max-width: 900px) { .pdv-layout { grid-template-columns: 1fr; } .pdv-cart { position: static; max-height: none; } }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats-row .stat-card { min-width: 100px; }
+      .modal { padding: 20px; }
+      .content { padding: 14px; }
+      th { padding: 9px 10px; font-size: .72rem; }
+      td { padding: 8px 10px; font-size: .8rem; }
+    }
+    /* ── RECIBO IMPRESSO ── */
+    #recibo-print { display: none; }
+    #comanda-print { display: none; }
+    .recibo-linha { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+    .recibo-total { font-weight: 700; font-size: 15px; }
+    .recibo-obrigado { text-align: center; margin-top: 10px; font-size: 12px; }
+    .comanda-item { font-size: 13px; padding: 3px 0; border-bottom: 1px dashed #000; }
+    .comanda-item small { display: block; font-size: 11px; }
+    @media print {
+      body * { visibility: hidden; }
+      #recibo-print, #recibo-print * { visibility: visible; }
+      #recibo-print { display: block; position: absolute; top: 0; left: 0; width: 300px; padding: 12px; font-family: monospace; color: #000; }
+      #recibo-print h2 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+      #recibo-print p { font-size: 12px; text-align: center; margin: 2px 0; }
+      #recibo-print hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+      #comanda-print, #comanda-print * { visibility: visible; }
+      #comanda-print { display: block; position: absolute; top: 0; left: 0; width: 300px; padding: 12px; font-family: monospace; color: #000; }
+      #comanda-print h2 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+      #comanda-print p { font-size: 12px; text-align: center; margin: 2px 0; }
+      #comanda-print hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+    }
+    /* ── CROP DE IMAGEM ── */
+    #modal-crop .modal { width: 460px; }
+    .crop-container { max-height: 60vh; overflow: hidden; background: #111; border-radius: 8px; }
+    .crop-container img { display: block; max-width: 100%; }
+    .crop-hint { font-size: .78rem; color: var(--muted); text-align: center; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div style="text-align:center">
+    <img src="./assets/logo-burger-house.png" alt="Logo" id="login-logo-img" style="width:150px;max-width:70vw;margin-bottom:14px;border-radius:8px;display:inline-block">
+    <h1 id="login-titulo">Admin</h1>
+    <p style="margin-top:6px">Acesso restrito</p>
+  </div>
+  <div class="login-box">
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="email-input" placeholder="seuemail@exemplo.com" autofocus>
+    </div>
+    <div class="form-group">
+      <label>Senha de acesso</label>
+      <input type="password" id="senha-input" placeholder="••••••••">
+    </div>
+    <span id="login-error">E-mail ou senha inválidos.</span>
+    <button class="btn btn-primary" onclick="fazerLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i> Entrar
+    </button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <button class="hamburger-btn" id="hamburger-btn" onclick="alternarMenu()" aria-label="Abrir menu"><i class="fa-solid fa-bars"></i></button>
+      <img id="topbar-logo-img" src="" alt="Logo" style="display:none;width:24px;height:24px;object-fit:cover;border-radius:6px">
+      <i class="fa-solid fa-burger" id="topbar-logo-icon"></i>
+      <span id="topbar-titulo">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:.8rem;color:var(--muted)" id="topbar-count"></span>
+      <button class="logout-btn" onclick="fazerLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</button>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="alternarMenu(false)"></div>
+  <div class="app-body">
+  <div class="sidebar">
+    <button class="side-btn active" onclick="mudarTab('produtos',this)"><i class="fa-solid fa-box"></i> Produtos</button>
+    <button class="side-btn" onclick="mudarTab('categorias',this)"><i class="fa-solid fa-tags"></i> Categorias</button>
+    <button class="side-btn" onclick="mudarTab('variacoes',this)"><i class="fa-solid fa-shirt"></i> Variações</button>
+    <button class="side-btn" onclick="mudarTab('adicionais',this)"><i class="fa-solid fa-plus-circle"></i> Adicionais</button>
+    <button class="side-btn" onclick="mudarTab('cupons',this)"><i class="fa-solid fa-ticket"></i> Cupons</button>
+    <button class="side-btn" onclick="mudarTab('pdv',this)"><i class="fa-solid fa-cash-register"></i> PDV</button>
+    <button class="side-btn" onclick="mudarTab('mesas',this)"><i class="fa-solid fa-utensils"></i> Mesas / Cozinha</button>
+    <button class="side-btn" onclick="mudarTab('pedidos',this)"><i class="fa-solid fa-bag-shopping"></i> Pedidos Online</button>
+    <button class="side-btn" onclick="mudarTab('fiado',this)"><i class="fa-solid fa-handshake"></i> Pagamento a Prazo</button>
+    <button class="side-btn" onclick="mudarTab('relatorio',this)"><i class="fa-solid fa-chart-column"></i> Relatório</button>
+    <button class="side-btn" onclick="mudarTab('config',this)"><i class="fa-solid fa-gear"></i> Configurações</button>
+    <button class="side-btn" id="side-btn-usuarios" onclick="mudarTab('usuarios',this)"><i class="fa-solid fa-users"></i> Usuários</button>
+  </div>
+
+  <div class="content">
+    <div id="tab-produtos" class="tab-panel active">
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat-total">–</div><div class="lbl">Total de produtos</div></div>
+        <div class="stat-card"><div class="num" id="stat-ativos">–</div><div class="lbl">Ativos</div></div>
+        <div class="stat-card"><div class="num" id="stat-destaque">–</div><div class="lbl">Destaques</div></div>
+        <div class="stat-card"><div class="num" id="stat-cats">–</div><div class="lbl">Categorias</div></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="busca-input" placeholder="🔍 Buscar produto..." oninput="filtrar()">
+        <select id="filtro-cat" onchange="filtrar()"><option value="">Todas categorias</option></select>
+        <select id="filtro-status" onchange="filtrar()">
+          <option value="">Todos status</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+          <option value="destaque">Destaques</option>
+          <option value="sem-entrega">Só retirada (sem entrega)</option>
+        </select>
+        <button class="btn btn-primary" onclick="abrirModalCriar()"><i class="fa-solid fa-plus"></i> Novo Produto</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Imagem</th><th>ID</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tabela-corpo"><tr><td colspan="7"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-categorias" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalCategoria()"><i class="fa-solid fa-plus"></i> Nova Categoria</button>
+      </div>
+      <div class="cat-grid" id="cat-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
+    </div>
+
+    <div id="tab-variacoes" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalTipoVariacao()"><i class="fa-solid fa-plus"></i> Novo Tipo</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+        Cadastre aqui os tipos de variação da loja (Cor, Tamanho, Voltagem...) e as opções de cada um.
+        Depois, em cada produto, você escolhe quais dessas opções ele oferece.
+      </p>
+      <div class="cat-grid" id="variacoes-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
+    </div>
+
+    <div id="tab-adicionais" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalGrupoAdicional()"><i class="fa-solid fa-plus"></i> Novo Grupo</button>
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+        Cadastre grupos de adicionais pagos (ex: "Adicionais Lanche" → Bacon +R$5, Queijo extra +R$3).
+        Depois, em cada produto, você escolhe quais grupos ele oferece. Diferente de Variações: aqui o cliente pode marcar
+        mais de uma opção, e cada opção tem seu próprio preço.
+      </p>
+      <div class="cat-grid" id="adicionais-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
+    </div>
+
+    <div id="tab-cupons" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalCupom()"><i class="fa-solid fa-plus"></i> Novo Cupom</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Código</th><th>Tipo</th><th>Valor</th><th>Pedido mínimo</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="cupons-tabela-corpo"><tr><td colspan="7"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-pdv" class="tab-panel">
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="pdv-stat-qtd">–</div><div class="lbl">Vendas hoje</div></div>
+        <div class="stat-card"><div class="num" id="pdv-stat-total">–</div><div class="lbl">Total vendido hoje</div></div>
+      </div>
+      <div class="pdv-layout">
+        <div class="pdv-products">
+          <input type="text" id="pdv-busca" placeholder="🔍 Buscar produto ou passar o leitor de código de barras" oninput="renderPdvGrid()" onkeydown="pdvBarcodeKeydown(event)" autofocus>
+          <div class="pdv-grid" id="pdv-grid"></div>
+        </div>
+        <div class="pdv-cart">
+          <h3><i class="fa-solid fa-cart-shopping"></i> Venda atual</h3>
+          <div id="pdv-cart-items"><div class="pdv-cart-empty">Carrinho vazio. Clique em um produto para adicionar.</div></div>
+          <div class="pdv-cupom-row">
+            <input type="text" id="pdv-cupom-input" placeholder="Código do cupom" style="text-transform:uppercase">
+            <button class="btn btn-ghost btn-sm" onclick="pdvAplicarCupom()">Aplicar</button>
+          </div>
+          <div class="form-group">
+            <label>Desconto manual (R$)</label>
+            <input type="number" id="pdv-desconto-manual" min="0" step="0.01" placeholder="0.00" oninput="renderPdvCart()">
+          </div>
+          <label class="toggle-row"><input type="checkbox" id="pdv-fiado" onchange="pdvToggleFiado()"> <i class="fa-solid fa-handshake"></i> Pagamento a Prazo (cliente paga depois)</label>
+          <div id="pdv-pagamento-normal-area">
+            <div class="form-group">
+              <label>Forma de pagamento</label>
+              <select id="pdv-pagamento" onchange="renderPdvCart()">
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">Pix</option>
+                <option value="debito">Cartão de débito</option>
+                <option value="credito">Cartão de crédito</option>
+              </select>
+            </div>
+            <label class="toggle-row"><input type="checkbox" id="pdv-pagamento-dividir" onchange="pdvTogglePagamentoDividido()"> Dividir em 2 formas de pagamento</label>
+            <div id="pdv-pagamento2-area" style="display:none;flex-direction:column;gap:12px">
+              <div class="form-group">
+                <label>2ª forma de pagamento</label>
+                <select id="pdv-pagamento2" onchange="renderPdvCart()">
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="pix">Pix</option>
+                  <option value="debito">Cartão de débito</option>
+                  <option value="credito" selected>Cartão de crédito</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Valor pago na 2ª forma (R$)</label>
+                <input type="number" id="pdv-valor-pagamento2" min="0" step="0.01" placeholder="0.00" oninput="renderPdvCart()">
+              </div>
+            </div>
+            <div id="pdv-dinheiro-area" style="display:none;flex-direction:column;gap:8px">
+              <div class="form-group">
+                <label>Valor recebido em dinheiro (R$)</label>
+                <input type="number" id="pdv-valor-recebido" min="0" step="0.01" placeholder="0.00" oninput="renderPdvCart()">
+              </div>
+              <div class="pdv-totals-row" id="pdv-troco-row" style="font-weight:700"><span>Troco</span><span id="pdv-troco">R$ 0,00</span></div>
+            </div>
+          </div>
+          <div id="pdv-fiado-aviso" style="display:none;align-items:flex-start;gap:8px;font-size:.82rem;color:#8a610a;background:#fff8ea;border:1px solid #f5deae;border-radius:8px;padding:10px 12px">
+            <i class="fa-solid fa-circle-info" style="margin-top:2px"></i>
+            <span>Essa venda vai ficar registrada como pagamento a prazo, sem pagamento agora. Informe o nome do cliente pra não perder o controle.</span>
+          </div>
+          <div class="form-group">
+            <label id="pdv-cliente-label">Cliente (opcional)</label>
+            <input type="text" id="pdv-cliente" placeholder="Nome do cliente">
+          </div>
+          <div class="pdv-totals-row"><span>Subtotal</span><span id="pdv-subtotal">R$ 0,00</span></div>
+          <div class="pdv-totals-row"><span>Desconto</span><span id="pdv-desconto-total">R$ 0,00</span></div>
+          <div class="pdv-totals-row total"><span>Total</span><span id="pdv-total">R$ 0,00</span></div>
+          <div id="pdv-split-resumo" style="display:none;flex-direction:column;gap:4px"></div>
+          <button class="btn btn-primary" id="pdv-finalizar-btn" style="width:100%;justify-content:center" onclick="pdvFinalizarVenda()"><i class="fa-solid fa-check"></i> Finalizar Venda</button>
+          <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="pdvLimparCarrinho()"><i class="fa-solid fa-eraser"></i> Limpar carrinho</button>
+          <p style="font-size:.72rem;color:var(--muted);text-align:center">Atalhos: <kbd>F2</kbd> buscar · <kbd>F4</kbd> finalizar · <kbd>Esc</kbd> limpar</p>
+        </div>
+      </div>
+      <div class="pdv-history">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Vendas de hoje</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Horário</th><th>Cliente</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Ações</th></tr></thead>
+            <tbody id="pdv-vendas-tabela"><tr><td colspan="6"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-mesas" class="tab-panel">
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="mesas-stat-ocupadas">–</div><div class="lbl">Mesas ocupadas</div></div>
+        <div class="stat-card"><div class="num" id="mesas-stat-total">–</div><div class="lbl">Total em aberto</div></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalMesa()"><i class="fa-solid fa-plus"></i> Nova Mesa</button>
+      </div>
+      <div class="cat-grid" id="mesas-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
+
+      <h3 style="margin:28px 0 14px"><i class="fa-solid fa-kitchen-set"></i> Cozinha — pedidos em aberto</h3>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">
+        Mostra todos os pedidos em aberto, de mesa e de delivery/retirada, na ordem em que chegaram.
+      </p>
+      <div class="pedidos-grid" id="cozinha-lista"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
+    </div>
+
+    <div id="tab-pedidos" class="tab-panel">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+        Pedidos feitos pelo site (entrega e retirada). Pedidos de mesa ficam na aba "Mesas / Cozinha".
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nº Pedido</th><th>Tipo</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
+          <tbody id="pedidos-online-tabela"><tr><td colspan="8"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-fiado" class="tab-panel">
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="fiado-stat-qtd">–</div><div class="lbl">Em aberto</div></div>
+        <div class="stat-card"><div class="num" id="fiado-stat-total">–</div><div class="lbl">Total a receber</div></div>
+      </div>
+      <div class="toolbar">
+        <select id="fiado-filtro" onchange="renderFiados()">
+          <option value="aberto">Em aberto</option>
+          <option value="quitado">Quitados</option>
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Data da venda</th><th>Itens</th><th>Total</th><th>Pago</th><th>Deve</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="fiado-tabela"><tr><td colspan="8"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-relatorio" class="tab-panel">
+      <div class="toolbar">
+        <input type="month" id="relatorio-mes" onchange="popularDiasRelatorio(); carregarRelatorio()">
+        <select id="relatorio-dia" onchange="carregarRelatorio()">
+          <option value="">Mês inteiro</option>
+        </select>
+        <button class="btn btn-ghost" onclick="limparFiltroRelatorio()"><i class="fa-solid fa-eraser"></i> Limpar</button>
+        <button class="btn btn-ghost" onclick="exportarRelatorioCSV()"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="relatorio-stat-qtd">–</div><div class="lbl" id="relatorio-lbl-qtd">Vendas no mês</div></div>
+        <div class="stat-card"><div class="num" id="relatorio-stat-total">–</div><div class="lbl" id="relatorio-lbl-total">Faturamento no mês</div></div>
+        <div class="stat-card"><div class="num" id="relatorio-stat-ticket">–</div><div class="lbl">Ticket médio</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;height:260px">
+        <canvas id="relatorio-grafico"></canvas>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Hora</th><th>Cliente</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Ações</th></tr></thead>
+          <tbody id="relatorio-tabela"><tr><td colspan="7"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-config" class="tab-panel">
+      <div class="form-grid" style="max-width:640px">
+        <div class="form-group full">
+          <label>Nome da loja</label>
+          <input type="text" id="config-nome-loja" placeholder="Ex: RA Moda Masculina">
+        </div>
+        <div class="form-group full">
+          <label>WhatsApp para receber pedidos <small style="color:var(--muted)">(DDI + DDD + número, só números, ex: 5581999999999)</small></label>
+          <input type="text" id="config-whatsapp" placeholder="5581999999999">
+        </div>
+        <div class="form-group full">
+          <label>Dias disponíveis para retirada</label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap">
+            <label class="toggle-row"><input type="checkbox" id="config-dia-0"> Dom</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-1"> Seg</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-2"> Ter</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-3"> Qua</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-4"> Qui</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-5"> Sex</label>
+            <label class="toggle-row"><input type="checkbox" id="config-dia-6"> Sáb</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Horário inicial da retirada</label><input type="time" id="config-hora-inicio"></div>
+        <div class="form-group"><label>Horário final da retirada</label><input type="time" id="config-hora-fim"></div>
+        <div class="form-group"><label>Intervalo entre horários (minutos)</label><input type="number" id="config-intervalo" min="15" step="15" placeholder="60"></div>
+
+        <div class="form-group full" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+          <label>Horário de funcionamento da loja <small style="color:var(--muted)">(diferente do horário de retirada acima — isto controla quando a loja aceita pedidos)</small></label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-0"> Dom</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-1"> Seg</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-2"> Ter</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-3"> Qua</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-4"> Qui</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-5"> Sex</label>
+            <label class="toggle-row"><input type="checkbox" id="config-func-dia-6"> Sáb</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Horário de abertura</label><input type="time" id="config-func-hora-inicio"></div>
+        <div class="form-group"><label>Horário de fechamento</label><input type="time" id="config-func-hora-fim"></div>
+
+        <div class="form-group full">
+          <label>Taxa de entrega (R$) <small style="color:var(--muted)">(valor fixo, somado ao total quando o cliente escolhe entrega)</small></label>
+          <input type="number" id="config-taxa-entrega" min="0" step="0.01" placeholder="0.00">
+        </div>
+
+        <div class="form-group full">
+          <label>Logo da loja <small style="color:var(--muted)">(aparece no topo do site e aqui no admin)</small></label>
+          <div class="img-tabs">
+            <button type="button" id="config-tab-logo-url" class="btn btn-primary btn-sm" onclick="alternarAbaImagemLogo('url')">
+              <i class="fa-solid fa-link"></i> Colar URL
+            </button>
+            <button type="button" id="config-tab-logo-upload" class="btn btn-ghost btn-sm" onclick="alternarAbaImagemLogo('upload')">
+              <i class="fa-solid fa-camera"></i> Upload / Câmera
+            </button>
+          </div>
+          <div id="config-logo-url-area">
+            <input type="text" id="config-logo-imagem" placeholder="https://... ou ./assets/logo.png">
+          </div>
+          <div id="config-logo-upload-area" style="display:none">
+            <input type="file" id="config-logo-imagem-file" accept="image/*" style="display:none">
+            <div class="upload-btn-area" onclick="document.getElementById('config-logo-imagem-file').click()">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.4rem;margin-bottom:6px;display:block"></i>
+              Clique para selecionar uma imagem<br>
+              <span style="font-size:.78rem">ou tirar foto pela câmera do celular</span>
+            </div>
+            <div class="upload-preview" id="config-logo-upload-preview">
+              <img id="config-logo-upload-preview-img" src="" alt="preview">
+              <p id="config-logo-upload-filename"></p>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <p style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Logo atual:</p>
+            <img id="config-logo-preview-atual" src="" alt="logo atual" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none">
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Banner do topo do site</label>
+          <div class="img-tabs">
+            <button type="button" id="config-tab-banner-url" class="btn btn-primary btn-sm" onclick="alternarAbaImagemBanner('url')">
+              <i class="fa-solid fa-link"></i> Colar URL
+            </button>
+            <button type="button" id="config-tab-banner-upload" class="btn btn-ghost btn-sm" onclick="alternarAbaImagemBanner('upload')">
+              <i class="fa-solid fa-camera"></i> Upload / Câmera
+            </button>
+          </div>
+          <div id="config-banner-url-area">
+            <input type="text" id="config-banner-imagem" placeholder="https://... ou ./assets/banner.jpg">
+          </div>
+          <div id="config-banner-upload-area" style="display:none">
+            <input type="file" id="config-banner-imagem-file" accept="image/*" style="display:none">
+            <div class="upload-btn-area" onclick="document.getElementById('config-banner-imagem-file').click()">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.4rem;margin-bottom:6px;display:block"></i>
+              Clique para selecionar uma imagem<br>
+              <span style="font-size:.78rem">ou tirar foto pela câmera do celular</span>
+            </div>
+            <div class="upload-preview" id="config-banner-upload-preview">
+              <img id="config-banner-upload-preview-img" src="" alt="preview">
+              <p id="config-banner-upload-filename"></p>
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <p style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Banner atual:</p>
+            <img id="config-banner-preview-atual" src="" alt="banner atual" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:none">
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label>Cores do site</label>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:4px">
+            <div class="form-group">
+              <label style="font-size:.75rem">Cor primária <small style="color:var(--muted)">(botões e destaques)</small></label>
+              <input type="color" id="config-cor-primaria" value="#D4AF37">
+            </div>
+            <div class="form-group">
+              <label style="font-size:.75rem">Cor secundária <small style="color:var(--muted)">(fundos escuros)</small></label>
+              <input type="color" id="config-cor-secundaria" value="#1C1C1C">
+            </div>
+            <div class="form-group">
+              <label style="font-size:.75rem">Cor de destaque <small style="color:var(--muted)">(categoria ativa)</small></label>
+              <input type="color" id="config-cor-destaque" value="#E8A33D">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:flex-start;margin-top:20px">
+        <button class="btn btn-primary" onclick="salvarConfiguracoes()"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
+      </div>
+    </div>
+
+    <div id="tab-usuarios" class="tab-panel">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+        Cadastre aqui os funcionários que vão acessar o painel. <strong>Dono</strong> vê tudo. <strong>Garçom</strong> só vê a aba Mesas/Cozinha
+        (não vê PDV, Relatório, Fiado, Configurações nem consegue editar Produtos/Categorias/Cupons).
+      </p>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalUsuario()"><i class="fa-solid fa-user-plus"></i> Novo Funcionário</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="usuarios-tabela"><tr><td colspan="5"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="modal-overlay" id="modal-produto">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-produto')">&times;</button>
+    <h2 id="modal-titulo"><i class="fa-solid fa-box"></i> Produto</h2>
+    <div class="form-grid">
+      <input type="hidden" id="form-id">
+      <div class="form-group full"><label>Nome do produto *</label><input type="text" id="form-nome" placeholder="Ex: Camiseta Polo Levi's"></div>
+      <div class="form-group"><label>Categoria *</label><select id="form-categoria"><option value="">Selecione...</option></select></div>
+      <div class="form-group"><label>Preço (R$) *</label><input type="number" id="form-preco" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group full"><label>Código de barras <small style="color:var(--muted)">(opcional, pra usar no leitor do PDV)</small></label><input type="text" id="form-codigo-barras" placeholder="Passe o leitor aqui ou digite o código"></div>
+
+      <!-- CAMPO DE IMAGEM COM UPLOAD -->
+      <div class="form-group full">
+        <label>Imagem do produto</label>
+        <div class="img-tabs">
+          <button type="button" id="tab-url" class="btn btn-primary btn-sm" onclick="alternarAbaImagem('url')">
+            <i class="fa-solid fa-link"></i> Colar URL
+          </button>
+          <button type="button" id="tab-upload" class="btn btn-ghost btn-sm" onclick="alternarAbaImagem('upload')">
+            <i class="fa-solid fa-camera"></i> Upload / Câmera
+          </button>
+        </div>
+        <div id="img-url-area">
+          <input type="text" id="form-imagem" placeholder="https://... ou ./assets/produto.jpg">
+        </div>
+        <div id="img-upload-area" style="display:none">
+          <input type="file" id="form-imagem-file" accept="image/*" style="display:none">
+          <div class="upload-btn-area" onclick="document.getElementById('form-imagem-file').click()">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.4rem;margin-bottom:6px;display:block"></i>
+            Clique para selecionar uma imagem<br>
+            <span style="font-size:.78rem">ou tirar foto pela câmera do celular</span>
+          </div>
+          <div class="upload-preview" id="upload-preview">
+            <img id="upload-preview-img" src="" alt="preview">
+            <p id="upload-filename"></p>
+          </div>
+          <div class="progress-bar" id="upload-progress-bar">
+            <div class="progress-fill" id="upload-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full"><label>Descrição</label><textarea id="form-descricao" placeholder="Descrição, tamanhos disponíveis, tecido..."></textarea></div>
+      <div class="form-group full" style="flex-direction:row;gap:20px;align-items:center;flex-wrap:wrap">
+        <label class="toggle-row"><input type="checkbox" id="form-ativo" checked> Produto ativo (visível na loja)</label>
+        <label class="toggle-row"><input type="checkbox" id="form-destaque"> Destaque</label>
+        <label class="toggle-row"><input type="checkbox" id="form-entrega" checked> Disponível para entrega</label>
+      </div>
+      <div class="form-group full">
+        <label>Variações <small style="color:var(--muted)">(opcional — marque as opções que este produto oferece)</small></label>
+        <div id="form-variacoes-lista" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+      </div>
+      <div class="form-group full">
+        <label>Adicionais <small style="color:var(--muted)">(opcional — marque os grupos de adicionais que este produto oferece)</small></label>
+        <div id="form-adicionais-lista" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-produto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProduto()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CROP DE IMAGEM -->
+<div class="modal-overlay" id="modal-crop">
+  <div class="modal">
+    <button class="modal-close" onclick="cancelarCrop()">&times;</button>
+    <h2><i class="fa-solid fa-crop-simple"></i> Ajustar foto do produto</h2>
+    <div class="crop-container"><img id="crop-imagem-alvo" src="" alt="Imagem para recortar"></div>
+    <p class="crop-hint">Arraste e use o zoom para posicionar. A imagem será salva em 500x500px.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cancelarCrop()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCrop()"><i class="fa-solid fa-check"></i> Usar esta foto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CROP DA LOGO -->
+<div class="modal-overlay" id="modal-crop-logo">
+  <div class="modal">
+    <button class="modal-close" onclick="cancelarCropLogo()">&times;</button>
+    <h2><i class="fa-solid fa-crop-simple"></i> Ajustar logo da loja</h2>
+    <div class="crop-container"><img id="crop-logo-alvo" src="" alt="Imagem para recortar"></div>
+    <p class="crop-hint">Arraste e use o zoom para posicionar. A logo será salva em 300x300px.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cancelarCropLogo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCropLogo()"><i class="fa-solid fa-check"></i> Usar esta logo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CATEGORIA -->
+<div class="modal-overlay" id="modal-categoria">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-categoria')">&times;</button>
+    <h2><i class="fa-solid fa-tag"></i> Categoria</h2>
+    <div class="form-grid">
+      <input type="hidden" id="cat-id-original">
+      <div class="form-group full"><label>Nome da categoria *</label><input type="text" id="cat-nome" placeholder="Ex: Blusas"></div>
+      <div class="form-group full"><label>Ícone Font Awesome <small style="color:var(--muted)">(ex: fa-shirt)</small></label><input type="text" id="cat-icone" placeholder="fa-tag"></div>
+      <div class="form-group full"><label>Ordem de exibição <small style="color:var(--muted)">(menor aparece primeiro; opcional)</small></label><input type="number" id="cat-ordem" min="0" step="1" placeholder="Ex: 1"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-categoria')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCategoria()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MESA -->
+<div class="modal-overlay" id="modal-mesa">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-mesa')">&times;</button>
+    <h2 id="mesa-modal-titulo"><i class="fa-solid fa-utensils"></i> Mesa</h2>
+    <input type="hidden" id="mesa-id-original">
+    <div class="form-group full"><label>Nome da mesa *</label><input type="text" id="mesa-nome" placeholder="Ex: Mesa 5"></div>
+    <div class="form-group full"><label>Cliente atual <small style="color:var(--muted)">(opcional — ajuda a identificar quem está na mesa agora)</small></label><input type="text" id="mesa-cliente-atual" placeholder="Ex: João"></div>
+    <div class="form-group full" style="flex-direction:row;gap:20px;align-items:center">
+      <label class="toggle-row"><input type="checkbox" id="mesa-ativo" checked> Mesa ativa</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-mesa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMesa()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL QR/LINK DA MESA -->
+<div class="modal-overlay" id="modal-mesa-qr">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-mesa-qr')">&times;</button>
+    <h2 id="mesa-qr-titulo"><i class="fa-solid fa-qrcode"></i> Link da mesa</h2>
+    <div id="mesa-qr-canvas" style="display:flex;justify-content:center;margin:16px 0"></div>
+    <div class="form-group full">
+      <label>Link direto <small style="color:var(--muted)">(imprima o QR Code e cole na mesa)</small></label>
+      <input type="text" id="mesa-qr-link" readonly onclick="this.select()">
+    </div>
+    <div class="modal-footer" style="justify-content:flex-start">
+      <button class="btn btn-ghost" onclick="copiarLinkMesa()"><i class="fa-solid fa-copy"></i> Copiar link</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FECHAR MESA -->
+<div class="modal-overlay" id="modal-fechar-mesa">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-fechar-mesa')">&times;</button>
+    <h2 id="fechar-mesa-titulo"><i class="fa-solid fa-money-bill-wave"></i> Fechar mesa</h2>
+    <input type="hidden" id="fechar-mesa-id">
+    <div id="fechar-mesa-resumo" style="font-size:.88rem;color:var(--muted);margin-bottom:14px"></div>
+    <div class="form-group full">
+      <label>Forma de pagamento</label>
+      <select id="fechar-mesa-pagamento">
+        <option value="dinheiro">Dinheiro</option>
+        <option value="pix">Pix</option>
+        <option value="debito">Cartão de débito</option>
+        <option value="credito">Cartão de crédito</option>
+      </select>
+    </div>
+    <div id="fechar-mesa-recibo-area" style="display:none;margin-top:12px">
+      <label style="font-size:.8rem;color:var(--muted)">Recibo gerado:</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="fechar-mesa-recibo-link" readonly onclick="this.select()" style="flex:1">
+        <button class="btn btn-ghost btn-sm" onclick="window.open(document.getElementById('fechar-mesa-recibo-link').value,'_blank')" title="Abrir recibo"><i class="fa-solid fa-print"></i></button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-fechar-mesa')">Cancelar</button>
+      <button class="btn btn-primary" id="fechar-mesa-confirmar-btn" onclick="confirmarFechamentoMesa()"><i class="fa-solid fa-check"></i> Confirmar fechamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TIPO DE VARIAÇÃO -->
+<div class="modal-overlay" id="modal-tipo-variacao">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-tipo-variacao')">&times;</button>
+    <h2 id="tipo-variacao-titulo"><i class="fa-solid fa-shirt"></i> Tipo de variação</h2>
+    <input type="hidden" id="tipo-var-id-original">
+    <div class="form-group full"><label>Nome do tipo *</label><input type="text" id="tipo-var-nome" placeholder="Ex: Cor, Tamanho, Voltagem..."></div>
+    <div class="form-group full" style="margin-top:14px">
+      <label>Opções</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="tipo-var-opcao-input" placeholder="Ex: Azul" style="flex:1">
+        <button type="button" class="btn btn-ghost" onclick="adicionarOpcaoTipoVariacao()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+      </div>
+      <div class="tipo-var-opcoes" id="tipo-var-opcoes-lista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-tipo-variacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTipoVariacao()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GRUPO DE ADICIONAL -->
+<div class="modal-overlay" id="modal-grupo-adicional">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-grupo-adicional')">&times;</button>
+    <h2 id="grupo-adicional-titulo"><i class="fa-solid fa-plus-circle"></i> Grupo de adicionais</h2>
+    <input type="hidden" id="grupo-adicional-id-original">
+    <div class="form-group full"><label>Nome do grupo *</label><input type="text" id="grupo-adicional-nome" placeholder="Ex: Adicionais Lanche"></div>
+    <div class="form-group full" style="margin-top:14px">
+      <label>Opções (nome + preço)</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input type="text" id="grupo-adicional-opcao-nome" placeholder="Ex: Bacon" style="flex:2">
+        <input type="number" id="grupo-adicional-opcao-preco" placeholder="Preço" min="0" step="0.01" style="flex:1">
+        <button type="button" class="btn btn-ghost" onclick="adicionarOpcaoGrupoAdicional()"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <div class="tipo-var-opcoes" id="grupo-adicional-opcoes-lista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-grupo-adicional')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarGrupoAdicional()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CUPOM -->
+<div class="modal-overlay" id="modal-cupom">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-cupom')">&times;</button>
+    <h2 id="cupom-modal-titulo"><i class="fa-solid fa-ticket"></i> Cupom</h2>
+    <div class="form-grid">
+      <input type="hidden" id="cupom-doc-id">
+      <div class="form-group full"><label>Código do cupom *</label><input type="text" id="cupom-codigo" placeholder="Ex: DESCONTO10" style="text-transform:uppercase"></div>
+      <div class="form-group">
+        <label>Tipo de desconto *</label>
+        <select id="cupom-tipo">
+          <option value="percentual">Percentual (%)</option>
+          <option value="fixo">Valor fixo (R$)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Valor *</label><input type="number" id="cupom-valor" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group"><label>Pedido mínimo (R$)</label><input type="number" id="cupom-valor-minimo" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group"><label>Validade (opcional)</label><input type="date" id="cupom-validade"></div>
+      <div class="form-group full" style="flex-direction:row;gap:20px;align-items:center">
+        <label class="toggle-row"><input type="checkbox" id="cupom-ativo" checked> Cupom ativo</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-cupom')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCupom()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO FIADO -->
+<div class="modal-overlay" id="modal-pagamento-fiado">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-pagamento-fiado')">&times;</button>
+    <h2><i class="fa-solid fa-hand-holding-dollar"></i> Registrar pagamento</h2>
+    <p id="fiado-pagamento-resumo" style="font-size:.88rem;color:var(--muted);margin-bottom:16px"></p>
+    <input type="hidden" id="fiado-pagamento-docid">
+    <div class="form-grid">
+      <div class="form-group"><label>Valor pago agora (R$) *</label><input type="number" id="fiado-pagamento-valor" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>Data do pagamento *</label><input type="date" id="fiado-pagamento-data"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-pagamento-fiado')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarPagamentoFiado()"><i class="fa-solid fa-check"></i> Confirmar pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUÁRIO (FUNCIONÁRIO) -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-usuario')">&times;</button>
+    <h2 id="usuario-modal-titulo"><i class="fa-solid fa-user-plus"></i> Funcionário</h2>
+    <input type="hidden" id="usuario-uid-original">
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome *</label><input type="text" id="usuario-nome" placeholder="Ex: João"></div>
+      <div class="form-group full"><label>E-mail *</label><input type="email" id="usuario-email" placeholder="funcionario@exemplo.com"></div>
+      <div class="form-group full" id="usuario-senha-area"><label>Senha *</label><input type="password" id="usuario-senha" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group full">
+        <label>Papel *</label>
+        <select id="usuario-papel">
+          <option value="garcom">Garçom (só Mesas/Cozinha)</option>
+          <option value="dono">Dono (acesso completo)</option>
+        </select>
+      </div>
+      <div class="form-group full" style="flex-direction:row;gap:20px;align-items:center">
+        <label class="toggle-row"><input type="checkbox" id="usuario-ativo" checked> Conta ativa (desmarque pra bloquear o login sem excluir)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarUsuario()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('confirm-modal')">&times;</button>
+    <h2><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> Confirmar exclusão</h2>
+    <p id="confirm-msg">Tem certeza que deseja excluir este item?</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok-btn"><i class="fa-solid fa-trash"></i> Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="recibo-print"></div>
+<div id="comanda-print"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="./firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+<script>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+
+// ── LOGIN ──────────────────────────────────────────────────────────────────
+function fazerLogin() {
+  const email = document.getElementById("email-input").value.trim();
+  const senha = document.getElementById("senha-input").value;
+  const err   = document.getElementById("login-error");
+  err.style.display = "none";
+  auth.signInWithEmailAndPassword(email, senha).catch(() => {
+    err.style.display = "block";
+  });
+}
+function fazerLogout() { auth.signOut(); }
+
+// "configuracoes" tem leitura pública, então dá pra mostrar o nome da loja
+// (e a logo) já na tela de login, antes mesmo de autenticar.
+db.collection("configuracoes").doc("geral").get().then(doc => {
+  if (!doc.exists) return;
+  const cfg = doc.data();
+  if (cfg.nomeLoja) {
+    document.title = cfg.nomeLoja + " · Admin";
+    document.getElementById("login-titulo").textContent = cfg.nomeLoja + " Admin";
+  }
+  if (cfg.logoUrl) {
+    document.getElementById("login-logo-img").src = cfg.logoUrl;
+    document.getElementById("topbar-logo-img").src = cfg.logoUrl;
+    document.getElementById("topbar-logo-img").style.display = "inline-block";
+    document.getElementById("topbar-logo-icon").style.display = "none";
+  }
+}).catch(() => {});
+document.getElementById("senha-input").addEventListener("keydown", e => { if (e.key === "Enter") fazerLogin(); });
+document.getElementById("email-input").addEventListener("keydown", e => { if (e.key === "Enter") fazerLogin(); });
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    inicializar();
+  } else {
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("app").style.display = "none";
+  }
+});
+
+// ── ESTADO ────────────────────────────────────────────────────────────────
+let todosProdutos   = [];
+let todasCategorias = [];
+let todosCupons     = [];
+let todosTiposVariacao = [];
+let todasMesas      = [];
+let todosPedidos    = [];
+let todosUsuarios   = [];
+let meuPapel        = "garcom"; // fail-safe: só vira "dono" se o Firestore confirmar
+let _imagemProdutoCortada = null; // base64 já recortado em 500x500, pronto pra salvar
+let _cropper = null;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+// OBS: a restrição de abas por papel (dono/garçom) foi temporariamente
+// desligada — mostra tudo pra qualquer conta logada, como era antes dessa
+// funcionalidade existir. O cadastro de funcionários (aba Usuários) continua
+// funcionando normalmente; só a parte que ESCONDE abas pra quem não é dono
+// está pausada, até revisarmos com calma. Pra reativar no futuro, é só
+// descomentar a chamada de aplicarRestricoesDePapel() abaixo.
+async function inicializar() {
+  await carregarMeuPapel();
+  await Promise.all([carregarCategorias(), carregarProdutos(), carregarCupons(), carregarConfiguracoes(), carregarTiposVariacao(), carregarGruposAdicionais(), carregarMesas()]);
+  iniciarListenerPedidos();
+  // aplicarRestricoesDePapel();
+  iniciarListenerVendasHoje();
+  carregarUsuarios();
+}
+
+// ── PAPÉIS E PERMISSÕES ──────────────────────────────────────────────────
+// Sem backend próprio, quem decide o que cada conta pode ver é o Firestore
+// (regras) + esta checagem no admin (esconder abas). A checagem real de
+// segurança está nas regras — esconder botão aqui é só conveniência de UI.
+async function carregarMeuPapel() {
+  try {
+    const uid = auth.currentUser.uid;
+    const doc = await db.collection("usuarios").doc(uid).get();
+    if (doc.exists) {
+      const dados = doc.data();
+      if (dados.ativo === false) {
+        toast("Sua conta foi desativada. Fale com o dono.", "err");
+        await auth.signOut();
+        return false;
+      }
+      // .trim() pra não travar por causa de espaço em branco a mais/a menos
+      // digitado sem querer no console do Firebase.
+      meuPapel = (dados.papel || "").trim() === "dono" ? "dono" : "garcom";
+    } else {
+      // Conta autenticada mas ainda sem registro em "usuarios" — acesso
+      // restrito por padrão (mais seguro do que liberar tudo por engano).
+      meuPapel = "garcom";
+    }
+  } catch(e) {
+    meuPapel = "garcom";
+  }
+  return true;
+}
+
+// Esconde no menu lateral tudo que não seja "Mesas / Cozinha" pra quem não é
+// dono, e já troca pra essa aba (a aba "Produtos" vem ativa por padrão no
+// HTML, mas o garçom não pode nem ver o botão dela).
+function aplicarRestricoesDePapel() {
+  if (meuPapel === "dono") return;
+  document.querySelectorAll(".side-btn").forEach(btn => {
+    const tab = (btn.getAttribute("onclick") || "").match(/mudarTab\('(\w+)'/)?.[1];
+    if (tab && tab !== "mesas") btn.style.display = "none";
+  });
+  const btnMesas = document.querySelector(".side-btn[onclick*=\"mudarTab('mesas'\"]");
+  if (btnMesas) mudarTab("mesas", btnMesas);
+}
+
+// ── MENU MOBILE (gaveta/hambúrguer) ─────────────────────────────────────────
+function alternarMenu(forcarEstado) {
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+  const abrir = typeof forcarEstado === "boolean" ? forcarEstado : !sidebar.classList.contains("open");
+  sidebar.classList.toggle("open", abrir);
+  overlay.classList.toggle("show", abrir);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function mudarTab(tab, btn) {
+  document.querySelectorAll(".side-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-" + tab).classList.add("active");
+  if (window.innerWidth <= 800) alternarMenu(false);
+  if (tab === "pdv") { renderPdvGrid(); document.getElementById("pdv-busca").focus(); }
+  if (tab === "fiado") carregarFiados();
+  if (tab === "mesas") { renderizarMesas(); renderizarCozinha(); }
+  if (tab === "pedidos") renderizarPedidosOnline();
+  if (tab === "usuarios") carregarUsuarios();
+  if (tab === "relatorio") {
+    const mesInput = document.getElementById("relatorio-mes");
+    if (!mesInput.value) mesInput.value = mesAtualStr();
+    popularDiasRelatorio();
+    carregarRelatorio();
+  }
+}
+
+function mesAtualStr() {
+  const hoje = new Date();
+  return hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0");
+}
+
+// ── PRODUTOS ──────────────────────────────────────────────────────────────
+async function carregarProdutos() {
+  try {
+    const snap = await db.collection("produtos").orderBy("id").get();
+    todosProdutos = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    atualizarStats(); filtrar(); popularSelectCategorias(); renderPdvGrid();
+  } catch(e) { toast("Erro ao carregar produtos: " + e.message, "err"); }
+}
+
+function atualizarStats() {
+  document.getElementById("stat-total").textContent    = todosProdutos.length;
+  document.getElementById("stat-ativos").textContent   = todosProdutos.filter(p => p.ativo !== false).length;
+  document.getElementById("stat-destaque").textContent = todosProdutos.filter(p => p.destaque).length;
+  document.getElementById("stat-cats").textContent     = todasCategorias.length;
+  document.getElementById("topbar-count").textContent  = `${todosProdutos.length} produtos`;
+}
+
+function filtrar() {
+  const busca  = (document.getElementById("busca-input").value || "").toLowerCase();
+  const cat    = document.getElementById("filtro-cat").value;
+  const status = document.getElementById("filtro-status").value;
+  let lista = [...todosProdutos];
+  if (busca)  lista = lista.filter(p => p.nome.toLowerCase().includes(busca) || (p.descricao||"").toLowerCase().includes(busca));
+  if (cat)    lista = lista.filter(p => (p.categoria||"") === cat);
+  if (status === "ativo")    lista = lista.filter(p => p.ativo !== false);
+  if (status === "inativo")  lista = lista.filter(p => p.ativo === false);
+  if (status === "destaque") lista = lista.filter(p => p.destaque);
+  if (status === "sem-entrega") lista = lista.filter(p => p.entrega === false);
+  mostrarTabela(lista);
+}
+
+function mostrarTabela(lista) {
+  const tbody = document.getElementById("tabela-corpo");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-box-open"></i><p>Nenhum produto encontrado.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(p => `
+    <tr>
+      <td>${p.imagem ? `<img class="prod-img" src="${p.imagem}" alt="${p.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+          <div class="prod-img-placeholder" ${p.imagem ? "style='display:none'" : ""}><i class="fa-solid fa-image"></i></div></td>
+      <td style="color:var(--muted);font-size:.8rem">${p.id || p.docId}</td>
+      <td style="max-width:220px"><strong>${p.nome}</strong>${p.descricao ? `<br><span style="color:var(--muted);font-size:.76rem">${p.descricao.substring(0,60)}${p.descricao.length>60?'…':''}</span>` : ''}${p.codigoBarras ? `<br><span style="color:var(--muted);font-size:.72rem;font-family:monospace"><i class="fa-solid fa-barcode"></i> ${p.codigoBarras}</span>` : ''}</td>
+      <td><span style="font-size:.8rem;color:var(--muted)">${p.categoria || '–'}</span></td>
+      <td style="font-weight:700;color:var(--gold)">R$ ${Number(p.preco||0).toFixed(2).replace('.',',')}</td>
+      <td>${p.ativo !== false ? '<span class="badge badge-ativo">Ativo</span>' : '<span class="badge badge-inativo">Inativo</span>'}${p.destaque ? ' <span class="badge badge-destaque">★ Destaque</span>' : ''}${p.entrega === false ? ' <span class="badge badge-inativo"><i class="fa-solid fa-store"></i> Só retirada</span>' : ''}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar('${p.docId}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('produto','${p.docId}','${p.nome.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`).join("");
+}
+
+function popularSelectCategorias() {
+  const selFiltro = document.getElementById("filtro-cat");
+  const selForm   = document.getElementById("form-categoria");
+  const cats = [...new Set([...todasCategorias.map(c => c.id), ...todosProdutos.map(p => p.categoria).filter(Boolean)])];
+  selFiltro.innerHTML = `<option value="">Todas categorias</option>` + cats.map(c => {
+    const nome = todasCategorias.find(x => x.id === c)?.nome || c;
+    return `<option value="${c}">${nome}</option>`;
+  }).join("");
+  selForm.innerHTML = `<option value="">Selecione...</option>` + cats.filter(c => c !== "all").map(c => {
+    const nome = todasCategorias.find(x => x.id === c)?.nome || c;
+    return `<option value="${c}">${nome}</option>`;
+  }).join("");
+}
+
+// ── UPLOAD DE IMAGEM (com recorte 500x500 via Cropper.js) ────────────────
+function alternarAbaImagem(aba) {
+  document.getElementById("img-url-area").style.display    = aba === "url"    ? "block" : "none";
+  document.getElementById("img-upload-area").style.display = aba === "upload" ? "block" : "none";
+  document.getElementById("tab-url").className    = "btn btn-sm " + (aba === "url"    ? "btn-primary" : "btn-ghost");
+  document.getElementById("tab-upload").className = "btn btn-sm " + (aba === "upload" ? "btn-primary" : "btn-ghost");
+  if (aba === "url") _imagemProdutoCortada = null;
+}
+
+function resetarUpload() {
+  _imagemProdutoCortada = null;
+  alternarAbaImagem("url");
+  document.getElementById("upload-preview").style.display      = "none";
+  document.getElementById("upload-progress-bar").style.display = "none";
+  document.getElementById("upload-progress-fill").style.width  = "0%";
+  document.getElementById("form-imagem-file").value            = "";
+  document.getElementById("upload-preview-img").src            = "";
+  document.getElementById("upload-filename").textContent       = "";
+}
+
+document.getElementById("form-imagem-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById("crop-imagem-alvo").src = ev.target.result;
+    abrirModal("modal-crop");
+    if (_cropper) _cropper.destroy();
+    _cropper = new Cropper(document.getElementById("crop-imagem-alvo"), {
+      aspectRatio: 1,
+      viewMode: 1,
+      background: false,
+      autoCropArea: 1,
+    });
+  };
+  reader.readAsDataURL(file);
+  e.target.value = ""; // permite selecionar o mesmo arquivo de novo depois
+});
+
+function confirmarCrop() {
+  if (!_cropper) return;
+  const canvas = _cropper.getCroppedCanvas({ width: 500, height: 500 });
+  _imagemProdutoCortada = canvas.toDataURL("image/jpeg", 0.85);
+  document.getElementById("upload-preview-img").src = _imagemProdutoCortada;
+  document.getElementById("upload-preview").style.display = "block";
+  document.getElementById("upload-filename").textContent = "Foto recortada — 500x500px";
+  _cropper.destroy();
+  _cropper = null;
+  fecharModal("modal-crop");
+}
+
+function cancelarCrop() {
+  if (_cropper) { _cropper.destroy(); _cropper = null; }
+  fecharModal("modal-crop");
+}
+
+// Redimensiona/comprime a imagem no navegador e retorna um data URL (base64),
+// que é salvo direto no Firestore — evita depender do Firebase Storage (CORS/regras).
+async function fazerUploadImagem(file, maxDim) {
+  const MAX_DIM = maxDim || 900;
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload  = () => resolve(i);
+    i.onerror = reject;
+    i.src = dataUrl;
+  });
+  let { width, height } = img;
+  if (width > MAX_DIM || height > MAX_DIM) {
+    if (width > height) { height = Math.round(height * MAX_DIM / width); width = MAX_DIM; }
+    else { width = Math.round(width * MAX_DIM / height); height = MAX_DIM; }
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width  = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", 0.75);
+}
+
+// ── UPLOAD/RECORTE DA LOGO (CONFIGURAÇÕES) ────────────────────────────────
+// Mesma técnica do recorte de foto de produto (Cropper.js), só que com um
+// modal e uma variável próprios — assim não mexe em nada do fluxo de
+// produto, que já está funcionando.
+let _logoCortada = null;
+let _cropperLogo = null;
+
+function alternarAbaImagemLogo(aba) {
+  document.getElementById("config-logo-url-area").style.display    = aba === "url"    ? "block" : "none";
+  document.getElementById("config-logo-upload-area").style.display = aba === "upload" ? "block" : "none";
+  document.getElementById("config-tab-logo-url").className    = "btn btn-sm " + (aba === "url"    ? "btn-primary" : "btn-ghost");
+  document.getElementById("config-tab-logo-upload").className = "btn btn-sm " + (aba === "upload" ? "btn-primary" : "btn-ghost");
+  if (aba === "url") _logoCortada = null;
+}
+
+function resetarUploadLogo() {
+  _logoCortada = null;
+  alternarAbaImagemLogo("url");
+  document.getElementById("config-logo-upload-preview").style.display = "none";
+  document.getElementById("config-logo-imagem-file").value             = "";
+  document.getElementById("config-logo-upload-preview-img").src        = "";
+  document.getElementById("config-logo-upload-filename").textContent   = "";
+}
+
+document.getElementById("config-logo-imagem-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById("crop-logo-alvo").src = ev.target.result;
+    abrirModal("modal-crop-logo");
+    if (_cropperLogo) _cropperLogo.destroy();
+    _cropperLogo = new Cropper(document.getElementById("crop-logo-alvo"), {
+      aspectRatio: 1,
+      viewMode: 1,
+      background: false,
+      autoCropArea: 1,
+    });
+  };
+  reader.readAsDataURL(file);
+  e.target.value = ""; // permite selecionar o mesmo arquivo de novo depois
+});
+
+function confirmarCropLogo() {
+  if (!_cropperLogo) return;
+  const canvas = _cropperLogo.getCroppedCanvas({ width: 300, height: 300 });
+  // PNG (não JPEG) pra manter fundo transparente se a logo original tiver
+  _logoCortada = canvas.toDataURL("image/png");
+  document.getElementById("config-logo-upload-preview-img").src = _logoCortada;
+  document.getElementById("config-logo-upload-preview").style.display = "block";
+  document.getElementById("config-logo-upload-filename").textContent = "Logo recortada — 300x300px";
+  _cropperLogo.destroy();
+  _cropperLogo = null;
+  fecharModal("modal-crop-logo");
+}
+
+function cancelarCropLogo() {
+  if (_cropperLogo) { _cropperLogo.destroy(); _cropperLogo = null; }
+  fecharModal("modal-crop-logo");
+}
+
+// ── UPLOAD DO BANNER (CONFIGURAÇÕES) ─────────────────────────────────────
+let _bannerArquivoSelecionado = null;
+
+function alternarAbaImagemBanner(aba) {
+  document.getElementById("config-banner-url-area").style.display    = aba === "url"    ? "block" : "none";
+  document.getElementById("config-banner-upload-area").style.display = aba === "upload" ? "block" : "none";
+  document.getElementById("config-tab-banner-url").className    = "btn btn-sm " + (aba === "url"    ? "btn-primary" : "btn-ghost");
+  document.getElementById("config-tab-banner-upload").className = "btn btn-sm " + (aba === "upload" ? "btn-primary" : "btn-ghost");
+  if (aba === "url") _bannerArquivoSelecionado = null;
+}
+
+document.getElementById("config-banner-imagem-file").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  _bannerArquivoSelecionado = file;
+  document.getElementById("config-banner-upload-filename").textContent = file.name;
+  document.getElementById("config-banner-upload-preview").style.display = "block";
+  const reader = new FileReader();
+  reader.onload = (ev) => { document.getElementById("config-banner-upload-preview-img").src = ev.target.result; };
+  reader.readAsDataURL(file);
+});
+
+// ── CRUD PRODUTOS ─────────────────────────────────────────────────────────
+function abrirModalCriar() {
+  document.getElementById("modal-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo Produto';
+  document.getElementById("form-id").value       = "";
+  document.getElementById("form-nome").value     = "";
+  document.getElementById("form-categoria").value= "";
+  document.getElementById("form-preco").value    = "";
+  document.getElementById("form-codigo-barras").value = "";
+  document.getElementById("form-imagem").value   = "";
+  document.getElementById("form-descricao").value= "";
+  document.getElementById("form-ativo").checked  = true;
+  document.getElementById("form-destaque").checked = false;
+  document.getElementById("form-entrega").checked = true;
+  renderizarVariacoesNoFormProduto(null);
+  renderizarAdicionaisNoFormProduto(null);
+  resetarUpload();
+  abrirModal("modal-produto");
+}
+
+function abrirModalEditar(docId) {
+  const p = todosProdutos.find(x => x.docId === docId);
+  if (!p) return;
+  document.getElementById("modal-titulo").innerHTML  = '<i class="fa-solid fa-pen"></i> Editar Produto';
+  document.getElementById("form-id").value           = docId;
+  document.getElementById("form-nome").value         = p.nome || "";
+  document.getElementById("form-preco").value        = p.preco || "";
+  document.getElementById("form-codigo-barras").value = p.codigoBarras || "";
+  document.getElementById("form-imagem").value       = p.imagem || "";
+  document.getElementById("form-descricao").value    = p.descricao || "";
+  document.getElementById("form-ativo").checked      = p.ativo !== false;
+  document.getElementById("form-destaque").checked   = !!p.destaque;
+  document.getElementById("form-entrega").checked    = p.entrega !== false;
+  setTimeout(() => { document.getElementById("form-categoria").value = p.categoria || ""; }, 0);
+  renderizarVariacoesNoFormProduto(p);
+  renderizarAdicionaisNoFormProduto(p);
+  resetarUpload();
+  abrirModal("modal-produto");
+}
+
+// Desenha, dentro do formulário de produto, um bloco de checkboxes por tipo
+// de variação cadastrado, marcando as opções que o produto já usa (edição).
+function renderizarVariacoesNoFormProduto(produto) {
+  const cont = document.getElementById("form-variacoes-lista");
+  if (!todosTiposVariacao.length) {
+    cont.innerHTML = `<p style="font-size:.78rem;color:var(--muted)">Nenhum tipo de variação cadastrado ainda. Cadastre em Produtos → Variações.</p>`;
+    return;
+  }
+  const variacoesAtuais = produto?.variacoes || [];
+  cont.innerHTML = todosTiposVariacao.map(t => {
+    const selecionadas = variacoesAtuais.find(v => v.tipoId === t.id)?.opcoes || [];
+    return `
+      <div class="form-variacao-tipo">
+        <div class="form-variacao-tipo-nome">${t.nome}</div>
+        <div class="form-variacao-opcoes">
+          ${(t.opcoes || []).map(o => `
+            <label><input type="checkbox" class="form-variacao-opcao-check" data-tipo-id="${t.id}" data-tipo-nome="${t.nome}" value="${o}" ${selecionadas.includes(o) ? "checked" : ""}> ${o}</label>
+          `).join("")}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// Desenha, dentro do formulário de produto, um checkbox por grupo de
+// adicionais cadastrado (o produto pode oferecer vários grupos inteiros,
+// diferente de Variações que marca opção por opção).
+function renderizarAdicionaisNoFormProduto(produto) {
+  const cont = document.getElementById("form-adicionais-lista");
+  if (!todosGruposAdicionais.length) {
+    cont.innerHTML = `<p style="font-size:.78rem;color:var(--muted)">Nenhum grupo de adicionais cadastrado ainda. Cadastre em Produtos → Adicionais.</p>`;
+    return;
+  }
+  const gruposAtuais = produto?.adicionaisGrupos || [];
+  cont.innerHTML = todosGruposAdicionais.map(g => `
+    <label class="toggle-row"><input type="checkbox" class="form-adicional-grupo-check" value="${g.docId}" ${gruposAtuais.includes(g.docId) ? "checked" : ""}> ${g.nome} <small style="color:var(--muted)">(${(g.opcoes||[]).length} opções)</small></label>
+  `).join("");
+}
+
+async function salvarProduto() {
+  const docId     = document.getElementById("form-id").value;
+  const nome      = document.getElementById("form-nome").value.trim();
+  const categoria = document.getElementById("form-categoria").value;
+  const preco     = parseFloat(document.getElementById("form-preco").value);
+  const codigoBarras = document.getElementById("form-codigo-barras").value.trim();
+  const descricao = document.getElementById("form-descricao").value.trim();
+  const ativo     = document.getElementById("form-ativo").checked;
+  const destaque  = document.getElementById("form-destaque").checked;
+  const entrega   = document.getElementById("form-entrega").checked;
+
+  if (!nome || !categoria || isNaN(preco)) { toast("Preencha nome, categoria e preço.", "err"); return; }
+
+  if (codigoBarras) {
+    const jaUsado = todosProdutos.find(p => p.codigoBarras === codigoBarras && p.docId !== docId);
+    if (jaUsado) { toast(`Este código de barras já está no produto "${jaUsado.nome}".`, "err"); return; }
+  }
+
+  // Resolve imagem: foto recortada (500x500) tem prioridade sobre URL
+  let imagem = document.getElementById("form-imagem").value.trim();
+  if (_imagemProdutoCortada) imagem = _imagemProdutoCortada;
+
+  // Junta as variações marcadas (Cor, Tamanho...) por tipo
+  const variacoesMap = {};
+  document.querySelectorAll(".form-variacao-opcao-check:checked").forEach(chk => {
+    const tipoId = chk.dataset.tipoId;
+    if (!variacoesMap[tipoId]) variacoesMap[tipoId] = { tipoId, tipoNome: chk.dataset.tipoNome, opcoes: [] };
+    variacoesMap[tipoId].opcoes.push(chk.value);
+  });
+  const variacoes = Object.values(variacoesMap);
+
+  // Grupos de adicionais marcados (o produto só guarda os ids; nome, opções
+  // e preços continuam só no catálogo gruposAdicionais)
+  const adicionaisGrupos = Array.from(document.querySelectorAll(".form-adicional-grupo-check:checked")).map(chk => chk.value);
+
+  const dados = { nome, categoria, preco, codigoBarras: codigoBarras || null, imagem, descricao, ativo, destaque, entrega, variacoes, adicionaisGrupos };
+  try {
+    if (docId) {
+      await db.collection("produtos").doc(docId).update(dados);
+      toast("Produto atualizado!", "ok");
+    } else {
+      const maxId = todosProdutos.length ? Math.max(...todosProdutos.map(p => Number(p.id)||0)) : 0;
+      await db.collection("produtos").doc(String(maxId + 1)).set({
+        ...dados, id: maxId + 1,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      toast("Produto criado!", "ok");
+    }
+    fecharModal("modal-produto");
+    await carregarProdutos();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+// ── CATEGORIAS ────────────────────────────────────────────────────────────
+// Categorias sem "ordem" definida caem no fim (fallback alfabético) — não
+// precisa de migração, docs antigos continuam funcionando normalmente.
+function compararCategorias(a, b) {
+  const oa = a.ordem ?? 9999;
+  const ob = b.ordem ?? 9999;
+  if (oa !== ob) return oa - ob;
+  return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+}
+
+async function carregarCategorias() {
+  try {
+    const snap = await db.collection("categorias").get();
+    todasCategorias = snap.docs.map(d => ({ docId: d.id, ...d.data() })).sort(compararCategorias);
+    renderizarCategorias();
+  } catch(e) { toast("Erro ao carregar categorias: " + e.message, "err"); }
+}
+
+function renderizarCategorias() {
+  const grid = document.getElementById("cat-grid");
+  if (!todasCategorias.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-tags"></i><p>Nenhuma categoria cadastrada.</p></div>`;
+    return;
+  }
+  grid.innerHTML = todasCategorias.map(c => `
+    <div class="cat-card">
+      <div class="cat-card-left">
+        <div class="cat-icon"><i class="fa-solid ${c.icone || 'fa-tag'}"></i></div>
+        <div><div class="cat-name">${c.nome}</div><div class="cat-id">${c.id || c.docId}</div></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalCategoriaEditar('${c.docId}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('categoria','${c.docId}','${(c.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`).join("");
+}
+
+function slugify(texto) {
+  return texto
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// ── TIPOS DE VARIAÇÃO (Cor, Tamanho, etc.) ──────────────────────────────────
+// Catálogo reutilizável, no mesmo espírito de Categorias: cadastra o tipo e
+// as opções uma vez, e cada produto só escolhe quais opções ele oferece.
+async function carregarTiposVariacao() {
+  try {
+    const snap = await db.collection("tiposVariacao").get();
+    todosTiposVariacao = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+  } catch(e) {
+    todosTiposVariacao = [];
+    toast("Erro ao carregar tipos de variação: " + e.message, "err");
+  }
+  renderizarTiposVariacao();
+}
+
+function renderizarTiposVariacao() {
+  const grid = document.getElementById("variacoes-grid");
+  if (!todosTiposVariacao.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-shirt"></i><p>Nenhum tipo de variação cadastrado.</p></div>`;
+    return;
+  }
+  grid.innerHTML = todosTiposVariacao.map(t => `
+    <div class="tipo-var-card">
+      <div class="tipo-var-card-head">
+        <div class="tipo-var-nome">${t.nome}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalTipoVariacaoEditar('${t.docId}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoTipoVariacao('${t.docId}','${(t.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="tipo-var-opcoes">
+        ${(t.opcoes||[]).map(o => `<span class="chip-opcao">${o}</span>`).join("") || '<span style="font-size:.78rem;color:var(--muted)">Sem opções</span>'}
+      </div>
+    </div>`).join("");
+}
+
+// Enquanto o modal de tipo de variação está aberto, as opções ficam nesta
+// lista em memória (arrays de texto) até o usuário clicar em Salvar.
+let _opcoesTipoVariacaoEmEdicao = [];
+
+function renderizarChipsEdicaoTipoVariacao() {
+  const cont = document.getElementById("tipo-var-opcoes-lista");
+  if (!_opcoesTipoVariacaoEmEdicao.length) {
+    cont.innerHTML = `<span style="font-size:.78rem;color:var(--muted)">Nenhuma opção adicionada ainda.</span>`;
+    return;
+  }
+  cont.innerHTML = _opcoesTipoVariacaoEmEdicao.map(o => `
+    <span class="chip-opcao-editavel">${o} <button type="button" onclick="removerOpcaoTipoVariacao('${o.replace(/'/g,"\\'")}')" title="Remover"><i class="fa-solid fa-xmark"></i></button></span>
+  `).join("");
+}
+
+function adicionarOpcaoTipoVariacao() {
+  const input = document.getElementById("tipo-var-opcao-input");
+  const valor = input.value.trim();
+  if (!valor) return;
+  if (_opcoesTipoVariacaoEmEdicao.some(o => o.toLowerCase() === valor.toLowerCase())) {
+    toast("Essa opção já foi adicionada.", "err");
+    return;
+  }
+  _opcoesTipoVariacaoEmEdicao.push(valor);
+  input.value = "";
+  input.focus();
+  renderizarChipsEdicaoTipoVariacao();
+}
+
+function removerOpcaoTipoVariacao(valor) {
+  const docIdOriginal = document.getElementById("tipo-var-id-original").value;
+  if (docIdOriginal) {
+    const emUsoPor = produtosQueUsamOpcaoDeVariacao(docIdOriginal, valor);
+    if (emUsoPor.length) {
+      toast(`"${valor}" está em uso em: ${emUsoPor.join(", ")}. Remova essa opção dos produtos antes.`, "err");
+      return;
+    }
+  }
+  _opcoesTipoVariacaoEmEdicao = _opcoesTipoVariacaoEmEdicao.filter(o => o !== valor);
+  renderizarChipsEdicaoTipoVariacao();
+}
+
+function abrirModalTipoVariacao() {
+  document.getElementById("tipo-variacao-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo tipo de variação';
+  document.getElementById("tipo-var-id-original").value = "";
+  document.getElementById("tipo-var-nome").value = "";
+  document.getElementById("tipo-var-opcao-input").value = "";
+  _opcoesTipoVariacaoEmEdicao = [];
+  renderizarChipsEdicaoTipoVariacao();
+  abrirModal("modal-tipo-variacao");
+}
+
+function abrirModalTipoVariacaoEditar(docId) {
+  const t = todosTiposVariacao.find(x => x.docId === docId);
+  if (!t) return;
+  document.getElementById("tipo-variacao-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar tipo de variação';
+  document.getElementById("tipo-var-id-original").value = docId;
+  document.getElementById("tipo-var-nome").value = t.nome || "";
+  document.getElementById("tipo-var-opcao-input").value = "";
+  _opcoesTipoVariacaoEmEdicao = [...(t.opcoes || [])];
+  renderizarChipsEdicaoTipoVariacao();
+  abrirModal("modal-tipo-variacao");
+}
+
+async function salvarTipoVariacao() {
+  const docIdOriginal = document.getElementById("tipo-var-id-original").value;
+  const nome = document.getElementById("tipo-var-nome").value.trim();
+  if (!nome) { toast("Preencha o nome do tipo.", "err"); return; }
+  if (!_opcoesTipoVariacaoEmEdicao.length) { toast("Adicione ao menos uma opção.", "err"); return; }
+
+  try {
+    if (docIdOriginal) {
+      const atual = todosTiposVariacao.find(x => x.docId === docIdOriginal);
+      const id = atual?.id || docIdOriginal;
+      await db.collection("tiposVariacao").doc(docIdOriginal).update({ nome, id, opcoes: _opcoesTipoVariacaoEmEdicao });
+    } else {
+      const id = slugify(nome);
+      await db.collection("tiposVariacao").doc(id).set({ nome, id, opcoes: _opcoesTipoVariacaoEmEdicao });
+    }
+    toast("Tipo de variação salvo!", "ok");
+    fecharModal("modal-tipo-variacao");
+    await carregarTiposVariacao();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+// Lista os nomes dos produtos que usam uma opção específica de um tipo —
+// usado pra bloquear exclusão/remoção quando "está em uso".
+function produtosQueUsamOpcaoDeVariacao(tipoId, opcao) {
+  return todosProdutos
+    .filter(p => (p.variacoes || []).some(v => v.tipoId === tipoId && (v.opcoes || []).includes(opcao)))
+    .map(p => p.nome);
+}
+
+// Lista os nomes dos produtos que usam QUALQUER opção de um tipo inteiro —
+// usado pra bloquear a exclusão do tipo todo.
+function produtosQueUsamTipoDeVariacao(tipoId) {
+  return todosProdutos
+    .filter(p => (p.variacoes || []).some(v => v.tipoId === tipoId))
+    .map(p => p.nome);
+}
+
+function confirmarExclusaoTipoVariacao(docId, nome) {
+  const emUsoPor = produtosQueUsamTipoDeVariacao(docId);
+  if (emUsoPor.length) {
+    toast(`"${nome}" está em uso em: ${emUsoPor.join(", ")}. Remova essa variação desses produtos antes de excluir.`, "err");
+    return;
+  }
+  document.getElementById("confirm-msg").textContent = `Excluir o tipo de variação "${nome}"? Esta ação não pode ser desfeita.`;
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      await db.collection("tiposVariacao").doc(docId).delete();
+      toast("Excluído com sucesso.", "ok");
+      fecharModal("confirm-modal");
+      await carregarTiposVariacao();
+    } catch(e) { toast("Erro: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
+}
+
+// ── GRUPOS DE ADICIONAIS (Bacon, Queijo extra, etc.) ────────────────────────
+// Catálogo separado de Tipos de Variação: aqui o cliente pode marcar mais de
+// uma opção (multi-seleção) e cada opção tem seu próprio preço.
+let todosGruposAdicionais = [];
+async function carregarGruposAdicionais() {
+  try {
+    const snap = await db.collection("gruposAdicionais").get();
+    todosGruposAdicionais = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+  } catch(e) {
+    todosGruposAdicionais = [];
+    toast("Erro ao carregar grupos de adicionais: " + e.message, "err");
+  }
+  renderizarGruposAdicionais();
+}
+
+function renderizarGruposAdicionais() {
+  const grid = document.getElementById("adicionais-grid");
+  if (!todosGruposAdicionais.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-plus-circle"></i><p>Nenhum grupo de adicionais cadastrado.</p></div>`;
+    return;
+  }
+  grid.innerHTML = todosGruposAdicionais.map(g => `
+    <div class="tipo-var-card">
+      <div class="tipo-var-card-head">
+        <div class="tipo-var-nome">${g.nome}</div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalGrupoAdicionalEditar('${g.docId}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoGrupoAdicional('${g.docId}','${(g.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <div class="tipo-var-opcoes">
+        ${(g.opcoes||[]).map(o => `<span class="chip-opcao">${o.nome} · R$ ${Number(o.preco||0).toFixed(2).replace('.',',')}</span>`).join("") || '<span style="font-size:.78rem;color:var(--muted)">Sem opções</span>'}
+      </div>
+    </div>`).join("");
+}
+
+let _opcoesGrupoAdicionalEmEdicao = [];
+
+function renderizarChipsEdicaoGrupoAdicional() {
+  const cont = document.getElementById("grupo-adicional-opcoes-lista");
+  if (!_opcoesGrupoAdicionalEmEdicao.length) {
+    cont.innerHTML = `<span style="font-size:.78rem;color:var(--muted)">Nenhuma opção adicionada ainda.</span>`;
+    return;
+  }
+  cont.innerHTML = _opcoesGrupoAdicionalEmEdicao.map(o => `
+    <span class="chip-opcao-editavel">${o.nome} · R$ ${Number(o.preco||0).toFixed(2).replace('.',',')} <button type="button" onclick="removerOpcaoGrupoAdicional('${o.nome.replace(/'/g,"\\'")}')" title="Remover"><i class="fa-solid fa-xmark"></i></button></span>
+  `).join("");
+}
+
+function adicionarOpcaoGrupoAdicional() {
+  const inputNome = document.getElementById("grupo-adicional-opcao-nome");
+  const inputPreco = document.getElementById("grupo-adicional-opcao-preco");
+  const nome = inputNome.value.trim();
+  const preco = parseFloat(inputPreco.value);
+  if (!nome) { toast("Informe o nome da opção.", "err"); return; }
+  if (isNaN(preco) || preco < 0) { toast("Informe um preço válido para a opção.", "err"); return; }
+  if (_opcoesGrupoAdicionalEmEdicao.some(o => o.nome.toLowerCase() === nome.toLowerCase())) {
+    toast("Essa opção já foi adicionada.", "err");
+    return;
+  }
+  _opcoesGrupoAdicionalEmEdicao.push({ nome, preco });
+  inputNome.value = ""; inputPreco.value = "";
+  inputNome.focus();
+  renderizarChipsEdicaoGrupoAdicional();
+}
+
+function removerOpcaoGrupoAdicional(nome) {
+  _opcoesGrupoAdicionalEmEdicao = _opcoesGrupoAdicionalEmEdicao.filter(o => o.nome !== nome);
+  renderizarChipsEdicaoGrupoAdicional();
+}
+
+function abrirModalGrupoAdicional() {
+  document.getElementById("grupo-adicional-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo grupo de adicionais';
+  document.getElementById("grupo-adicional-id-original").value = "";
+  document.getElementById("grupo-adicional-nome").value = "";
+  document.getElementById("grupo-adicional-opcao-nome").value = "";
+  document.getElementById("grupo-adicional-opcao-preco").value = "";
+  _opcoesGrupoAdicionalEmEdicao = [];
+  renderizarChipsEdicaoGrupoAdicional();
+  abrirModal("modal-grupo-adicional");
+}
+
+function abrirModalGrupoAdicionalEditar(docId) {
+  const g = todosGruposAdicionais.find(x => x.docId === docId);
+  if (!g) return;
+  document.getElementById("grupo-adicional-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar grupo de adicionais';
+  document.getElementById("grupo-adicional-id-original").value = docId;
+  document.getElementById("grupo-adicional-nome").value = g.nome || "";
+  document.getElementById("grupo-adicional-opcao-nome").value = "";
+  document.getElementById("grupo-adicional-opcao-preco").value = "";
+  _opcoesGrupoAdicionalEmEdicao = (g.opcoes || []).map(o => ({ ...o }));
+  renderizarChipsEdicaoGrupoAdicional();
+  abrirModal("modal-grupo-adicional");
+}
+
+async function salvarGrupoAdicional() {
+  const docIdOriginal = document.getElementById("grupo-adicional-id-original").value;
+  const nome = document.getElementById("grupo-adicional-nome").value.trim();
+  if (!nome) { toast("Preencha o nome do grupo.", "err"); return; }
+  if (!_opcoesGrupoAdicionalEmEdicao.length) { toast("Adicione ao menos uma opção.", "err"); return; }
+  try {
+    if (docIdOriginal) {
+      await db.collection("gruposAdicionais").doc(docIdOriginal).update({ nome, opcoes: _opcoesGrupoAdicionalEmEdicao });
+    } else {
+      await db.collection("gruposAdicionais").add({ nome, opcoes: _opcoesGrupoAdicionalEmEdicao });
+    }
+    toast("Grupo de adicionais salvo!", "ok");
+    fecharModal("modal-grupo-adicional");
+    await carregarGruposAdicionais();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+function produtosQueUsamGrupoAdicional(grupoId) {
+  return todosProdutos
+    .filter(p => (p.adicionaisGrupos || []).includes(grupoId))
+    .map(p => p.nome);
+}
+
+function confirmarExclusaoGrupoAdicional(docId, nome) {
+  const emUsoPor = produtosQueUsamGrupoAdicional(docId);
+  if (emUsoPor.length) {
+    toast(`"${nome}" está em uso em: ${emUsoPor.join(", ")}. Remova esse adicional desses produtos antes de excluir.`, "err");
+    return;
+  }
+  document.getElementById("confirm-msg").textContent = `Excluir o grupo de adicionais "${nome}"? Esta ação não pode ser desfeita.`;
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      await db.collection("gruposAdicionais").doc(docId).delete();
+      toast("Excluído com sucesso.", "ok");
+      fecharModal("confirm-modal");
+      await carregarGruposAdicionais();
+    } catch(e) { toast("Erro: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
+}
+
+function abrirModalCategoria() {
+  document.getElementById("cat-id-original").value = "";
+  document.getElementById("cat-nome").value  = "";
+  document.getElementById("cat-icone").value = "";
+  document.getElementById("cat-ordem").value = "";
+  abrirModal("modal-categoria");
+}
+
+function abrirModalCategoriaEditar(docId) {
+  const c = todasCategorias.find(x => x.docId === docId);
+  if (!c) return;
+  document.getElementById("cat-id-original").value = docId;
+  document.getElementById("cat-nome").value  = c.nome || "";
+  document.getElementById("cat-icone").value = c.icone || "";
+  document.getElementById("cat-ordem").value = c.ordem ?? "";
+  abrirModal("modal-categoria");
+}
+
+async function salvarCategoria() {
+  const docIdOriginal = document.getElementById("cat-id-original").value;
+  const nome  = document.getElementById("cat-nome").value.trim();
+  const icone = document.getElementById("cat-icone").value.trim() || "fa-tag";
+  const ordemStr = document.getElementById("cat-ordem").value;
+  const ordem = ordemStr !== "" ? parseInt(ordemStr, 10) : null;
+  if (!nome) { toast("Preencha o nome.", "err"); return; }
+  try {
+    if (docIdOriginal) {
+      const atual = todasCategorias.find(x => x.docId === docIdOriginal);
+      const id = atual?.id || docIdOriginal;
+      await db.collection("categorias").doc(docIdOriginal).update({ nome, id, icone, ordem });
+    } else {
+      const id = slugify(nome);
+      await db.collection("categorias").doc(id).set({ nome, id, icone, ordem });
+    }
+    toast("Categoria salva!", "ok");
+    fecharModal("modal-categoria");
+    await carregarCategorias();
+    popularSelectCategorias();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+// ── MESAS ─────────────────────────────────────────────────────────────────
+// "mesas" é um cadastro puro (nome/ativo), sem status mutável. Se a mesa
+// está livre ou ocupada é derivado em tempo real a partir de "pedidos"
+// (existe pedido aberto com esse mesaId?) — ver iniciarListenerPedidos().
+async function carregarMesas() {
+  try {
+    const snap = await db.collection("mesas").get();
+    todasMesas = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { numeric: true }));
+    renderizarMesas();
+  } catch(e) { toast("Erro ao carregar mesas: " + e.message, "err"); }
+}
+
+function pedidosAbertosDaMesa(mesaId) {
+  return todosPedidos.filter(p => p.mesaId === mesaId && !p.fechada);
+}
+
+function renderizarMesas() {
+  const grid = document.getElementById("mesas-grid");
+  if (!grid) return;
+  if (!todasMesas.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-utensils"></i><p>Nenhuma mesa cadastrada.</p></div>`;
+  } else {
+    grid.innerHTML = todasMesas.map(m => {
+      const pedidosMesa = pedidosAbertosDaMesa(m.docId);
+      const ocupada = pedidosMesa.length > 0;
+      const total = pedidosMesa.reduce((s, p) => s + Number(p.total || 0), 0);
+      return `
+        <div class="mesa-card ${ocupada ? 'ocupada' : ''}">
+          <div class="mesa-card-head">
+            <div class="mesa-nome"><i class="fa-solid fa-utensils"></i> ${m.nome}${m.clienteAtual ? ` <span style="font-weight:400;color:var(--muted)">— ${m.clienteAtual}</span>` : ""}</div>
+            <span class="badge ${ocupada ? 'badge-inativo' : 'badge-ativo'}">${ocupada ? 'Ocupada' : 'Livre'}</span>
+          </div>
+          ${ocupada ? `
+            <div class="mesa-total">Total: <strong>R$ ${total.toFixed(2).replace('.', ',')}</strong></div>
+            <details class="mesa-pedidos-detalhe">
+              <summary>${pedidosMesa.length} pedido(s) em aberto</summary>
+              ${pedidosMesa.map(p => `
+                <div class="mesa-pedido-item">
+                  <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
+                  <span>${(p.itens || []).map(i => {
+                    let linha = `${i.qtd}x ${i.nome}`;
+                    if (i.adicionais && i.adicionais.length) linha += ` + ${i.adicionais.map(a => a.opcaoNome).join(", ")}`;
+                    if (i.observacao) linha += ` (${i.observacao})`;
+                    return linha;
+                  }).join(", ")}</span>
+                </div>`).join("")}
+            </details>
+            <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="abrirModalFecharMesa('${m.docId}')"><i class="fa-solid fa-money-bill-wave"></i> Fechar Mesa</button>
+          ` : ""}
+          <div style="display:flex;gap:6px;margin-top:10px">
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalMesaQr('${m.docId}')" title="Link / QR Code"><i class="fa-solid fa-qrcode"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalMesaEditar('${m.docId}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoMesa('${m.docId}','${(m.nome || '').replace(/'/g, "\\'")}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+  const ocupadasCount = todasMesas.filter(m => pedidosAbertosDaMesa(m.docId).length > 0).length;
+  const totalAberto = todosPedidos.filter(p => p.origem === "mesa" && !p.fechada).reduce((s, p) => s + Number(p.total || 0), 0);
+  document.getElementById("mesas-stat-ocupadas").textContent = ocupadasCount;
+  document.getElementById("mesas-stat-total").textContent = "R$ " + totalAberto.toFixed(2).replace('.', ',');
+}
+
+function abrirModalMesa() {
+  document.getElementById("mesa-modal-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Nova mesa';
+  document.getElementById("mesa-id-original").value = "";
+  document.getElementById("mesa-nome").value = "";
+  document.getElementById("mesa-cliente-atual").value = "";
+  document.getElementById("mesa-ativo").checked = true;
+  abrirModal("modal-mesa");
+}
+
+function abrirModalMesaEditar(docId) {
+  const m = todasMesas.find(x => x.docId === docId);
+  if (!m) return;
+  document.getElementById("mesa-modal-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar mesa';
+  document.getElementById("mesa-id-original").value = docId;
+  document.getElementById("mesa-nome").value = m.nome || "";
+  document.getElementById("mesa-cliente-atual").value = m.clienteAtual || "";
+  document.getElementById("mesa-ativo").checked = m.ativo !== false;
+  abrirModal("modal-mesa");
+}
+
+async function salvarMesa() {
+  const docIdOriginal = document.getElementById("mesa-id-original").value;
+  const nome = document.getElementById("mesa-nome").value.trim();
+  const clienteAtual = document.getElementById("mesa-cliente-atual").value.trim() || null;
+  const ativo = document.getElementById("mesa-ativo").checked;
+  if (!nome) { toast("Preencha o nome da mesa.", "err"); return; }
+  try {
+    if (docIdOriginal) {
+      await db.collection("mesas").doc(docIdOriginal).update({ nome, clienteAtual, ativo });
+    } else {
+      await db.collection("mesas").add({ nome, clienteAtual, ativo, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+    toast("Mesa salva!", "ok");
+    fecharModal("modal-mesa");
+    await carregarMesas();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+function confirmarExclusaoMesa(docId, nome) {
+  if (pedidosAbertosDaMesa(docId).length) {
+    toast(`"${nome}" tem pedidos em aberto. Feche a mesa antes de excluir.`, "err");
+    return;
+  }
+  document.getElementById("confirm-msg").textContent = `Excluir a mesa "${nome}"? Esta ação não pode ser desfeita.`;
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      await db.collection("mesas").doc(docId).delete();
+      toast("Excluído com sucesso.", "ok");
+      fecharModal("confirm-modal");
+      await carregarMesas();
+    } catch(e) { toast("Erro: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
+}
+
+// QR code gerado dentro do próprio admin (qrcodejs via CDN), pra não depender
+// de nenhum gerador externo continuar disponível nem de o dono digitar a URL.
+function abrirModalMesaQr(docId) {
+  const mesa = todasMesas.find(m => m.docId === docId);
+  if (!mesa) return;
+  const link = new URL("index.html", location.href).href + "?mesa=" + docId;
+  document.getElementById("mesa-qr-titulo").innerHTML = `<i class="fa-solid fa-qrcode"></i> ${mesa.nome}`;
+  document.getElementById("mesa-qr-link").value = link;
+  const canvasEl = document.getElementById("mesa-qr-canvas");
+  canvasEl.innerHTML = "";
+  new QRCode(canvasEl, { text: link, width: 220, height: 220 });
+  abrirModal("modal-mesa-qr");
+}
+
+function copiarLinkMesa() {
+  const input = document.getElementById("mesa-qr-link");
+  input.select();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(input.value).then(() => toast("Link copiado!", "ok")).catch(() => {});
+  } else {
+    document.execCommand("copy");
+    toast("Link copiado!", "ok");
+  }
+}
+
+function abrirModalFecharMesa(mesaId) {
+  const mesa = todasMesas.find(m => m.docId === mesaId);
+  if (!mesa) return;
+  const pedidosMesa = pedidosAbertosDaMesa(mesaId);
+  if (!pedidosMesa.length) { toast("Essa mesa não tem pedidos em aberto.", "err"); return; }
+  const total = pedidosMesa.reduce((s, p) => s + Number(p.total || 0), 0);
+  document.getElementById("fechar-mesa-id").value = mesaId;
+  document.getElementById("fechar-mesa-titulo").innerHTML = `<i class="fa-solid fa-money-bill-wave"></i> Fechar ${mesa.nome}`;
+  document.getElementById("fechar-mesa-resumo").innerHTML = `${pedidosMesa.length} pedido(s) · <strong>Total: R$ ${total.toFixed(2).replace('.', ',')}</strong>`;
+  document.getElementById("fechar-mesa-recibo-area").style.display = "none";
+  abrirModal("modal-fechar-mesa");
+}
+
+// Fechar mesa: relê os pedidos abertos na hora (defende contra dois admins
+// fechando a mesma mesa ao mesmo tempo), marca todos como fechados num
+// batch, e cria UM documento em "vendas" com o total somado — assim
+// Relatório, CSV e o link de recibo funcionam pra vendas de mesa sem
+// nenhuma mudança nessas partes (mesmo formato de pdvFinalizarVenda()).
+async function confirmarFechamentoMesa() {
+  const mesaId = document.getElementById("fechar-mesa-id").value;
+  const mesa = todasMesas.find(m => m.docId === mesaId);
+  if (!mesa) return;
+  const formaPag = document.getElementById("fechar-mesa-pagamento").value;
+  try {
+    const snap = await db.collection("pedidos")
+      .where("mesaId", "==", mesaId)
+      .where("fechada", "==", false)
+      .get();
+    if (!snap.docs.length) {
+      toast("Essa mesa não tem mais pedidos em aberto.", "err");
+      fecharModal("modal-fechar-mesa");
+      await carregarMesas();
+      return;
+    }
+    const pedidosMesa = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    const total = pedidosMesa.reduce((s, p) => s + Number(p.total || 0), 0);
+    const itens = pedidosMesa.flatMap(p => p.itens || []);
+
+    const batch = db.batch();
+    pedidosMesa.forEach(p => {
+      batch.update(db.collection("pedidos").doc(p.docId), {
+        fechada: true, status: "entregue",
+        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    // Limpa o nome do cliente da mesa — a próxima pessoa que sentar começa
+    // com o campo em branco de novo.
+    batch.update(db.collection("mesas").doc(mesaId), { clienteAtual: null });
+    const vendaRef = db.collection("vendas").doc();
+    const vendaBase = {
+      itens, subtotal: total, desconto: 0, total,
+      fiado: false,
+      pagamentos: [{ forma: formaPag, valor: total }],
+      pagamento: PAG_LABEL[formaPag] || formaPag,
+      recebidoDinheiro: null, troco: null,
+      cliente: mesa.clienteAtual || mesa.nome,
+      cupom: null,
+      mesaFechamento: { mesaId, mesaNome: mesa.nome, pedidoIds: pedidosMesa.map(p => p.docId) },
+    };
+    batch.set(vendaRef, { ...vendaBase, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    await batch.commit();
+
+    toast(`${mesa.nome} fechada com sucesso!`, "ok");
+    const linkRecibo = gerarLinkRecibo({ ...vendaBase, criadoEm: new Date() });
+    document.getElementById("fechar-mesa-recibo-link").value = linkRecibo;
+    document.getElementById("fechar-mesa-recibo-area").style.display = "block";
+    await carregarMesas();
+  } catch(e) { toast("Erro ao fechar mesa: " + e.message, "err"); }
+}
+
+// ── COZINHA / PEDIDOS ONLINE ─────────────────────────────────────────────
+const STATUS_LABEL = { recebido: "Recebido", em_preparo: "Em preparo", pronto: "Pronto", entregue: "Entregue" };
+const STATUS_ORDEM = ["recebido", "em_preparo", "pronto", "entregue"];
+
+// Um único listener em tempo real sobre TODOS os pedidos (mesa + delivery +
+// retirada), ordenado só por criadoEm — evita precisar de índice composto no
+// Firestore (where + orderBy em campos diferentes exigiria um). O que muda
+// entre as visões (Cozinha, Mesas, Pedidos Online) é só o filtro feito aqui
+// no navegador em cima do mesmo array. Mesmo padrão de "log de transações"
+// já usado em iniciarListenerVendasHoje().
+let _pedidosIniciado = false;
+function iniciarListenerPedidos() {
+  db.collection("pedidos")
+    .orderBy("criadoEm", "desc")
+    .limit(200)
+    .onSnapshot(snap => {
+      todosPedidos = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+      renderizarMesas();
+      renderizarCozinha();
+      if (document.getElementById("tab-pedidos")?.classList.contains("active")) renderizarPedidosOnline();
+
+      if (!snap.metadata.fromCache) {
+        if (_pedidosIniciado) {
+          const novoPedidoExterno = snap.docChanges().some(
+            c => c.type === "added" && !c.doc.metadata.hasPendingWrites
+          );
+          if (novoPedidoExterno) { tocarSomNotificacao(); toast("Novo pedido recebido!", "ok"); }
+        }
+        _pedidosIniciado = true;
+      }
+    }, e => {
+      document.getElementById("cozinha-lista").innerHTML =
+        `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Erro ao carregar pedidos: ${e.message}</p></div>`;
+    });
+}
+
+function renderizarCozinha() {
+  const cont = document.getElementById("cozinha-lista");
+  if (!cont) return;
+  const abertos = todosPedidos.filter(p => !p.fechada);
+  if (!abertos.length) {
+    cont.innerHTML = `<div class="empty-state"><i class="fa-solid fa-kitchen-set"></i><p>Nenhum pedido em aberto no momento.</p></div>`;
+    return;
+  }
+  cont.innerHTML = abertos.map(p => {
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+    const hora = dt ? dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '–';
+    const origemLabel = p.origem === "mesa" ? (p.mesaNome || "Mesa") : (p.origem === "delivery" ? "Entrega" : "Retirada");
+    const proximoStatus = STATUS_ORDEM[STATUS_ORDEM.indexOf(p.status) + 1];
+    return `
+      <div class="pedido-card">
+        <div class="pedido-card-head">
+          <strong>${origemLabel}</strong>
+          <span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span>
+        </div>
+        <div class="pedido-card-hora">${hora}${p.numeroPedido ? ' · #' + p.numeroPedido : ''}${p.cliente?.nome ? ' · ' + p.cliente.nome : ''}</div>
+        <div class="pedido-card-itens">${(p.itens || []).map(i => {
+          let linha = `${i.qtd}x ${i.nome}`;
+          if (i.variacao) linha += ` (${i.variacao})`;
+          if (i.adicionais && i.adicionais.length) linha += ` + ${i.adicionais.map(a => a.opcaoNome).join(", ")}`;
+          if (i.observacao) linha += ` <em>— ${i.observacao}</em>`;
+          return linha;
+        }).join("<br>")}</div>
+        <div class="pedido-card-total">Total: R$ ${Number(p.total || 0).toFixed(2).replace('.', ',')}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          ${proximoStatus ? `<button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="avancarStatusPedido('${p.docId}')"><i class="fa-solid fa-forward"></i> "${STATUS_LABEL[proximoStatus]}"</button>` : ""}
+          <button class="btn btn-ghost btn-sm" onclick="imprimirComanda('${p.docId}')" title="Imprimir comanda"><i class="fa-solid fa-print"></i></button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderizarPedidosOnline() {
+  const tbody = document.getElementById("pedidos-online-tabela");
+  if (!tbody) return;
+  const lista = todosPedidos.filter(p => p.origem !== "mesa");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-bag-shopping"></i><p>Nenhum pedido online ainda.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(p => {
+    const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : null;
+    const dataTexto = dt ? dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '–';
+    const itensResumo = (p.itens || []).map(i => `${i.qtd}x ${i.nome}`).join(", ");
+    const proximoStatus = STATUS_ORDEM[STATUS_ORDEM.indexOf(p.status) + 1];
+    return `
+      <tr>
+        <td>${p.numeroPedido || '–'}</td>
+        <td>${p.origem === "delivery" ? "Entrega" : "Retirada"}</td>
+        <td>${p.cliente?.nome || '–'}</td>
+        <td style="max-width:220px"><span style="font-size:.8rem;color:var(--muted)">${itensResumo}</span></td>
+        <td style="font-weight:700">R$ ${Number(p.total || 0).toFixed(2).replace('.', ',')}</td>
+        <td><span class="status-badge status-${p.status}">${STATUS_LABEL[p.status] || p.status}</span></td>
+        <td>${dataTexto}</td>
+        <td><div class="actions-cell">
+          ${proximoStatus ? `<button class="btn btn-ghost btn-sm" onclick="avancarStatusPedido('${p.docId}')" title="Avançar status"><i class="fa-solid fa-forward"></i></button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="imprimirComanda('${p.docId}')" title="Imprimir comanda"><i class="fa-solid fa-print"></i></button>
+        </div></td>
+      </tr>`;
+  }).join("");
+}
+
+// Comanda de cozinha: mesmo padrão de bloco oculto + window.print() já usado
+// em imprimirRecibo(), já que quem imprime é o próprio funcionário aqui
+// dentro do admin (diferente do recibo, que também pode ser compartilhado
+// por link com o cliente).
+function imprimirComanda(pedidoId) {
+  const p = todosPedidos.find(x => x.docId === pedidoId);
+  if (!p) return;
+  const dt = p.criadoEm?.toDate ? p.criadoEm.toDate() : new Date();
+  const nomeLoja = document.getElementById("config-nome-loja").value || "Loja";
+  const origemLabel = p.origem === "mesa" ? (p.mesaNome || "Mesa") : (p.origem === "delivery" ? "Entrega" : "Retirada");
+  const identificacao = p.origem === "mesa" ? (p.mesaNome || "Mesa") : (p.cliente?.nome || "Cliente");
+
+  document.getElementById("comanda-print").innerHTML = `
+    <h2>${nomeLoja}</h2>
+    <p>${origemLabel} · ${identificacao}</p>
+    <p>${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+    ${p.numeroPedido ? `<p>Pedido #${p.numeroPedido}</p>` : ''}
+    <hr>
+    ${(p.itens||[]).map(i => `
+      <div class="comanda-item">
+        ${i.qtd}x ${i.nome}${i.variacao ? ` (${i.variacao})` : ''}
+        ${i.adicionais && i.adicionais.length ? `<small>+ ${i.adicionais.map(a => a.opcaoNome).join(", ")}</small>` : ''}
+        ${i.observacao ? `<small>Obs: ${i.observacao}</small>` : ''}
+      </div>`).join("")}
+    <hr>
+    <p style="font-weight:700">Total: R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</p>
+  `;
+  window.print();
+}
+
+async function avancarStatusPedido(docId) {
+  const p = todosPedidos.find(x => x.docId === docId);
+  if (!p) return;
+  const proximo = STATUS_ORDEM[STATUS_ORDEM.indexOf(p.status) + 1];
+  if (!proximo) return;
+  try {
+    await db.collection("pedidos").doc(docId).update({ status: proximo, atualizadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+  } catch(e) { toast("Erro ao atualizar status: " + e.message, "err"); }
+}
+
+// ── USUÁRIOS (FUNCIONÁRIOS) ──────────────────────────────────────────────
+async function carregarUsuarios() {
+  try {
+    const snap = await db.collection("usuarios").get();
+    todosUsuarios = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderizarUsuarios();
+  } catch(e) {
+    const tbody = document.getElementById("usuarios-tabela");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Erro ao carregar usuários: ${e.message}</p></div></td></tr>`;
+  }
+}
+
+function renderizarUsuarios() {
+  const tbody = document.getElementById("usuarios-tabela");
+  if (!tbody) return;
+  if (!todosUsuarios.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-users"></i><p>Nenhum funcionário cadastrado ainda.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = todosUsuarios.map(u => `
+    <tr>
+      <td>${u.nome}</td>
+      <td>${u.email}</td>
+      <td>${u.papel === "dono" ? "Dono" : "Garçom"}</td>
+      <td>${u.ativo !== false ? '<span class="badge badge-ativo">Ativa</span>' : '<span class="badge badge-inativo">Desativada</span>'}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuarioEditar('${u.docId}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="enviarResetSenhaUsuario('${u.email}')" title="Enviar redefinição de senha por e-mail"><i class="fa-solid fa-key"></i></button>
+      </div></td>
+    </tr>`).join("");
+}
+
+function abrirModalUsuario() {
+  document.getElementById("usuario-modal-titulo").innerHTML = '<i class="fa-solid fa-user-plus"></i> Novo funcionário';
+  document.getElementById("usuario-uid-original").value = "";
+  document.getElementById("usuario-nome").value = "";
+  document.getElementById("usuario-email").value = "";
+  document.getElementById("usuario-email").disabled = false;
+  document.getElementById("usuario-senha").value = "";
+  document.getElementById("usuario-senha-area").style.display = "block";
+  document.getElementById("usuario-papel").value = "garcom";
+  document.getElementById("usuario-ativo").checked = true;
+  abrirModal("modal-usuario");
+}
+
+function abrirModalUsuarioEditar(docId) {
+  const u = todosUsuarios.find(x => x.docId === docId);
+  if (!u) return;
+  document.getElementById("usuario-modal-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar funcionário';
+  document.getElementById("usuario-uid-original").value = docId;
+  document.getElementById("usuario-nome").value = u.nome || "";
+  document.getElementById("usuario-email").value = u.email || "";
+  document.getElementById("usuario-email").disabled = true; // trocar e-mail exigiria recriar a conta no Firebase Auth
+  document.getElementById("usuario-senha").value = "";
+  document.getElementById("usuario-senha-area").style.display = "none"; // senha só troca pelo botão de redefinição
+  document.getElementById("usuario-papel").value = u.papel || "garcom";
+  document.getElementById("usuario-ativo").checked = u.ativo !== false;
+  abrirModal("modal-usuario");
+}
+
+async function salvarUsuario() {
+  const docIdOriginal = document.getElementById("usuario-uid-original").value;
+  const nome  = document.getElementById("usuario-nome").value.trim();
+  const email = document.getElementById("usuario-email").value.trim();
+  const senha = document.getElementById("usuario-senha").value;
+  const papel = document.getElementById("usuario-papel").value;
+  const ativo = document.getElementById("usuario-ativo").checked;
+
+  if (!nome || !email) { toast("Preencha nome e e-mail.", "err"); return; }
+
+  try {
+    if (docIdOriginal) {
+      // Edição: só nome, papel e status (desativar aqui bloqueia o login de
+      // verdade, na próxima vez que a pessoa tentar entrar).
+      await db.collection("usuarios").doc(docIdOriginal).update({ nome, papel, ativo });
+      toast("Funcionário atualizado!", "ok");
+      fecharModal("modal-usuario");
+      await carregarUsuarios();
+      return;
+    }
+
+    if (!senha || senha.length < 6) { toast("A senha precisa ter pelo menos 6 caracteres.", "err"); return; }
+
+    // Cria a conta de login num app do Firebase à parte (temporário), só
+    // pra não trocar a sessão logada do dono pela do funcionário novo — se
+    // criasse direto no app principal, você seria deslogado e logado como
+    // a nova conta no meio do processo.
+    const secondaryApp = firebase.initializeApp(firebaseConfig, "secundario-" + Date.now());
+    try {
+      const cred = await secondaryApp.auth().createUserWithEmailAndPassword(email, senha);
+      const uid = cred.user.uid;
+      await db.collection("usuarios").doc(uid).set({
+        nome, email, papel, ativo,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await secondaryApp.auth().signOut();
+    } finally {
+      await secondaryApp.delete();
+    }
+
+    toast("Funcionário cadastrado!", "ok");
+    fecharModal("modal-usuario");
+    await carregarUsuarios();
+  } catch(e) {
+    const msg = e.code === "auth/email-already-in-use" ? "Esse e-mail já está cadastrado." : e.message;
+    toast("Erro: " + msg, "err");
+  }
+}
+
+function enviarResetSenhaUsuario(email) {
+  auth.sendPasswordResetEmail(email)
+    .then(() => toast(`E-mail de redefinição enviado para ${email}.`, "ok"))
+    .catch(e => toast("Erro ao enviar e-mail: " + e.message, "err"));
+}
+
+// ── CUPONS ────────────────────────────────────────────────────────────────
+async function carregarCupons() {
+  try {
+    const snap = await db.collection("cupons").get();
+    todosCupons = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderizarCupons();
+  } catch(e) { toast("Erro ao carregar cupons: " + e.message, "err"); }
+}
+
+function renderizarCupons() {
+  const tbody = document.getElementById("cupons-tabela-corpo");
+  if (!todosCupons.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-ticket"></i><p>Nenhum cupom cadastrado.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = todosCupons.map(c => {
+    const valorFmt    = c.tipo === "fixo" ? `R$ ${Number(c.valor||0).toFixed(2).replace('.',',')}` : `${Number(c.valor||0)}%`;
+    const minimoFmt    = c.valorMinimo ? `R$ ${Number(c.valorMinimo).toFixed(2).replace('.',',')}` : '–';
+    const validadeFmt  = c.validade ? new Date(c.validade + "T00:00:00").toLocaleDateString('pt-BR') : '–';
+    return `
+    <tr>
+      <td><strong>${c.codigo}</strong></td>
+      <td>${c.tipo === "fixo" ? "Valor fixo" : "Percentual"}</td>
+      <td style="font-weight:700;color:var(--gold)">${valorFmt}</td>
+      <td>${minimoFmt}</td>
+      <td>${validadeFmt}</td>
+      <td>${c.ativo !== false ? '<span class="badge badge-ativo">Ativo</span>' : '<span class="badge badge-inativo">Inativo</span>'}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalCupomEditar('${c.docId}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('cupom','${c.docId}','${(c.codigo||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function abrirModalCupom() {
+  document.getElementById("cupom-modal-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo Cupom';
+  document.getElementById("cupom-doc-id").value        = "";
+  document.getElementById("cupom-codigo").value        = "";
+  document.getElementById("cupom-tipo").value          = "percentual";
+  document.getElementById("cupom-valor").value         = "";
+  document.getElementById("cupom-valor-minimo").value  = "";
+  document.getElementById("cupom-validade").value      = "";
+  document.getElementById("cupom-ativo").checked       = true;
+  abrirModal("modal-cupom");
+}
+
+function abrirModalCupomEditar(docId) {
+  const c = todosCupons.find(x => x.docId === docId);
+  if (!c) return;
+  document.getElementById("cupom-modal-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar Cupom';
+  document.getElementById("cupom-doc-id").value        = docId;
+  document.getElementById("cupom-codigo").value        = c.codigo || "";
+  document.getElementById("cupom-tipo").value          = c.tipo || "percentual";
+  document.getElementById("cupom-valor").value         = c.valor ?? "";
+  document.getElementById("cupom-valor-minimo").value  = c.valorMinimo ?? "";
+  document.getElementById("cupom-validade").value      = c.validade || "";
+  document.getElementById("cupom-ativo").checked       = c.ativo !== false;
+  abrirModal("modal-cupom");
+}
+
+async function salvarCupom() {
+  const docId          = document.getElementById("cupom-doc-id").value;
+  const codigo         = document.getElementById("cupom-codigo").value.trim().toUpperCase();
+  const tipo           = document.getElementById("cupom-tipo").value;
+  const valor          = parseFloat(document.getElementById("cupom-valor").value);
+  const valorMinimoRaw = document.getElementById("cupom-valor-minimo").value;
+  const valorMinimo    = valorMinimoRaw ? parseFloat(valorMinimoRaw) : 0;
+  const validade       = document.getElementById("cupom-validade").value || null;
+  const ativo          = document.getElementById("cupom-ativo").checked;
+
+  if (!codigo || isNaN(valor)) { toast("Preencha código e valor.", "err"); return; }
+  if (tipo === "percentual" && valor > 100) { toast("O percentual não pode ser maior que 100.", "err"); return; }
+
+  const jaExiste = todosCupons.find(c => c.codigo === codigo && c.docId !== docId);
+  if (jaExiste) { toast("Já existe um cupom com esse código.", "err"); return; }
+
+  const dados = { codigo, tipo, valor, valorMinimo, validade, ativo };
+  try {
+    if (docId) {
+      await db.collection("cupons").doc(docId).update(dados);
+      toast("Cupom atualizado!", "ok");
+    } else {
+      await db.collection("cupons").add(dados);
+      toast("Cupom criado!", "ok");
+    }
+    fecharModal("modal-cupom");
+    await carregarCupons();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+// ── EXCLUSÃO ──────────────────────────────────────────────────────────────
+function confirmarExclusao(tipo, docId, nome) {
+  document.getElementById("confirm-msg").textContent = `Excluir "${nome}"? Esta ação não pode ser desfeita.`;
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      if (tipo === "produto") { await db.collection("produtos").doc(docId).delete(); await carregarProdutos(); }
+      else if (tipo === "cupom") { await db.collection("cupons").doc(docId).delete(); await carregarCupons(); }
+      else { await db.collection("categorias").doc(docId).delete(); await carregarCategorias(); popularSelectCategorias(); }
+      toast("Excluído com sucesso.", "ok");
+      fecharModal("confirm-modal");
+    } catch(e) { toast("Erro: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
+}
+
+// ── PDV ───────────────────────────────────────────────────────────────────
+let pdvCarrinho = [];       // [{ docId, nome, preco, qtd }]
+let pdvCupomAplicado = null;
+let vendasHoje = [];
+let vendasRelatorio = [];
+let vendasFiado = [];
+
+function renderPdvGrid() {
+  const grid = document.getElementById("pdv-grid");
+  const busca = (document.getElementById("pdv-busca")?.value || "").toLowerCase();
+  let lista = todosProdutos.filter(p => p.ativo !== false);
+  if (busca) lista = lista.filter(p => p.nome.toLowerCase().includes(busca));
+  if (!lista.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-box-open"></i><p>Nenhum produto encontrado.</p></div>`;
+    return;
+  }
+  grid.innerHTML = lista.map(p => `
+    <div class="pdv-item" onclick="pdvAdicionarItem('${p.docId}')">
+      ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+      <div class="pdv-item-noimg" ${p.imagem ? "style='display:none'" : ""}><i class="fa-solid fa-image"></i></div>
+      <div class="pdv-item-nome">${p.nome}</div>
+      <div class="pdv-item-preco">R$ ${Number(p.preco||0).toFixed(2).replace('.',',')}</div>
+    </div>`).join("");
+}
+
+function pdvAdicionarItem(docId) {
+  const p = todosProdutos.find(x => x.docId === docId);
+  if (!p) return;
+  const item = pdvCarrinho.find(i => i.docId === docId);
+  if (item) item.qtd += 1;
+  else pdvCarrinho.push({ docId, nome: p.nome, preco: Number(p.preco||0), qtd: 1 });
+  renderPdvCart();
+  // Devolve o foco pro campo de busca, pra o próximo produto (por clique ou
+  // leitor de código de barras) já cair no lugar certo.
+  document.getElementById("pdv-busca").focus();
+}
+
+// Chamado pelo onkeydown do #pdv-busca. Leitores de código de barras
+// funcionam como teclado: "digitam" o código bem rápido e mandam um Enter.
+function pdvBarcodeKeydown(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const codigo = e.target.value.trim();
+  if (!codigo) return;
+
+  const produto = todosProdutos.find(p => p.codigoBarras && p.codigoBarras === codigo && p.ativo !== false);
+  e.target.value = "";
+  renderPdvGrid();
+
+  if (produto) {
+    pdvAdicionarItem(produto.docId);
+    toast(`${produto.nome} adicionado!`, "ok");
+  } else {
+    toast("Código de barras não encontrado.", "err");
+    e.target.focus();
+  }
+}
+
+function pdvAlterarQtd(docId, delta) {
+  const item = pdvCarrinho.find(i => i.docId === docId);
+  if (!item) return;
+  item.qtd += delta;
+  if (item.qtd <= 0) pdvCarrinho = pdvCarrinho.filter(i => i.docId !== docId);
+  renderPdvCart();
+}
+
+function pdvRemoverItem(docId) {
+  pdvCarrinho = pdvCarrinho.filter(i => i.docId !== docId);
+  renderPdvCart();
+}
+
+function pdvLimparCarrinho() {
+  pdvCarrinho = [];
+  pdvCupomAplicado = null;
+  document.getElementById("pdv-cupom-input").value = "";
+  document.getElementById("pdv-desconto-manual").value = "";
+  document.getElementById("pdv-cliente").value = "";
+  document.getElementById("pdv-pagamento-dividir").checked = false;
+  document.getElementById("pdv-valor-pagamento2").value = "";
+  document.getElementById("pdv-valor-recebido").value = "";
+  document.getElementById("pdv-pagamento").value = "dinheiro";
+  document.getElementById("pdv-fiado").checked = false;
+  pdvToggleFiado();
+  pdvTogglePagamentoDividido();
+  renderPdvCart();
+  document.getElementById("pdv-busca").focus();
+}
+
+function pdvTogglePagamentoDividido() {
+  const dividir = document.getElementById("pdv-pagamento-dividir").checked;
+  document.getElementById("pdv-pagamento2-area").style.display = dividir ? "flex" : "none";
+  renderPdvCart();
+}
+
+function pdvToggleFiado() {
+  const fiado = document.getElementById("pdv-fiado").checked;
+  document.getElementById("pdv-pagamento-normal-area").style.display = fiado ? "none" : "block";
+  document.getElementById("pdv-fiado-aviso").style.display = fiado ? "flex" : "none";
+  document.getElementById("pdv-cliente-label").textContent = fiado ? "Cliente *" : "Cliente (opcional)";
+  document.getElementById("pdv-finalizar-btn").innerHTML = fiado
+    ? '<i class="fa-solid fa-handshake"></i> Registrar Pagamento a Prazo'
+    : '<i class="fa-solid fa-check"></i> Finalizar Venda';
+  renderPdvCart();
+}
+
+function pdvCalcularSubtotal() {
+  return pdvCarrinho.reduce((s, i) => s + i.preco * i.qtd, 0);
+}
+
+function pdvCalcularDesconto(subtotal) {
+  const manual = parseFloat(document.getElementById("pdv-desconto-manual").value) || 0;
+  let descontoCupom = 0;
+  if (pdvCupomAplicado) {
+    descontoCupom = pdvCupomAplicado.tipo === "fixo"
+      ? Number(pdvCupomAplicado.valor || 0)
+      : subtotal * (Number(pdvCupomAplicado.valor || 0) / 100);
+  }
+  return Math.min(subtotal, manual + descontoCupom);
+}
+
+const PAG_LABEL = { dinheiro: "Dinheiro", pix: "Pix", debito: "Débito", credito: "Crédito" };
+
+function pdvCalcularPagamentos(total) {
+  const dividir = document.getElementById("pdv-pagamento-dividir").checked;
+  const forma1  = document.getElementById("pdv-pagamento").value;
+  if (!dividir) return [{ forma: forma1, valor: total }];
+  const forma2 = document.getElementById("pdv-pagamento2").value;
+  let valor2   = parseFloat(document.getElementById("pdv-valor-pagamento2").value) || 0;
+  valor2 = Math.max(0, Math.min(valor2, total));
+  const valor1 = total - valor2;
+  return [{ forma: forma1, valor: valor1 }, { forma: forma2, valor: valor2 }];
+}
+
+// Soma quanto do total precisa ser pago em dinheiro (pode ser o total inteiro,
+// ou só a parte em dinheiro quando o pagamento está dividido).
+function pdvValorDinheiroNecessario(total) {
+  return pdvCalcularPagamentos(total)
+    .filter(p => p.forma === "dinheiro")
+    .reduce((s, p) => s + p.valor, 0);
+}
+
+function renderPdvCart() {
+  const cont = document.getElementById("pdv-cart-items");
+  if (!pdvCarrinho.length) {
+    cont.innerHTML = `<div class="pdv-cart-empty">Carrinho vazio. Clique em um produto para adicionar.</div>`;
+  } else {
+    cont.innerHTML = pdvCarrinho.map(i => `
+      <div class="pdv-cart-item">
+        <div class="pdv-cart-item-info">
+          <div class="pdv-cart-item-nome">${i.nome}</div>
+          <div class="pdv-cart-item-preco">R$ ${i.preco.toFixed(2).replace('.',',')} un.</div>
+        </div>
+        <div class="pdv-qty">
+          <button class="pdv-qty-btn" onclick="pdvAlterarQtd('${i.docId}',-1)">−</button>
+          <span>${i.qtd}</span>
+          <button class="pdv-qty-btn" onclick="pdvAlterarQtd('${i.docId}',1)">+</button>
+        </div>
+        <div class="pdv-cart-item-total">R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</div>
+        <button class="pdv-remove-btn" onclick="pdvRemoverItem('${i.docId}')"><i class="fa-solid fa-trash"></i></button>
+      </div>`).join("");
+  }
+  const subtotal  = pdvCalcularSubtotal();
+  const desconto  = pdvCalcularDesconto(subtotal);
+  const total     = subtotal - desconto;
+  document.getElementById("pdv-subtotal").textContent      = "R$ " + subtotal.toFixed(2).replace('.',',');
+  document.getElementById("pdv-desconto-total").textContent= "R$ " + desconto.toFixed(2).replace('.',',');
+  document.getElementById("pdv-total").textContent         = "R$ " + total.toFixed(2).replace('.',',');
+
+  const fiado = document.getElementById("pdv-fiado").checked;
+  const resumo = document.getElementById("pdv-split-resumo");
+  if (!fiado && document.getElementById("pdv-pagamento-dividir").checked) {
+    const pags = pdvCalcularPagamentos(total);
+    resumo.style.display = "flex";
+    resumo.innerHTML = pags.map(p => `
+      <div class="pdv-totals-row"><span>${PAG_LABEL[p.forma] || p.forma}</span><span>R$ ${p.valor.toFixed(2).replace('.',',')}</span></div>
+    `).join("");
+  } else {
+    resumo.style.display = "none";
+    resumo.innerHTML = "";
+  }
+
+  // Troco: só aparece quando alguma parte do pagamento é em dinheiro (e não é fiado)
+  const areaDinheiro = document.getElementById("pdv-dinheiro-area");
+  const dinheiroNecessario = fiado ? 0 : pdvValorDinheiroNecessario(total);
+  if (dinheiroNecessario > 0) {
+    areaDinheiro.style.display = "flex";
+    const recebido = parseFloat(document.getElementById("pdv-valor-recebido").value) || 0;
+    const troco = recebido - dinheiroNecessario;
+    const trocoEl = document.getElementById("pdv-troco");
+    if (recebido > 0 && troco < 0) {
+      trocoEl.textContent = "faltam R$ " + Math.abs(troco).toFixed(2).replace('.', ',');
+      trocoEl.style.color = "var(--red)";
+    } else {
+      trocoEl.textContent = "R$ " + Math.max(troco, 0).toFixed(2).replace('.', ',');
+      trocoEl.style.color = "var(--green)";
+    }
+  } else {
+    areaDinheiro.style.display = "none";
+  }
+}
+
+function pdvAplicarCupom() {
+  const codigo = document.getElementById("pdv-cupom-input").value.trim().toUpperCase();
+  if (!codigo) return;
+  const cupom = todosCupons.find(c => c.codigo === codigo && c.ativo !== false);
+  if (!cupom) { toast("Cupom inválido ou inativo.", "err"); return; }
+  const subtotal = pdvCalcularSubtotal();
+  if (cupom.valorMinimo && subtotal < cupom.valorMinimo) {
+    toast(`Pedido mínimo para este cupom: R$ ${Number(cupom.valorMinimo).toFixed(2).replace('.',',')}`, "err");
+    return;
+  }
+  pdvCupomAplicado = cupom;
+  toast("Cupom aplicado!", "ok");
+  renderPdvCart();
+}
+
+async function pdvFinalizarVenda() {
+  if (!pdvCarrinho.length) { toast("Adicione ao menos um produto ao carrinho.", "err"); return; }
+  const subtotal   = pdvCalcularSubtotal();
+  const desconto   = pdvCalcularDesconto(subtotal);
+  const total      = subtotal - desconto;
+  const cliente    = document.getElementById("pdv-cliente").value.trim();
+  const fiado      = document.getElementById("pdv-fiado").checked;
+
+  let venda;
+
+  if (fiado) {
+    if (!cliente) { toast("Informe o nome do cliente para registrar o pagamento a prazo.", "err"); return; }
+    venda = {
+      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+      subtotal, desconto, total,
+      fiado: true,
+      valorPago: 0,
+      pagamentosFiado: [],
+      pagamentos: [],
+      pagamento: "Pagamento a Prazo",
+      recebidoDinheiro: null,
+      troco: null,
+      cliente,
+      cupom: pdvCupomAplicado ? pdvCupomAplicado.codigo : null,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    };
+  } else {
+    const pagamentos = pdvCalcularPagamentos(total);
+    if (pagamentos.length > 1 && (pagamentos[0].valor <= 0 || pagamentos[1].valor <= 0)) {
+      toast("Informe um valor válido para a 2ª forma de pagamento (menor que o total).", "err");
+      return;
+    }
+
+    const dinheiroNecessario = pdvValorDinheiroNecessario(total);
+    const recebido = parseFloat(document.getElementById("pdv-valor-recebido").value) || 0;
+    const troco = recebido - dinheiroNecessario;
+    if (dinheiroNecessario > 0 && recebido < dinheiroNecessario) {
+      toast("Informe quanto o cliente pagou em dinheiro (valor recebido menor que o necessário).", "err");
+      return;
+    }
+
+    venda = {
+      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+      subtotal, desconto, total,
+      fiado: false,
+      pagamentos,
+      pagamento: pagamentos.map(p => PAG_LABEL[p.forma] || p.forma).join(" + "),
+      recebidoDinheiro: dinheiroNecessario > 0 ? recebido : null,
+      troco: dinheiroNecessario > 0 ? troco : null,
+      cliente: cliente || null,
+      cupom: pdvCupomAplicado ? pdvCupomAplicado.codigo : null,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    };
+  }
+
+  try {
+    await db.collection("vendas").add(venda);
+    toast(fiado ? "Pagamento a prazo registrado!" : "Venda finalizada com sucesso!", "ok");
+    pdvLimparCarrinho();
+    if (fiado) carregarFiados();
+    // vendasHoje é atualizado automaticamente pelo listener em tempo real
+  } catch(e) { toast("Erro ao finalizar venda: " + e.message, "err"); }
+}
+
+// ── FIADO ─────────────────────────────────────────────────────────────────
+// Traz todas as vendas marcadas como pagamento a prazo (não só as de hoje/do mês, pra
+// nunca perder quem ainda está devendo). Ordena no navegador em vez de usar
+// orderBy no Firestore, assim não precisa criar nenhum índice composto lá.
+async function carregarFiados() {
+  try {
+    const snap = await db.collection("vendas").where("fiado", "==", true).get();
+    vendasFiado = snap.docs
+      .map(d => ({ docId: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const ta = a.criadoEm?.toDate ? a.criadoEm.toDate().getTime() : 0;
+        const tb = b.criadoEm?.toDate ? b.criadoEm.toDate().getTime() : 0;
+        return tb - ta;
+      });
+    renderFiados();
+  } catch(e) {
+    document.getElementById("fiado-tabela").innerHTML =
+      `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Erro ao carregar pagamentos a prazo: ${e.message}</p></div></td></tr>`;
+  }
+}
+
+function fiadoSaldo(v) {
+  return Math.max(0, Number(v.total || 0) - Number(v.valorPago || 0));
+}
+
+function renderFiados() {
+  const filtro = document.getElementById("fiado-filtro").value;
+  let lista = vendasFiado;
+  if (filtro === "aberto") lista = lista.filter(v => fiadoSaldo(v) > 0.004);
+  if (filtro === "quitado") lista = lista.filter(v => fiadoSaldo(v) <= 0.004);
+
+  const abertos = vendasFiado.filter(v => fiadoSaldo(v) > 0.004);
+  document.getElementById("fiado-stat-qtd").textContent = abertos.length;
+  document.getElementById("fiado-stat-total").textContent =
+    "R$ " + abertos.reduce((s, v) => s + fiadoSaldo(v), 0).toFixed(2).replace('.', ',');
+
+  const tbody = document.getElementById("fiado-tabela");
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-handshake"></i><p>Nenhum pagamento a prazo encontrado.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(v => {
+    const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : null;
+    const dataTexto = dt ? dt.toLocaleDateString('pt-BR') : '–';
+    const itensResumo = (v.itens || []).map(i => `${i.qtd}x ${i.nome}`).join(", ");
+    const saldo = fiadoSaldo(v);
+    const quitado = saldo <= 0.004;
+    return `
+    <tr>
+      <td><strong>${v.cliente || '–'}</strong></td>
+      <td>${dataTexto}</td>
+      <td style="max-width:220px"><span style="font-size:.8rem;color:var(--muted)">${itensResumo}</span></td>
+      <td style="font-weight:700">R$ ${Number(v.total||0).toFixed(2).replace('.',',')}</td>
+      <td>R$ ${Number(v.valorPago||0).toFixed(2).replace('.',',')}</td>
+      <td style="font-weight:700;color:${quitado ? 'var(--green)' : 'var(--red)'}">R$ ${saldo.toFixed(2).replace('.',',')}</td>
+      <td>${quitado ? '<span class="badge badge-ativo">Pago</span>' : '<span class="badge badge-inativo">A Prazo</span>'}</td>
+      <td><div class="actions-cell">
+        ${!quitado ? `<button class="btn btn-primary btn-sm" onclick="abrirModalPagamentoFiado('${v.docId}')" title="Registrar pagamento"><i class="fa-solid fa-hand-holding-dollar"></i></button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="imprimirRecibo('${v.docId}','fiado')" title="Imprimir recibo"><i class="fa-solid fa-print"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="compartilharReciboWhatsapp('${v.docId}','fiado')" title="Enviar recibo pelo WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoVenda('${v.docId}','fiado')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function abrirModalPagamentoFiado(docId) {
+  const v = vendasFiado.find(x => x.docId === docId);
+  if (!v) return;
+  const saldo = fiadoSaldo(v);
+  document.getElementById("fiado-pagamento-docid").value = docId;
+  document.getElementById("fiado-pagamento-resumo").textContent =
+    `${v.cliente || 'Cliente'} · Total R$ ${Number(v.total||0).toFixed(2).replace('.',',')} · Deve R$ ${saldo.toFixed(2).replace('.',',')}`;
+  document.getElementById("fiado-pagamento-valor").value = saldo.toFixed(2);
+  document.getElementById("fiado-pagamento-valor").max = saldo.toFixed(2);
+  document.getElementById("fiado-pagamento-data").value = new Date().toISOString().split("T")[0];
+  abrirModal("modal-pagamento-fiado");
+}
+
+async function confirmarPagamentoFiado() {
+  const docId = document.getElementById("fiado-pagamento-docid").value;
+  const v = vendasFiado.find(x => x.docId === docId);
+  if (!v) return;
+  const valor = parseFloat(document.getElementById("fiado-pagamento-valor").value);
+  const dataStr = document.getElementById("fiado-pagamento-data").value;
+  if (!valor || valor <= 0) { toast("Informe um valor de pagamento válido.", "err"); return; }
+  if (!dataStr) { toast("Informe a data do pagamento.", "err"); return; }
+
+  const saldoAtual = fiadoSaldo(v);
+  const valorAplicado = Math.min(valor, saldoAtual);
+  const novoValorPago = Number(v.valorPago || 0) + valorAplicado;
+  // Não usa FieldValue.serverTimestamp() aqui: o Firestore não permite esse
+  // valor "pendente" dentro de um item de arrayUnion. A data do pagamento é
+  // a que o usuário escolheu no formulário mesmo.
+  const novoPagamento = { valor: valorAplicado, data: dataStr };
+
+  try {
+    await db.collection("vendas").doc(docId).update({
+      valorPago: novoValorPago,
+      pagamentosFiado: firebase.firestore.FieldValue.arrayUnion(novoPagamento),
+    });
+    const quitado = novoValorPago >= Number(v.total || 0) - 0.004;
+    toast(quitado ? "Pagamento registrado — dívida quitada!" : "Pagamento registrado. Ainda falta receber.", "ok");
+    fecharModal("modal-pagamento-fiado");
+    await carregarFiados();
+  } catch(e) { toast("Erro ao registrar pagamento: " + e.message, "err"); }
+}
+
+// Escuta a coleção "vendas" em tempo real (só as de hoje). Útil quando mais
+// de um dispositivo/admin usa o PDV ao mesmo tempo: a venda aparece na hora
+// nas outras telas, sem precisar recarregar.
+let _vendasHojeIniciado = false;
+function iniciarListenerVendasHoje() {
+  const inicioHoje = new Date();
+  inicioHoje.setHours(0,0,0,0);
+  db.collection("vendas")
+    .where("criadoEm", ">=", inicioHoje)
+    .orderBy("criadoEm", "desc")
+    .onSnapshot(snap => {
+      vendasHoje = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+      renderVendasHoje();
+
+      // Ignora snapshots vindos só do cache local (evita "nova venda" falsa
+      // quando os dados do servidor ainda estão chegando em duas etapas) e
+      // não notifica a venda que o próprio admin acabou de registrar aqui.
+      if (!snap.metadata.fromCache) {
+        if (_vendasHojeIniciado) {
+          const novaVendaExterna = snap.docChanges().some(
+            c => c.type === "added" && !c.doc.metadata.hasPendingWrites
+          );
+          if (novaVendaExterna) { tocarSomNotificacao(); toast("Nova venda registrada!", "ok"); }
+        }
+        _vendasHojeIniciado = true;
+      }
+    }, e => {
+      document.getElementById("pdv-vendas-tabela").innerHTML =
+        `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Erro ao carregar vendas: ${e.message}</p></div></td></tr>`;
+    });
+}
+
+function tocarSomNotificacao() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1180, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch (e) { /* navegador pode bloquear áudio sem interação do usuário */ }
+}
+
+function linhaVenda(v, origem, comData) {
+  const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : null;
+  const hora = dt ? dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '–';
+  const data = dt ? dt.toLocaleDateString('pt-BR') : '–';
+  const itensResumo = (v.itens||[]).map(i => `${i.qtd}x ${i.nome}`).join(", ");
+  let pagamentoTexto = Array.isArray(v.pagamentos)
+    ? v.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma} (R$ ${Number(p.valor||0).toFixed(2).replace('.',',')})`).join(" + ")
+    : (PAG_LABEL[v.pagamento] || v.pagamento || '–');
+  if (v.fiado) {
+    const saldo = fiadoSaldo(v);
+    pagamentoTexto = saldo > 0.004
+      ? `<span class="badge badge-inativo"><i class="fa-solid fa-handshake"></i> A Prazo — deve R$ ${saldo.toFixed(2).replace('.',',')}</span>`
+      : `<span class="badge badge-ativo"><i class="fa-solid fa-handshake"></i> A Prazo — pago</span>`;
+  }
+  return `
+    <tr>
+      ${comData ? `<td>${data}</td>` : ''}
+      <td>${hora}</td>
+      <td>${v.cliente || '–'}</td>
+      <td style="max-width:260px"><span style="font-size:.8rem;color:var(--muted)">${itensResumo}</span></td>
+      <td><span style="font-size:.8rem">${pagamentoTexto}</span></td>
+      <td style="font-weight:700;color:var(--gold)">R$ ${Number(v.total||0).toFixed(2).replace('.',',')}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="imprimirRecibo('${v.docId}','${origem}')" title="Imprimir recibo"><i class="fa-solid fa-print"></i></button>
+        <button class="btn btn-ghost btn-sm" onclick="compartilharReciboWhatsapp('${v.docId}','${origem}')" title="Enviar recibo pelo WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoVenda('${v.docId}','${origem}')" title="Excluir venda"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+}
+
+function listaVendaPorOrigem(origem) {
+  if (origem === "relatorio") return vendasRelatorio;
+  if (origem === "fiado") return vendasFiado;
+  return vendasHoje;
+}
+
+// ── IMPRESSÃO DE RECIBO ───────────────────────────────────────────────────
+function imprimirRecibo(docId, origem) {
+  const lista = listaVendaPorOrigem(origem);
+  const v = lista.find(x => x.docId === docId);
+  if (!v) return;
+  const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : new Date();
+  const pagamentoTexto = Array.isArray(v.pagamentos)
+    ? v.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma}: R$ ${Number(p.valor||0).toFixed(2).replace('.',',')}`).join(" + ")
+    : (PAG_LABEL[v.pagamento] || v.pagamento || '–');
+  const nomeLoja = document.getElementById("config-nome-loja").value || "Loja";
+
+  document.getElementById("recibo-print").innerHTML = `
+    <h2>${nomeLoja}</h2>
+    <p>${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+    ${v.cliente ? `<p>Cliente: ${v.cliente}</p>` : ''}
+    <hr>
+    ${(v.itens||[]).map(i => `<div class="recibo-linha"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.qtd*i.preco).toFixed(2).replace('.',',')}</span></div>`).join("")}
+    <hr>
+    <div class="recibo-linha"><span>Subtotal</span><span>R$ ${Number(v.subtotal||0).toFixed(2).replace('.',',')}</span></div>
+    ${v.desconto ? `<div class="recibo-linha"><span>Desconto${v.cupom ? ` (${v.cupom})` : ''}</span><span>-R$ ${Number(v.desconto).toFixed(2).replace('.',',')}</span></div>` : ''}
+    <div class="recibo-linha recibo-total"><span>Total</span><span>R$ ${Number(v.total||0).toFixed(2).replace('.',',')}</span></div>
+    <hr>
+    ${v.fiado ? `
+      <p><strong>${fiadoSaldo(v) > 0.004 ? 'PAGAMENTO A PRAZO — em aberto' : 'PAGAMENTO A PRAZO — quitado'}</strong></p>
+      <div class="recibo-linha"><span>Pago até agora</span><span>R$ ${Number(v.valorPago||0).toFixed(2).replace('.',',')}</span></div>
+      <div class="recibo-linha"><span>Falta pagar</span><span>R$ ${fiadoSaldo(v).toFixed(2).replace('.',',')}</span></div>
+    ` : `
+      <p>${pagamentoTexto}</p>
+      ${v.troco != null ? `<div class="recibo-linha"><span>Recebido</span><span>R$ ${Number(v.recebidoDinheiro||0).toFixed(2).replace('.',',')}</span></div>
+      <div class="recibo-linha"><span>Troco</span><span>R$ ${Number(v.troco||0).toFixed(2).replace('.',',')}</span></div>` : ''}
+    `}
+    <p class="recibo-obrigado">Obrigado pela preferência!</p>
+  `;
+  window.print();
+}
+
+// ── COMPARTILHAR RECIBO NO WHATSAPP ───────────────────────────────────────
+// Não depende do Firestore: os dados do recibo vão codificados no próprio
+// link (depois do #), então quem abrir não precisa de login nem de
+// permissão nenhuma pra ver — o recibo.html só decodifica e mostra.
+function gerarLinkRecibo(v) {
+  const nomeLoja = document.getElementById("config-nome-loja").value || "Loja";
+  const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : new Date();
+  const payload = {
+    loja: nomeLoja,
+    data: dt.toISOString(),
+    cliente: v.cliente || null,
+    itens: (v.itens || []).map(i => ({ n: i.nome, q: i.qtd, p: i.preco })),
+    subtotal: Number(v.subtotal || 0),
+    desconto: Number(v.desconto || 0),
+    cupom: v.cupom || null,
+    total: Number(v.total || 0),
+    pagamentos: Array.isArray(v.pagamentos) ? v.pagamentos : [{ forma: v.pagamento || "", valor: v.total }],
+    recebido: v.recebidoDinheiro ?? null,
+    troco: v.troco ?? null,
+    fiado: !!v.fiado,
+    pago: v.fiado ? Number(v.valorPago || 0) : null,
+    deve: v.fiado ? fiadoSaldo(v) : null,
+  };
+  const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  return new URL("recibo.html", location.href).href + "#" + base64;
+}
+
+function compartilharReciboWhatsapp(docId, origem) {
+  const lista = listaVendaPorOrigem(origem);
+  const v = lista.find(x => x.docId === docId);
+  if (!v) return;
+  const url = gerarLinkRecibo(v);
+  const texto = `Aqui está o recibo da sua compra:\n${url}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+}
+
+function renderVendasHoje() {
+  const tbody = document.getElementById("pdv-vendas-tabela");
+  document.getElementById("pdv-stat-qtd").textContent = vendasHoje.length;
+  document.getElementById("pdv-stat-total").textContent =
+    "R$ " + vendasHoje.reduce((s,v) => s + Number(v.total||0), 0).toFixed(2).replace('.',',');
+  if (!vendasHoje.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-cash-register"></i><p>Nenhuma venda registrada hoje.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = vendasHoje.map(v => linhaVenda(v, "pdv", false)).join("");
+}
+
+function confirmarExclusaoVenda(docId, origem) {
+  document.getElementById("confirm-msg").textContent = "Excluir esta venda? Esta ação não pode ser desfeita.";
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      await db.collection("vendas").doc(docId).delete();
+      toast("Venda excluída.", "ok");
+      fecharModal("confirm-modal");
+      // pdv-vendas-tabela atualiza sozinho pelo listener
+      await carregarRelatorio();
+      if (origem === "fiado") await carregarFiados();
+    } catch(e) { toast("Erro ao excluir venda: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
+}
+
+// ── RELATÓRIO ─────────────────────────────────────────────────────────────
+// Recria as opções do seletor de dia com base no mês escolhido (fevereiro
+// tem 28/29, abril tem 30, etc.) e mantém o dia selecionado se ele ainda
+// existir no mês novo.
+function popularDiasRelatorio() {
+  const mesStr = document.getElementById("relatorio-mes").value || mesAtualStr();
+  const [ano, mes] = mesStr.split("-").map(Number);
+  const diasNoMes = new Date(ano, mes, 0).getDate();
+  const sel = document.getElementById("relatorio-dia");
+  const diaSelecionado = sel.value;
+
+  let opcoes = `<option value="">Mês inteiro</option>`;
+  for (let d = 1; d <= diasNoMes; d++) {
+    opcoes += `<option value="${d}">Dia ${String(d).padStart(2, "0")}</option>`;
+  }
+  sel.innerHTML = opcoes;
+  if (diaSelecionado && Number(diaSelecionado) <= diasNoMes) sel.value = diaSelecionado;
+}
+
+// Limpa o filtro de dia e volta o mês pro mês atual — mesmo estado padrão
+// que a aba já assume quando é aberta pela primeira vez.
+function limparFiltroRelatorio() {
+  document.getElementById("relatorio-mes").value = mesAtualStr();
+  popularDiasRelatorio();
+  document.getElementById("relatorio-dia").value = "";
+  carregarRelatorio();
+}
+
+async function carregarRelatorio() {
+  try {
+    const mesStr = document.getElementById("relatorio-mes").value || mesAtualStr();
+    const [ano, mes] = mesStr.split("-").map(Number);
+    const diaFiltro = document.getElementById("relatorio-dia").value;
+
+    let inicio, fim;
+    if (diaFiltro) {
+      inicio = new Date(ano, mes - 1, Number(diaFiltro), 0, 0, 0, 0);
+      fim    = new Date(ano, mes - 1, Number(diaFiltro) + 1, 0, 0, 0, 0);
+    } else {
+      inicio = new Date(ano, mes - 1, 1, 0, 0, 0, 0);
+      fim    = new Date(ano, mes, 1, 0, 0, 0, 0);
+    }
+    const snap = await db.collection("vendas")
+      .where("criadoEm", ">=", inicio)
+      .where("criadoEm", "<", fim)
+      .orderBy("criadoEm", "desc")
+      .get();
+    vendasRelatorio = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+    renderRelatorio();
+  } catch(e) {
+    document.getElementById("relatorio-tabela").innerHTML =
+      `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>Erro ao carregar relatório: ${e.message}</p></div></td></tr>`;
+  }
+}
+
+function renderRelatorio() {
+  const totalMes = vendasRelatorio.reduce((s,v) => s + Number(v.total||0), 0);
+  document.getElementById("relatorio-stat-qtd").textContent   = vendasRelatorio.length;
+  document.getElementById("relatorio-stat-total").textContent = "R$ " + totalMes.toFixed(2).replace('.',',');
+  document.getElementById("relatorio-stat-ticket").textContent= "R$ " + (vendasRelatorio.length ? totalMes / vendasRelatorio.length : 0).toFixed(2).replace('.',',');
+
+  const filtrandoDia = !!document.getElementById("relatorio-dia").value;
+  document.getElementById("relatorio-lbl-qtd").textContent   = filtrandoDia ? "Vendas no dia" : "Vendas no mês";
+  document.getElementById("relatorio-lbl-total").textContent = filtrandoDia ? "Faturamento no dia" : "Faturamento no mês";
+
+  renderRelatorioChart();
+
+  const tbody = document.getElementById("relatorio-tabela");
+  if (!vendasRelatorio.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-chart-column"></i><p>Nenhuma venda encontrada neste período.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = vendasRelatorio.map(v => linhaVenda(v, "relatorio", true)).join("");
+}
+
+// ── GRÁFICO DO RELATÓRIO ─────────────────────────────────────────────────
+let _relatorioChart = null;
+function renderRelatorioChart() {
+  const mesStr = document.getElementById("relatorio-mes").value || mesAtualStr();
+  const [ano, mes] = mesStr.split("-").map(Number);
+  const diasNoMes = new Date(ano, mes, 0).getDate();
+  const totaisPorDia = Array(diasNoMes).fill(0);
+  vendasRelatorio.forEach(v => {
+    const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : null;
+    if (dt) totaisPorDia[dt.getDate() - 1] += Number(v.total || 0);
+  });
+
+  const ctx = document.getElementById("relatorio-grafico");
+  if (!ctx || typeof Chart === "undefined") return;
+  if (_relatorioChart) _relatorioChart.destroy();
+  _relatorioChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: totaisPorDia.map((_, i) => String(i + 1)),
+      datasets: [{
+        label: "Faturamento no dia",
+        data: totaisPorDia,
+        backgroundColor: "rgba(13,71,161,.55)",
+        borderRadius: 4,
+        maxBarThickness: 22,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: (v) => "R$ " + v } },
+        x: { title: { display: true, text: "Dia do mês" } },
+      },
+    },
+  });
+}
+
+// ── EXPORTAR CSV ──────────────────────────────────────────────────────────
+function exportarRelatorioCSV() {
+  if (!vendasRelatorio.length) { toast("Nenhuma venda para exportar neste período.", "err"); return; }
+  const cabecalho = ["Data", "Hora", "Cliente", "Itens", "Pagamento", "Cupom", "Subtotal", "Desconto", "Total"];
+  const linhas = vendasRelatorio.map(v => {
+    const dt = v.criadoEm?.toDate ? v.criadoEm.toDate() : null;
+    const itensTexto = (v.itens || []).map(i => `${i.qtd}x ${i.nome}`).join(" | ");
+    const pagamentoTexto = Array.isArray(v.pagamentos)
+      ? v.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma} (R$ ${Number(p.valor||0).toFixed(2)})`).join(" + ")
+      : (PAG_LABEL[v.pagamento] || v.pagamento || "");
+    return [
+      dt ? dt.toLocaleDateString('pt-BR') : "",
+      dt ? dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : "",
+      v.cliente || "",
+      itensTexto,
+      pagamentoTexto,
+      v.cupom || "",
+      Number(v.subtotal||0).toFixed(2),
+      Number(v.desconto||0).toFixed(2),
+      Number(v.total||0).toFixed(2),
+    ].map(campo => `"${String(campo).replace(/"/g, '""')}"`).join(";");
+  });
+  const csv = "﻿" + [cabecalho.join(";"), ...linhas].join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  const mesStr = document.getElementById("relatorio-mes").value || mesAtualStr();
+  a.href = url;
+  a.download = `vendas-${mesStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ── CONFIGURAÇÕES ─────────────────────────────────────────────────────────
+const CONFIG_PADRAO = {
+  nomeLoja: "Burger House",
+  whatsapp: "558182362638",
+  retiradaDias: [0,1,2,3,4,5,6],
+  retiradaHoraInicio: "08:00",
+  retiradaHoraFim: "18:00",
+  retiradaIntervalo: 60,
+  funcionamentoDias: [0,1,2,3,4,5,6],
+  funcionamentoHoraInicio: "08:00",
+  funcionamentoHoraFim: "22:00",
+  taxaEntrega: 0,
+  bannerUrl: "",
+  corPrimaria: "#D4AF37",
+  corSecundaria: "#1C1C1C",
+  corDestaque: "#E8A33D"
+};
+
+async function carregarConfiguracoes() {
+  try {
+    const doc = await db.collection("configuracoes").doc("geral").get();
+    const cfg = doc.exists ? { ...CONFIG_PADRAO, ...doc.data() } : CONFIG_PADRAO;
+    document.title = cfg.nomeLoja + " · Admin";
+    document.getElementById("login-titulo").textContent = cfg.nomeLoja + " Admin";
+    document.getElementById("topbar-titulo").textContent = cfg.nomeLoja + " Admin";
+    document.getElementById("config-nome-loja").value  = cfg.nomeLoja;
+    document.getElementById("config-whatsapp").value   = cfg.whatsapp;
+    document.getElementById("config-hora-inicio").value = cfg.retiradaHoraInicio;
+    document.getElementById("config-hora-fim").value    = cfg.retiradaHoraFim;
+    document.getElementById("config-intervalo").value   = cfg.retiradaIntervalo;
+    for (let i = 0; i <= 6; i++) {
+      document.getElementById("config-dia-" + i).checked = cfg.retiradaDias.includes(i);
+    }
+    document.getElementById("config-func-hora-inicio").value = cfg.funcionamentoHoraInicio;
+    document.getElementById("config-func-hora-fim").value    = cfg.funcionamentoHoraFim;
+    for (let i = 0; i <= 6; i++) {
+      document.getElementById("config-func-dia-" + i).checked = cfg.funcionamentoDias.includes(i);
+    }
+    document.getElementById("config-taxa-entrega").value = cfg.taxaEntrega || 0;
+    document.getElementById("config-banner-imagem").value = cfg.bannerUrl || "";
+    const previewAtual = document.getElementById("config-banner-preview-atual");
+    if (cfg.bannerUrl) { previewAtual.src = cfg.bannerUrl; previewAtual.style.display = "block"; }
+    else { previewAtual.style.display = "none"; }
+    document.getElementById("config-logo-imagem").value = cfg.logoUrl || "";
+    const previewLogoAtual = document.getElementById("config-logo-preview-atual");
+    if (cfg.logoUrl) { previewLogoAtual.src = cfg.logoUrl; previewLogoAtual.style.display = "block"; }
+    else { previewLogoAtual.style.display = "none"; }
+    if (cfg.logoUrl) {
+      document.getElementById("topbar-logo-img").src = cfg.logoUrl;
+      document.getElementById("topbar-logo-img").style.display = "inline-block";
+      document.getElementById("topbar-logo-icon").style.display = "none";
+      document.getElementById("login-logo-img").src = cfg.logoUrl;
+    }
+    document.getElementById("config-cor-primaria").value   = cfg.corPrimaria;
+    document.getElementById("config-cor-secundaria").value = cfg.corSecundaria;
+    document.getElementById("config-cor-destaque").value   = cfg.corDestaque;
+    resetarUploadBanner();
+    resetarUploadLogo();
+  } catch(e) { toast("Erro ao carregar configurações: " + e.message, "err"); }
+}
+
+function resetarUploadBanner() {
+  _bannerArquivoSelecionado = null;
+  alternarAbaImagemBanner("url");
+  document.getElementById("config-banner-upload-preview").style.display = "none";
+  document.getElementById("config-banner-imagem-file").value             = "";
+  document.getElementById("config-banner-upload-preview-img").src        = "";
+  document.getElementById("config-banner-upload-filename").textContent   = "";
+}
+
+async function salvarConfiguracoes() {
+  const nomeLoja  = document.getElementById("config-nome-loja").value.trim();
+  const whatsapp  = document.getElementById("config-whatsapp").value.trim().replace(/\D/g, "");
+  const horaInicio = document.getElementById("config-hora-inicio").value;
+  const horaFim    = document.getElementById("config-hora-fim").value;
+  const intervalo  = parseInt(document.getElementById("config-intervalo").value, 10) || 60;
+  const retiradaDias = [];
+  for (let i = 0; i <= 6; i++) {
+    if (document.getElementById("config-dia-" + i).checked) retiradaDias.push(i);
+  }
+  const funcHoraInicio = document.getElementById("config-func-hora-inicio").value;
+  const funcHoraFim    = document.getElementById("config-func-hora-fim").value;
+  const funcionamentoDias = [];
+  for (let i = 0; i <= 6; i++) {
+    if (document.getElementById("config-func-dia-" + i).checked) funcionamentoDias.push(i);
+  }
+  const taxaEntrega = parseFloat(document.getElementById("config-taxa-entrega").value) || 0;
+  const corPrimaria   = document.getElementById("config-cor-primaria").value;
+  const corSecundaria = document.getElementById("config-cor-secundaria").value;
+  const corDestaque   = document.getElementById("config-cor-destaque").value;
+
+  if (!nomeLoja || !whatsapp) { toast("Preencha nome da loja e WhatsApp.", "err"); return; }
+  if (!horaInicio || !horaFim || horaInicio >= horaFim) { toast("Verifique o horário de início e fim da retirada.", "err"); return; }
+  if (!retiradaDias.length) { toast("Selecione ao menos um dia para retirada.", "err"); return; }
+  if (!funcHoraInicio || !funcHoraFim || funcHoraInicio >= funcHoraFim) { toast("Verifique o horário de funcionamento da loja.", "err"); return; }
+  if (!funcionamentoDias.length) { toast("Selecione ao menos um dia de funcionamento da loja.", "err"); return; }
+
+  // Resolve banner: upload tem prioridade sobre URL
+  let bannerUrl = document.getElementById("config-banner-imagem").value.trim();
+  if (_bannerArquivoSelecionado) {
+    try {
+      bannerUrl = await fazerUploadImagem(_bannerArquivoSelecionado, 1600);
+    } catch(e) {
+      toast("Erro ao processar o banner: " + e.message, "err");
+      return;
+    }
+  }
+
+  // Resolve logo: foto recortada (300x300) tem prioridade sobre URL
+  let logoUrl = document.getElementById("config-logo-imagem").value.trim();
+  if (_logoCortada) logoUrl = _logoCortada;
+
+  try {
+    await db.collection("configuracoes").doc("geral").set({
+      nomeLoja, whatsapp, retiradaDias,
+      retiradaHoraInicio: horaInicio,
+      retiradaHoraFim: horaFim,
+      retiradaIntervalo: intervalo,
+      funcionamentoDias,
+      funcionamentoHoraInicio: funcHoraInicio,
+      funcionamentoHoraFim: funcHoraFim,
+      taxaEntrega,
+      bannerUrl, logoUrl, corPrimaria, corSecundaria, corDestaque
+    });
+    toast("Configurações salvas!", "ok");
+    await carregarConfiguracoes();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────────────
+function abrirModal(id)  { document.getElementById(id).classList.add("show"); }
+function fecharModal(id) {
+  document.getElementById(id).classList.remove("show");
+  if (id === "modal-crop" && _cropper) { _cropper.destroy(); _cropper = null; }
+  if (id === "modal-crop-logo" && _cropperLogo) { _cropperLogo.destroy(); _cropperLogo = null; }
+}
+document.querySelectorAll(".modal-overlay").forEach(o => {
+  o.addEventListener("click", e => { if (e.target === o) fecharModal(o.id); });
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".modal-overlay.show").forEach(o => fecharModal(o.id));
+});
+
+// ── ATALHOS DE TECLADO DO PDV ────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  const pdvAtivo = document.getElementById("tab-pdv")?.classList.contains("active");
+  if (!pdvAtivo) return;
+  const modalAberto = document.querySelector(".modal-overlay.show");
+  if (modalAberto) return;
+
+  if (e.key === "F2") {
+    e.preventDefault();
+    document.getElementById("pdv-busca").focus();
+  } else if (e.key === "F4") {
+    e.preventDefault();
+    pdvFinalizarVenda();
+  } else if (e.key === "Escape" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "SELECT") {
+    if (pdvCarrinho.length) pdvLimparCarrinho();
+  }
+});
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+let _toastTimer;
+function toast(msg, tipo = "ok") {
+  const el = document.getElementById("toast");
+  el.textContent = tipo === "ok" ? "✔ " + msg : "✘ " + msg;
+  el.className = "show " + tipo;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.className = "", 3200);
+}
+
+// ── AUTO-INIT ─────────────────────────────────────────────────────────────
+if (sessionStorage.getItem("admin_ok") === "1") inicializar();
+</script>
+</body>
+</html>
