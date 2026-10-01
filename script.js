@@ -1015,6 +1015,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                     endereco: document.getElementById("delivery-address").value.trim(),
                   }
                 : { nome: document.getElementById("pickup-name").value.trim() };
+            // Retirada não tem forma de pagamento pré-selecionada (o cliente
+            // paga na hora, no balcão) — só delivery escolhe isso no carrinho.
+            const formaPagamento = tipoEntrega === "delivery"
+                ? document.querySelector('input[name="payment"]:checked')?.value || null
+                : null;
             db.collection("pedidos").add({
                 origem: tipoEntrega,
                 numeroPedido,
@@ -1027,6 +1032,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 cupom: appliedCoupon ? appliedCoupon.codigo : null,
                 total,
                 tipoEntrega,
+                formaPagamento,
                 cliente: clienteFirestore,
                 status: "recebido",
                 fechada: false,

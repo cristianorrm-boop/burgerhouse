@@ -250,7 +250,13 @@
     </div>
     <div class="form-group">
       <label>Senha de acesso</label>
-      <input type="password" id="senha-input" placeholder="••••••••">
+      <div style="position:relative">
+        <input type="password" id="senha-input" placeholder="••••••••" style="width:100%;padding-right:40px">
+        <button type="button" onclick="alternarVisibilidadeSenha()" aria-label="Mostrar/ocultar senha"
+          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:4px">
+          <i class="fa-solid fa-eye" id="senha-olho-icone"></i>
+        </button>
+      </div>
     </div>
     <span id="login-error">E-mail ou senha inválidos.</span>
     <button class="btn btn-primary" onclick="fazerLogin()">
@@ -1006,6 +1012,14 @@ function fazerLogin() {
   });
 }
 function fazerLogout() { auth.signOut(); }
+
+function alternarVisibilidadeSenha() {
+  const input = document.getElementById("senha-input");
+  const icone = document.getElementById("senha-olho-icone");
+  const mostrando = input.type === "text";
+  input.type = mostrando ? "password" : "text";
+  icone.className = mostrando ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+}
 
 // "configuracoes" tem leitura pública, então dá pra mostrar o nome da loja
 // (e a logo) já na tela de login, antes mesmo de autenticar.
@@ -2170,9 +2184,11 @@ function renderizarCozinha() {
 function renderizarPedidosOnline() {
   const tbody = document.getElementById("pedidos-online-tabela");
   if (!tbody) return;
-  const lista = todosPedidos.filter(p => p.origem !== "mesa");
+  // Depois de "Entregue" o pedido já virou venda (vai pro Relatório) e some
+  // daqui — essa lista mostra só os que ainda estão em andamento.
+  const lista = todosPedidos.filter(p => p.origem !== "mesa" && !p.fechada);
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-bag-shopping"></i><p>Nenhum pedido online ainda.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-bag-shopping"></i><p>Nenhum pedido online em andamento.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = lista.map(p => {
@@ -2227,13 +2243,42 @@ function imprimirComanda(pedidoId) {
   window.print();
 }
 
+// Quando um pedido online (delivery/retirada) chega em "Entregue", gera um
+// registro em "vendas" (igual acontece ao fechar uma mesa) pra entrar no
+// Relatório/faturamento, e fecha o pedido — some da lista de ativos, mas
+// continua existindo (agora como venda). Pedido de mesa não passa por aqui:
+// ele só fecha pelo fluxo de "Fechar Mesa" (pode ter vários pedidos juntos).
 async function avancarStatusPedido(docId) {
   const p = todosPedidos.find(x => x.docId === docId);
   if (!p) return;
   const proximo = STATUS_ORDEM[STATUS_ORDEM.indexOf(p.status) + 1];
   if (!proximo) return;
   try {
-    await db.collection("pedidos").doc(docId).update({ status: proximo, atualizadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    if (proximo === "entregue" && p.origem !== "mesa") {
+      const batch = db.batch();
+      batch.update(db.collection("pedidos").doc(docId), {
+        status: proximo, fechada: true,
+        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      const vendaRef = db.collection("vendas").doc();
+      batch.set(vendaRef, {
+        itens: (p.itens || []).map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+        subtotal: p.subtotal || 0,
+        desconto: p.desconto || 0,
+        total: p.total || 0,
+        fiado: false,
+        pagamentos: [{ forma: p.formaPagamento || "A combinar", valor: p.total || 0 }],
+        pagamento: p.formaPagamento || "A combinar",
+        recebidoDinheiro: null, troco: null,
+        cliente: p.cliente?.nome || (p.origem === "delivery" ? "Cliente (entrega)" : "Cliente (retirada)"),
+        cupom: p.cupom || null,
+        pedidoOrigem: { pedidoId: docId, origem: p.origem, numeroPedido: p.numeroPedido || null },
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+    } else {
+      await db.collection("pedidos").doc(docId).update({ status: proximo, atualizadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    }
   } catch(e) { toast("Erro ao atualizar status: " + e.message, "err"); }
 }
 
