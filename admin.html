@@ -144,10 +144,6 @@
     .chip-opcao { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px; font-size: .76rem; color: var(--muted); }
     .chip-opcao-editavel { display: inline-flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: .82rem; }
     .chip-opcao-editavel button { background: none; border: none; color: var(--red); cursor: pointer; font-size: .8rem; padding: 2px 4px; }
-    .form-variacao-tipo { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
-    .form-variacao-tipo-nome { font-size: .82rem; font-weight: 700; margin-bottom: 8px; }
-    .form-variacao-opcoes { display: flex; flex-wrap: wrap; gap: 10px; }
-    .form-variacao-opcoes label { display: flex; align-items: center; gap: 5px; font-size: .82rem; cursor: pointer; }
     #toast { position: fixed; bottom: 24px; right: 24px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: .88rem; z-index: 9999; transform: translateY(80px); opacity: 0; transition: .3s; max-width: 320px; display: flex; align-items: center; gap: 10px; }
     #toast.show { transform: translateY(0); opacity: 1; }
     #toast.ok  { border-color: var(--green); color: var(--green); }
@@ -170,7 +166,7 @@
     .pdv-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
     .pdv-products { min-width: 0; }
     .pdv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: 62vh; overflow-y: auto; margin-top: 14px; padding-right: 4px; }
-    .pdv-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; text-align: center; transition: .15s; }
+    .pdv-item { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; text-align: center; transition: .15s; }
     .pdv-item:hover { border-color: var(--gold); transform: translateY(-1px); }
     .pdv-item img, .pdv-item .pdv-item-noimg { width: 100%; height: 74px; object-fit: contain; margin-bottom: 8px; border-radius: 6px; }
     .pdv-item .pdv-item-noimg { background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--muted); border: 1px dashed var(--border); }
@@ -284,7 +280,6 @@
   <div class="sidebar">
     <button class="side-btn active" onclick="mudarTab('produtos',this)"><i class="fa-solid fa-box"></i> Produtos</button>
     <button class="side-btn" onclick="mudarTab('categorias',this)"><i class="fa-solid fa-tags"></i> Categorias</button>
-    <button class="side-btn" onclick="mudarTab('variacoes',this)"><i class="fa-solid fa-shirt"></i> Variações</button>
     <button class="side-btn" onclick="mudarTab('adicionais',this)"><i class="fa-solid fa-plus-circle"></i> Adicionais</button>
     <button class="side-btn" onclick="mudarTab('cupons',this)"><i class="fa-solid fa-ticket"></i> Cupons</button>
     <button class="side-btn" onclick="mudarTab('pdv',this)"><i class="fa-solid fa-cash-register"></i> PDV</button>
@@ -331,24 +326,13 @@
       <div class="cat-grid" id="cat-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
     </div>
 
-    <div id="tab-variacoes" class="tab-panel">
-      <div class="toolbar">
-        <button class="btn btn-primary" onclick="abrirModalTipoVariacao()"><i class="fa-solid fa-plus"></i> Novo Tipo</button>
-      </div>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
-        Cadastre aqui os tipos de variação da loja (Cor, Tamanho, Voltagem...) e as opções de cada um.
-        Depois, em cada produto, você escolhe quais dessas opções ele oferece.
-      </p>
-      <div class="cat-grid" id="variacoes-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
-    </div>
-
     <div id="tab-adicionais" class="tab-panel">
       <div class="toolbar">
         <button class="btn btn-primary" onclick="abrirModalGrupoAdicional()"><i class="fa-solid fa-plus"></i> Novo Grupo</button>
       </div>
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
         Cadastre grupos de adicionais pagos (ex: "Adicionais Lanche" → Bacon +R$5, Queijo extra +R$3).
-        Depois, em cada produto, você escolhe quais grupos ele oferece. Diferente de Variações: aqui o cliente pode marcar
+        Depois, em cada produto, você escolhe quais grupos ele oferece — o cliente pode marcar
         mais de uma opção, e cada opção tem seu próprio preço.
       </p>
       <div class="cat-grid" id="adicionais-grid"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></div>
@@ -724,10 +708,6 @@
         <label class="toggle-row"><input type="checkbox" id="form-entrega" checked> Disponível para entrega</label>
       </div>
       <div class="form-group full">
-        <label>Variações <small style="color:var(--muted)">(opcional — marque as opções que este produto oferece)</small></label>
-        <div id="form-variacoes-lista" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
-      </div>
-      <div class="form-group full">
         <label>Adicionais <small style="color:var(--muted)">(opcional — marque os grupos de adicionais que este produto oferece)</small></label>
         <div id="form-adicionais-lista" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
       </div>
@@ -849,28 +829,6 @@
   </div>
 </div>
 
-<!-- MODAL TIPO DE VARIAÇÃO -->
-<div class="modal-overlay" id="modal-tipo-variacao">
-  <div class="modal">
-    <button class="modal-close" onclick="fecharModal('modal-tipo-variacao')">&times;</button>
-    <h2 id="tipo-variacao-titulo"><i class="fa-solid fa-shirt"></i> Tipo de variação</h2>
-    <input type="hidden" id="tipo-var-id-original">
-    <div class="form-group full"><label>Nome do tipo *</label><input type="text" id="tipo-var-nome" placeholder="Ex: Cor, Tamanho, Voltagem..."></div>
-    <div class="form-group full" style="margin-top:14px">
-      <label>Opções</label>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input type="text" id="tipo-var-opcao-input" placeholder="Ex: Azul" style="flex:1">
-        <button type="button" class="btn btn-ghost" onclick="adicionarOpcaoTipoVariacao()"><i class="fa-solid fa-plus"></i> Adicionar</button>
-      </div>
-      <div class="tipo-var-opcoes" id="tipo-var-opcoes-lista"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="fecharModal('modal-tipo-variacao')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarTipoVariacao()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL GRUPO DE ADICIONAL -->
 <div class="modal-overlay" id="modal-grupo-adicional">
   <div class="modal">
@@ -969,6 +927,24 @@
   </div>
 </div>
 
+<!-- MODAL ADICIONAIS DO PDV -->
+<div class="modal-overlay" id="modal-pdv-adicionais">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-pdv-adicionais')">&times;</button>
+    <h2 id="pdv-adicionais-titulo"><i class="fa-solid fa-plus-circle"></i> Adicionais</h2>
+    <input type="hidden" id="pdv-adicionais-produto-id">
+    <div id="pdv-adicionais-lista"></div>
+    <div class="form-group full" style="margin-top:14px">
+      <label>Observação <small style="color:var(--muted)">(opcional)</small></label>
+      <input type="text" id="pdv-adicionais-observacao" placeholder="Ex: sem cebola">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-pdv-adicionais')">Cancelar</button>
+      <button class="btn btn-primary" onclick="pdvConfirmarAdicionarComAdicionais()"><i class="fa-solid fa-cart-plus"></i> Adicionar ao carrinho</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAR -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal">
@@ -1054,7 +1030,6 @@ auth.onAuthStateChanged(user => {
 let todosProdutos   = [];
 let todasCategorias = [];
 let todosCupons     = [];
-let todosTiposVariacao = [];
 let todasMesas      = [];
 let todosPedidos    = [];
 let todosUsuarios   = [];
@@ -1071,7 +1046,7 @@ let _cropper = null;
 // descomentar a chamada de aplicarRestricoesDePapel() abaixo.
 async function inicializar() {
   await carregarMeuPapel();
-  await Promise.all([carregarCategorias(), carregarProdutos(), carregarCupons(), carregarConfiguracoes(), carregarTiposVariacao(), carregarGruposAdicionais(), carregarMesas()]);
+  await Promise.all([carregarCategorias(), carregarProdutos(), carregarCupons(), carregarConfiguracoes(), carregarGruposAdicionais(), carregarMesas()]);
   iniciarListenerPedidos();
   // aplicarRestricoesDePapel();
   iniciarListenerVendasHoje();
@@ -1401,7 +1376,6 @@ function abrirModalCriar() {
   document.getElementById("form-ativo").checked  = true;
   document.getElementById("form-destaque").checked = false;
   document.getElementById("form-entrega").checked = true;
-  renderizarVariacoesNoFormProduto(null);
   renderizarAdicionaisNoFormProduto(null);
   resetarUpload();
   abrirModal("modal-produto");
@@ -1421,33 +1395,9 @@ function abrirModalEditar(docId) {
   document.getElementById("form-destaque").checked   = !!p.destaque;
   document.getElementById("form-entrega").checked    = p.entrega !== false;
   setTimeout(() => { document.getElementById("form-categoria").value = p.categoria || ""; }, 0);
-  renderizarVariacoesNoFormProduto(p);
   renderizarAdicionaisNoFormProduto(p);
   resetarUpload();
   abrirModal("modal-produto");
-}
-
-// Desenha, dentro do formulário de produto, um bloco de checkboxes por tipo
-// de variação cadastrado, marcando as opções que o produto já usa (edição).
-function renderizarVariacoesNoFormProduto(produto) {
-  const cont = document.getElementById("form-variacoes-lista");
-  if (!todosTiposVariacao.length) {
-    cont.innerHTML = `<p style="font-size:.78rem;color:var(--muted)">Nenhum tipo de variação cadastrado ainda. Cadastre em Produtos → Variações.</p>`;
-    return;
-  }
-  const variacoesAtuais = produto?.variacoes || [];
-  cont.innerHTML = todosTiposVariacao.map(t => {
-    const selecionadas = variacoesAtuais.find(v => v.tipoId === t.id)?.opcoes || [];
-    return `
-      <div class="form-variacao-tipo">
-        <div class="form-variacao-tipo-nome">${t.nome}</div>
-        <div class="form-variacao-opcoes">
-          ${(t.opcoes || []).map(o => `
-            <label><input type="checkbox" class="form-variacao-opcao-check" data-tipo-id="${t.id}" data-tipo-nome="${t.nome}" value="${o}" ${selecionadas.includes(o) ? "checked" : ""}> ${o}</label>
-          `).join("")}
-        </div>
-      </div>`;
-  }).join("");
 }
 
 // Desenha, dentro do formulário de produto, um checkbox por grupo de
@@ -1487,20 +1437,11 @@ async function salvarProduto() {
   let imagem = document.getElementById("form-imagem").value.trim();
   if (_imagemProdutoCortada) imagem = _imagemProdutoCortada;
 
-  // Junta as variações marcadas (Cor, Tamanho...) por tipo
-  const variacoesMap = {};
-  document.querySelectorAll(".form-variacao-opcao-check:checked").forEach(chk => {
-    const tipoId = chk.dataset.tipoId;
-    if (!variacoesMap[tipoId]) variacoesMap[tipoId] = { tipoId, tipoNome: chk.dataset.tipoNome, opcoes: [] };
-    variacoesMap[tipoId].opcoes.push(chk.value);
-  });
-  const variacoes = Object.values(variacoesMap);
-
   // Grupos de adicionais marcados (o produto só guarda os ids; nome, opções
   // e preços continuam só no catálogo gruposAdicionais)
   const adicionaisGrupos = Array.from(document.querySelectorAll(".form-adicional-grupo-check:checked")).map(chk => chk.value);
 
-  const dados = { nome, categoria, preco, codigoBarras: codigoBarras || null, imagem, descricao, ativo, destaque, entrega, variacoes, adicionaisGrupos };
+  const dados = { nome, categoria, preco, codigoBarras: codigoBarras || null, imagem, descricao, ativo, destaque, entrega, adicionaisGrupos };
   try {
     if (docId) {
       await db.collection("produtos").doc(docId).update(dados);
@@ -1562,160 +1503,6 @@ function slugify(texto) {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-}
-
-// ── TIPOS DE VARIAÇÃO (Cor, Tamanho, etc.) ──────────────────────────────────
-// Catálogo reutilizável, no mesmo espírito de Categorias: cadastra o tipo e
-// as opções uma vez, e cada produto só escolhe quais opções ele oferece.
-async function carregarTiposVariacao() {
-  try {
-    const snap = await db.collection("tiposVariacao").get();
-    todosTiposVariacao = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-  } catch(e) {
-    todosTiposVariacao = [];
-    toast("Erro ao carregar tipos de variação: " + e.message, "err");
-  }
-  renderizarTiposVariacao();
-}
-
-function renderizarTiposVariacao() {
-  const grid = document.getElementById("variacoes-grid");
-  if (!todosTiposVariacao.length) {
-    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-shirt"></i><p>Nenhum tipo de variação cadastrado.</p></div>`;
-    return;
-  }
-  grid.innerHTML = todosTiposVariacao.map(t => `
-    <div class="tipo-var-card">
-      <div class="tipo-var-card-head">
-        <div class="tipo-var-nome">${t.nome}</div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" onclick="abrirModalTipoVariacaoEditar('${t.docId}')"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoTipoVariacao('${t.docId}','${(t.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-      <div class="tipo-var-opcoes">
-        ${(t.opcoes||[]).map(o => `<span class="chip-opcao">${o}</span>`).join("") || '<span style="font-size:.78rem;color:var(--muted)">Sem opções</span>'}
-      </div>
-    </div>`).join("");
-}
-
-// Enquanto o modal de tipo de variação está aberto, as opções ficam nesta
-// lista em memória (arrays de texto) até o usuário clicar em Salvar.
-let _opcoesTipoVariacaoEmEdicao = [];
-
-function renderizarChipsEdicaoTipoVariacao() {
-  const cont = document.getElementById("tipo-var-opcoes-lista");
-  if (!_opcoesTipoVariacaoEmEdicao.length) {
-    cont.innerHTML = `<span style="font-size:.78rem;color:var(--muted)">Nenhuma opção adicionada ainda.</span>`;
-    return;
-  }
-  cont.innerHTML = _opcoesTipoVariacaoEmEdicao.map(o => `
-    <span class="chip-opcao-editavel">${o} <button type="button" onclick="removerOpcaoTipoVariacao('${o.replace(/'/g,"\\'")}')" title="Remover"><i class="fa-solid fa-xmark"></i></button></span>
-  `).join("");
-}
-
-function adicionarOpcaoTipoVariacao() {
-  const input = document.getElementById("tipo-var-opcao-input");
-  const valor = input.value.trim();
-  if (!valor) return;
-  if (_opcoesTipoVariacaoEmEdicao.some(o => o.toLowerCase() === valor.toLowerCase())) {
-    toast("Essa opção já foi adicionada.", "err");
-    return;
-  }
-  _opcoesTipoVariacaoEmEdicao.push(valor);
-  input.value = "";
-  input.focus();
-  renderizarChipsEdicaoTipoVariacao();
-}
-
-function removerOpcaoTipoVariacao(valor) {
-  const docIdOriginal = document.getElementById("tipo-var-id-original").value;
-  if (docIdOriginal) {
-    const emUsoPor = produtosQueUsamOpcaoDeVariacao(docIdOriginal, valor);
-    if (emUsoPor.length) {
-      toast(`"${valor}" está em uso em: ${emUsoPor.join(", ")}. Remova essa opção dos produtos antes.`, "err");
-      return;
-    }
-  }
-  _opcoesTipoVariacaoEmEdicao = _opcoesTipoVariacaoEmEdicao.filter(o => o !== valor);
-  renderizarChipsEdicaoTipoVariacao();
-}
-
-function abrirModalTipoVariacao() {
-  document.getElementById("tipo-variacao-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo tipo de variação';
-  document.getElementById("tipo-var-id-original").value = "";
-  document.getElementById("tipo-var-nome").value = "";
-  document.getElementById("tipo-var-opcao-input").value = "";
-  _opcoesTipoVariacaoEmEdicao = [];
-  renderizarChipsEdicaoTipoVariacao();
-  abrirModal("modal-tipo-variacao");
-}
-
-function abrirModalTipoVariacaoEditar(docId) {
-  const t = todosTiposVariacao.find(x => x.docId === docId);
-  if (!t) return;
-  document.getElementById("tipo-variacao-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar tipo de variação';
-  document.getElementById("tipo-var-id-original").value = docId;
-  document.getElementById("tipo-var-nome").value = t.nome || "";
-  document.getElementById("tipo-var-opcao-input").value = "";
-  _opcoesTipoVariacaoEmEdicao = [...(t.opcoes || [])];
-  renderizarChipsEdicaoTipoVariacao();
-  abrirModal("modal-tipo-variacao");
-}
-
-async function salvarTipoVariacao() {
-  const docIdOriginal = document.getElementById("tipo-var-id-original").value;
-  const nome = document.getElementById("tipo-var-nome").value.trim();
-  if (!nome) { toast("Preencha o nome do tipo.", "err"); return; }
-  if (!_opcoesTipoVariacaoEmEdicao.length) { toast("Adicione ao menos uma opção.", "err"); return; }
-
-  try {
-    if (docIdOriginal) {
-      const atual = todosTiposVariacao.find(x => x.docId === docIdOriginal);
-      const id = atual?.id || docIdOriginal;
-      await db.collection("tiposVariacao").doc(docIdOriginal).update({ nome, id, opcoes: _opcoesTipoVariacaoEmEdicao });
-    } else {
-      const id = slugify(nome);
-      await db.collection("tiposVariacao").doc(id).set({ nome, id, opcoes: _opcoesTipoVariacaoEmEdicao });
-    }
-    toast("Tipo de variação salvo!", "ok");
-    fecharModal("modal-tipo-variacao");
-    await carregarTiposVariacao();
-  } catch(e) { toast("Erro: " + e.message, "err"); }
-}
-
-// Lista os nomes dos produtos que usam uma opção específica de um tipo —
-// usado pra bloquear exclusão/remoção quando "está em uso".
-function produtosQueUsamOpcaoDeVariacao(tipoId, opcao) {
-  return todosProdutos
-    .filter(p => (p.variacoes || []).some(v => v.tipoId === tipoId && (v.opcoes || []).includes(opcao)))
-    .map(p => p.nome);
-}
-
-// Lista os nomes dos produtos que usam QUALQUER opção de um tipo inteiro —
-// usado pra bloquear a exclusão do tipo todo.
-function produtosQueUsamTipoDeVariacao(tipoId) {
-  return todosProdutos
-    .filter(p => (p.variacoes || []).some(v => v.tipoId === tipoId))
-    .map(p => p.nome);
-}
-
-function confirmarExclusaoTipoVariacao(docId, nome) {
-  const emUsoPor = produtosQueUsamTipoDeVariacao(docId);
-  if (emUsoPor.length) {
-    toast(`"${nome}" está em uso em: ${emUsoPor.join(", ")}. Remova essa variação desses produtos antes de excluir.`, "err");
-    return;
-  }
-  document.getElementById("confirm-msg").textContent = `Excluir o tipo de variação "${nome}"? Esta ação não pode ser desfeita.`;
-  document.getElementById("confirm-ok-btn").onclick = async () => {
-    try {
-      await db.collection("tiposVariacao").doc(docId).delete();
-      toast("Excluído com sucesso.", "ok");
-      fecharModal("confirm-modal");
-      await carregarTiposVariacao();
-    } catch(e) { toast("Erro: " + e.message, "err"); }
-  };
-  abrirModal("confirm-modal");
 }
 
 // ── GRUPOS DE ADICIONAIS (Bacon, Queijo extra, etc.) ────────────────────────
@@ -1902,8 +1689,14 @@ async function salvarCategoria() {
 async function carregarMesas() {
   try {
     const snap = await db.collection("mesas").get();
+    // Ordena pela ordem de cadastro (criadoEm), não pelo nome — assim
+    // "Comanda 8" não pula pra frente de "Mesa 1" por ordem alfabética.
     todasMesas = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
-      .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { numeric: true }));
+      .sort((a, b) => {
+        const ta = a.criadoEm?.toMillis ? a.criadoEm.toMillis() : 0;
+        const tb = b.criadoEm?.toMillis ? b.criadoEm.toMillis() : 0;
+        return ta - tb;
+      });
     renderizarMesas();
   } catch(e) { toast("Erro ao carregar mesas: " + e.message, "err"); }
 }
@@ -2538,17 +2331,80 @@ function renderPdvGrid() {
     <div class="pdv-item" onclick="pdvAdicionarItem('${p.docId}')">
       ${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
       <div class="pdv-item-noimg" ${p.imagem ? "style='display:none'" : ""}><i class="fa-solid fa-image"></i></div>
+      ${(p.adicionaisGrupos || []).length ? `<span style="position:absolute;top:6px;right:6px;background:var(--gold);color:#fff;border-radius:999px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.68rem" title="Tem adicionais"><i class="fa-solid fa-plus"></i></span>` : ""}
       <div class="pdv-item-nome">${p.nome}</div>
       <div class="pdv-item-preco">R$ ${Number(p.preco||0).toFixed(2).replace('.',',')}</div>
     </div>`).join("");
 }
 
+// Produto com adicionais cadastrados abre um popup de seleção (igual o site
+// já faz); sem adicionais, adiciona direto com um clique só, como sempre foi.
 function pdvAdicionarItem(docId) {
   const p = todosProdutos.find(x => x.docId === docId);
   if (!p) return;
-  const item = pdvCarrinho.find(i => i.docId === docId);
+  if ((p.adicionaisGrupos || []).length) {
+    pdvAbrirModalAdicionais(docId);
+    return;
+  }
+  pdvAdicionarAoCarrinho(docId, [], null);
+}
+
+function pdvAbrirModalAdicionais(docId) {
+  const p = todosProdutos.find(x => x.docId === docId);
+  if (!p) return;
+  document.getElementById("pdv-adicionais-titulo").innerHTML = `<i class="fa-solid fa-plus-circle"></i> ${p.nome}`;
+  document.getElementById("pdv-adicionais-produto-id").value = docId;
+  document.getElementById("pdv-adicionais-observacao").value = "";
+  const grupos = (p.adicionaisGrupos || []).map(id => todosGruposAdicionais.find(g => g.docId === id)).filter(Boolean);
+  const cont = document.getElementById("pdv-adicionais-lista");
+  if (!grupos.length) {
+    cont.innerHTML = `<p style="font-size:.82rem;color:var(--muted)">Esse produto não tem adicionais cadastrados.</p>`;
+  } else {
+    cont.innerHTML = grupos.map(g => `
+      <div style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:.85rem;margin-bottom:6px">${g.nome}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${(g.opcoes || []).map(o => `
+            <label class="toggle-row" style="justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+              <span><input type="checkbox" class="pdv-adicional-check" data-grupo-nome="${g.nome}" data-opcao-nome="${o.nome}" data-preco="${o.preco}"> ${o.nome}</span>
+              <span style="font-weight:700;color:var(--gold)">+ R$ ${Number(o.preco || 0).toFixed(2).replace('.', ',')}</span>
+            </label>`).join("")}
+        </div>
+      </div>`).join("");
+  }
+  abrirModal("modal-pdv-adicionais");
+}
+
+function pdvConfirmarAdicionarComAdicionais() {
+  const docId = document.getElementById("pdv-adicionais-produto-id").value;
+  const adicionais = Array.from(document.querySelectorAll(".pdv-adicional-check:checked")).map(chk => ({
+    grupoNome: chk.dataset.grupoNome,
+    opcaoNome: chk.dataset.opcaoNome,
+    preco: Number(chk.dataset.preco) || 0,
+  }));
+  const observacao = document.getElementById("pdv-adicionais-observacao").value.trim() || null;
+  fecharModal("modal-pdv-adicionais");
+  pdvAdicionarAoCarrinho(docId, adicionais, observacao);
+}
+
+function pdvPrecoComAdicionais(item) {
+  return item.preco + (item.adicionais || []).reduce((s, a) => s + (Number(a.preco) || 0), 0);
+}
+
+// Mesma lógica de "linha separada por combinação" do carrinho do site: dois
+// lançamentos do mesmo produto só juntam a quantidade se tiverem os mesmos
+// adicionais e a mesma observação.
+function pdvAdicionarAoCarrinho(docId, adicionais, observacao) {
+  const p = todosProdutos.find(x => x.docId === docId);
+  if (!p) return;
+  const chave = JSON.stringify([...(adicionais || [])].sort((a, b) => (a.opcaoNome > b.opcaoNome ? 1 : -1)));
+  const item = pdvCarrinho.find(i =>
+    i.docId === docId &&
+    JSON.stringify([...(i.adicionais || [])].sort((a, b) => (a.opcaoNome > b.opcaoNome ? 1 : -1))) === chave &&
+    (i.observacao || null) === (observacao || null)
+  );
   if (item) item.qtd += 1;
-  else pdvCarrinho.push({ docId, nome: p.nome, preco: Number(p.preco||0), qtd: 1 });
+  else pdvCarrinho.push({ docId, nome: p.nome, preco: Number(p.preco || 0), qtd: 1, adicionais: adicionais || [], observacao: observacao || null });
   renderPdvCart();
   // Devolve o foco pro campo de busca, pra o próximo produto (por clique ou
   // leitor de código de barras) já cair no lugar certo.
@@ -2576,16 +2432,18 @@ function pdvBarcodeKeydown(e) {
   }
 }
 
-function pdvAlterarQtd(docId, delta) {
-  const item = pdvCarrinho.find(i => i.docId === docId);
+// Endereça pela posição no carrinho, não pelo docId — um mesmo produto pode
+// ter mais de uma linha (combinações diferentes de adicionais/observação).
+function pdvAlterarQtd(index, delta) {
+  const item = pdvCarrinho[index];
   if (!item) return;
   item.qtd += delta;
-  if (item.qtd <= 0) pdvCarrinho = pdvCarrinho.filter(i => i.docId !== docId);
+  if (item.qtd <= 0) pdvCarrinho.splice(index, 1);
   renderPdvCart();
 }
 
-function pdvRemoverItem(docId) {
-  pdvCarrinho = pdvCarrinho.filter(i => i.docId !== docId);
+function pdvRemoverItem(index) {
+  pdvCarrinho.splice(index, 1);
   renderPdvCart();
 }
 
@@ -2624,7 +2482,7 @@ function pdvToggleFiado() {
 }
 
 function pdvCalcularSubtotal() {
-  return pdvCarrinho.reduce((s, i) => s + i.preco * i.qtd, 0);
+  return pdvCarrinho.reduce((s, i) => s + pdvPrecoComAdicionais(i) * i.qtd, 0);
 }
 
 function pdvCalcularDesconto(subtotal) {
@@ -2664,19 +2522,21 @@ function renderPdvCart() {
   if (!pdvCarrinho.length) {
     cont.innerHTML = `<div class="pdv-cart-empty">Carrinho vazio. Clique em um produto para adicionar.</div>`;
   } else {
-    cont.innerHTML = pdvCarrinho.map(i => `
+    cont.innerHTML = pdvCarrinho.map((i, index) => `
       <div class="pdv-cart-item">
         <div class="pdv-cart-item-info">
           <div class="pdv-cart-item-nome">${i.nome}</div>
-          <div class="pdv-cart-item-preco">R$ ${i.preco.toFixed(2).replace('.',',')} un.</div>
+          ${i.adicionais && i.adicionais.length ? `<div style="font-size:.74rem;color:var(--muted)">+ ${i.adicionais.map(a => a.opcaoNome).join(", ")}</div>` : ""}
+          ${i.observacao ? `<div style="font-size:.74rem;color:var(--muted)">Obs: ${i.observacao}</div>` : ""}
+          <div class="pdv-cart-item-preco">R$ ${pdvPrecoComAdicionais(i).toFixed(2).replace('.',',')} un.</div>
         </div>
         <div class="pdv-qty">
-          <button class="pdv-qty-btn" onclick="pdvAlterarQtd('${i.docId}',-1)">−</button>
+          <button class="pdv-qty-btn" onclick="pdvAlterarQtd(${index},-1)">−</button>
           <span>${i.qtd}</span>
-          <button class="pdv-qty-btn" onclick="pdvAlterarQtd('${i.docId}',1)">+</button>
+          <button class="pdv-qty-btn" onclick="pdvAlterarQtd(${index},1)">+</button>
         </div>
-        <div class="pdv-cart-item-total">R$ ${(i.preco*i.qtd).toFixed(2).replace('.',',')}</div>
-        <button class="pdv-remove-btn" onclick="pdvRemoverItem('${i.docId}')"><i class="fa-solid fa-trash"></i></button>
+        <div class="pdv-cart-item-total">R$ ${(pdvPrecoComAdicionais(i)*i.qtd).toFixed(2).replace('.',',')}</div>
+        <button class="pdv-remove-btn" onclick="pdvRemoverItem(${index})"><i class="fa-solid fa-trash"></i></button>
       </div>`).join("");
   }
   const subtotal  = pdvCalcularSubtotal();
@@ -2747,7 +2607,7 @@ async function pdvFinalizarVenda() {
   if (fiado) {
     if (!cliente) { toast("Informe o nome do cliente para registrar o pagamento a prazo.", "err"); return; }
     venda = {
-      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd, adicionais: i.adicionais || [], observacao: i.observacao || null })),
       subtotal, desconto, total,
       fiado: true,
       valorPago: 0,
@@ -2776,7 +2636,7 @@ async function pdvFinalizarVenda() {
     }
 
     venda = {
-      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+      itens: pdvCarrinho.map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd, adicionais: i.adicionais || [], observacao: i.observacao || null })),
       subtotal, desconto, total,
       fiado: false,
       pagamentos,
