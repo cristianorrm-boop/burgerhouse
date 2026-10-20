@@ -55,6 +55,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         deliveryFeeLineElem = document.getElementById("delivery-fee-line"),
         totalElem = document.getElementById("cart-total");
     const finishOrderBtn = document.getElementById("finish-order-btn");
+    // Carrinho em duas etapas: 1) só os itens, 2) dados de entrega/retirada + pagamento
+    const cartStep1 = document.getElementById("cart-step-1"),
+        cartStep2 = document.getElementById("cart-step-2"),
+        stepIndicator1 = document.getElementById("step-indicator-1"),
+        stepIndicator2 = document.getElementById("step-indicator-2"),
+        continuarDadosBtn = document.getElementById("continuar-dados-btn"),
+        voltarCarrinhoBtn = document.getElementById("voltar-carrinho-btn"),
+        subtotalStep1Elem = document.getElementById("cart-subtotal-step1"),
+        totalStep1Elem = document.getElementById("cart-total-step1");
     // Seletores da barra inferior
     const viewCartBanner = document.querySelector(".view-cart-banner");
     const bannerTotalElem = document.getElementById("banner-total");
@@ -448,6 +457,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         unlockScroll();
     };
 
+    const irParaEtapaDados = () => {
+        if (!carrinho.length) return;
+        cartStep1.style.display = "none";
+        cartStep2.style.display = "flex";
+        stepIndicator1.classList.remove("active");
+        stepIndicator2.classList.add("active");
+        const footerEl = cartStep2.querySelector(".cart-footer");
+        if (footerEl) footerEl.scrollTop = 0;
+    };
+    const voltarParaCarrinho = () => {
+        cartStep2.style.display = "none";
+        cartStep1.style.display = "flex";
+        stepIndicator2.classList.remove("active");
+        stepIndicator1.classList.add("active");
+    };
+
     // --- POPUP DE DETALHES DO PRODUTO ---
     // Guarda o produto aberto no popup e as opções de variação (Cor,
     // Tamanho...) que o cliente já escolheu, enquanto o popup está aberto.
@@ -794,11 +819,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             discountLineElem.style.display = "none";
         }
         totalElem.textContent = formatarMoeda(total);
+        subtotalStep1Elem.textContent = formatarMoeda(subtotal);
+        totalStep1Elem.textContent = formatarMoeda(subtotal);
         cartBadge.textContent = carrinho.reduce(
             (acc, item) => acc + item.quantidade,
             0,
         );
         finishOrderBtn.disabled = carrinho.length === 0 || !lojaAberta;
+        continuarDadosBtn.disabled = carrinho.length === 0 || !lojaAberta;
 
         if (carrinho.length > 0 && window.innerWidth <= 768) {
             bannerTotalElem.textContent = formatarMoeda(total);
@@ -1107,6 +1135,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (modoMesa) finalizarPedidoMesa();
         else finalizarPedido();
     });
+    continuarDadosBtn.addEventListener("click", irParaEtapaDados);
+    voltarCarrinhoBtn.addEventListener("click", voltarParaCarrinho);
     viewCartBannerBtn.addEventListener("click", abrirCarrinho);
 
     productModalCloseBtn.addEventListener("click", fecharModalProduto);

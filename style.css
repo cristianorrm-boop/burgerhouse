@@ -217,19 +217,37 @@ header{
 .cart-header h3{font-size:1.25rem;color:var(--text-color)}
 .close-cart-btn{background:none;border:none;font-size:2rem;cursor:pointer;color:var(--text-color)}
 
-/* Itens do carrinho e formulário ficam numa rolagem só (.cart-scroll). Os
-   itens começam ocupando metade do espaço (e rolam por conta própria se
-   tiver muito item); o formulário vem logo depois preenchendo a outra
-   metade e, como é "sticky", conforme o cliente rola pra baixo pra
-   continuar preenchendo, ele gruda no topo e cobre os itens — que não
-   precisam mais aparecer, já que aquela parte já foi validada. */
-.cart-scroll{flex:1;min-height:0;overflow-y:auto}
-.cart-body{padding:1.5rem;height:50%;overflow-y:auto}
+/* Carrinho em duas etapas: 1) só os itens (.cart-step-1), 2) dados de
+   entrega/retirada + pagamento (.cart-step-2) — só uma fica visível por vez. */
+.cart-body{padding:1.5rem;flex:1 1 auto;min-height:0;overflow-y:auto}
 .cart-footer{
   padding:1rem 1.5rem;border-top:1px solid var(--border-color);background:var(--light-2);
-  position:sticky;top:0;z-index:2;
+  overflow-y:auto;flex-grow:1;
 }
-.finish-order-btn-container{padding:1rem 1.5rem;border-top:1px solid var(--border-color);background:var(--surface);box-shadow:0 -2px 5px rgba(var(--shadow-color),.05)}
+.finish-order-btn-container{
+  padding:1rem 1.5rem;border-top:1px solid var(--border-color);background:var(--surface);box-shadow:0 -2px 5px rgba(var(--shadow-color),.05);
+  display:flex;gap:.7rem;
+}
+
+.cart-step-indicator{
+  display:flex;align-items:center;justify-content:center;gap:.6rem;
+  padding:.7rem 1.5rem;border-bottom:1px solid var(--border-color);
+  background:var(--light-2);font-size:.78rem;color:#6b7280;
+}
+.cart-step-indicator .step{display:flex;align-items:center;gap:.4rem;opacity:.55;transition:opacity .2s,color .2s}
+.cart-step-indicator .step.active{opacity:1;color:var(--primary-strong);font-weight:700}
+.cart-step-indicator .step-sep{opacity:.35;font-size:.7rem}
+.cart-step{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
+.cart-step1-resumo{padding:1rem 1.5rem 0;border-top:1px solid var(--border-color)}
+.cart-step1-resumo .summary-line{display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.95rem;color:#6b7280}
+.cart-step1-resumo .summary-line.total{font-size:1.2rem;font-weight:800;color:var(--text-color)}
+.cart-step1-resumo .summary-line.total span:last-child{color:var(--primary-strong)}
+.btn-voltar-carrinho{
+  flex:0 0 auto;padding:1rem 1.1rem;font-size:1rem;font-weight:700;
+  background:transparent;color:var(--text-color);border:1px solid var(--border-color);border-radius:.7rem;cursor:pointer;
+  transition:border-color .2s,color .2s;
+}
+.btn-voltar-carrinho:hover{border-color:var(--primary-color);color:var(--primary-strong)}
 
 .cart-body::-webkit-scrollbar,.cart-footer::-webkit-scrollbar{width:6px}
 .cart-body::-webkit-scrollbar-track,.cart-footer::-webkit-scrollbar-track{background:var(--light-2)}
@@ -387,7 +405,7 @@ header{
 .summary-line.discount-line{color:var(--success-color);font-weight:700}
 
 .finish-order-btn{
-  width:100%;padding:1rem;font-size:1.1rem;font-weight:800;color:#fff;
+  flex:1;padding:1rem;font-size:1.1rem;font-weight:800;color:#fff;
   background:linear-gradient(135deg,var(--secondary-color),#111827);
   border:none;border-radius:.7rem;cursor:pointer;transition:filter .2s, transform .1s;
   box-shadow:0 10px 26px rgba(2,6,23,.18);

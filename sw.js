@@ -1,10 +1,10 @@
-const CACHE_NAME = "burger-house-shell-v1";
+const CACHE_NAME = "burger-house-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css",
-  "./script.js",
-  "./firebase-config.js",
+  "./style.css?v=00.007",
+  "./script.js?v=00.007",
+  "./firebase-config.js?v=00.007",
   "./manifest.json",
 ];
 
