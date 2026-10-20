@@ -967,10 +967,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const nome = document.getElementById("delivery-name").value;
             const phone = document.getElementById("delivery-phone").value;
             const address = document.getElementById("delivery-address").value;
-            const modoEntrega = document.querySelector(
-                'input[name="delivery-mode"]:checked',
-            ).value;
-            const horario = document.getElementById("delivery-horario").value;
             const recebedor = document.getElementById("delivery-recebedor").value.trim();
 
             const paymentMethod = document.querySelector(
@@ -983,7 +979,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     ? ` (Troco para R$ ${troco})`
                     : " (Não precisa de troco)";
             }
-            mensagem += `*Tipo de Pedido:* Entrega\n\n*Nome:* ${nome}\n*Telefone:* ${phone}\n*Endereço:* ${address}\n*Como entregar:* ${modoEntrega}${horario ? `\n*Horário desejado:* ${horario}` : ""}\n*Quem vai receber:* ${recebedor || nome}\n\n${paymentInfo}`;
+            mensagem += `*Tipo de Pedido:* Entrega\n\n*Nome:* ${nome}\n*Telefone:* ${phone}\n*Endereço:* ${address}\n*Quem vai receber:* ${recebedor || nome}\n\n${paymentInfo}`;
         } else {
             const nome = document.getElementById("pickup-name").value;
             const dataInput = document.getElementById("pickup-date").value;
@@ -1252,14 +1248,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
 
     document
-        .querySelectorAll('input[name="payment"], input[name="delivery-mode"]')
+        .querySelectorAll('input[name="payment"]')
         .forEach((radio) => {
             radio.addEventListener("change", (e) => {
                 if (e.target.name === "payment") {
                     trocoContainer.style.display =
                         e.target.value === "Dinheiro" ? "block" : "none";
                 }
-                // Só desmarca visualmente as opções do mesmo grupo (payment ou delivery-mode)
+                // Só desmarca visualmente as opções do mesmo grupo (payment)
                 document
                     .querySelectorAll(`input[name="${e.target.name}"]`)
                     .forEach((r) => r.closest(".payment-option").classList.remove("selected"));
