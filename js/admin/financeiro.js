@@ -1,10 +1,11 @@
 // Financeiro: resumo do mês, contas a pagar e contas a receber (com parcelas, recorrência e CSV).
 import { db } from '../db.js?v=2.0.0-f1';
+import { caixaRecebido, fiadoEmAberto, msDe } from '../nucleo/faturamento.js?v=2.0.0-f1';
 import { moeda, esc, modal, confirmar, toast, hojeISO, dataBR } from '../utils.js?v=2.0.0-f1';
 
 const CATS = {
   contas_pagar: ['Fornecedores', 'Insumos', 'Aluguel', 'Contas de consumo', 'Salários', 'Impostos', 'Manutenção', 'Marketing', 'Outros'],
-  contas_receber: ['Eventos', 'Cartões', 'Convênios', 'Fiado', 'Outros']
+  contas_receber: ['Eventos', 'Cartões', 'Convênios', 'Outros']
 };
 
 export function baixarCSV(nome, linhas) {
@@ -59,8 +60,14 @@ export function render(el) {
   async function carregarVendas() {
     const [a, m] = E.mes.split('-').map(Number);
     const ini = new Date(a, m - 1, 1).getTime(), fim = new Date(a, m, 1).getTime();
-    const l = await db.list('pedidos', { where: [['criadoEm', '>=', ini], ['criadoEm', '<', fim]] }).catch(() => []);
-    E.vendas = l.filter(p => p.status === 'entregue');
+    const [doMes, fiados] = await Promise.all([
+      db.list('vendas', { where: [['criadoEm', '>=', ini], ['criadoEm', '<', fim]] }).catch(() => []),
+      db.list('vendas', { where: [['fiado', '==', true]] }).catch(() => [])
+    ]);
+    const porId = new Map();
+    [...doMes, ...fiados].forEach(v => porId.set(v.id, v));
+    E.vendas = [...porId.values()];
+    E.periodo = [ini, fim];
     if (E.aba === 'resumo') desenhar();
   }
 
@@ -73,7 +80,10 @@ export function render(el) {
   function resumo() {
     const doMes = (c, campo) => (c[campo] || '').startsWith(E.mes);
     const soma = arr => arr.reduce((s, c) => s + (Number(c.valor) || 0), 0);
-    const vendas = E.vendas.reduce((s, p) => s + p.total, 0);
+    const [pIni, pFim] = E.periodo || [0, 0];
+    const vendas = caixaRecebido(E.vendas, pIni, pFim);
+    const nVendas = E.vendas.filter(v => { const t = msDe(v.criadoEm); return v.fiado !== true && t !== null && t >= pIni && t < pFim; }).length;
+    const fiadoAberto = fiadoEmAberto(E.vendas).reduce((s, f) => s + f.saldo, 0);
     const pagas = E.contas_pagar.filter(c => c.pago && doMes(c, 'pagoEm'));
     const aPagar = E.contas_pagar.filter(c => !c.pago && doMes(c, 'vencimento'));
     const recebidas = E.contas_receber.filter(c => c.pago && doMes(c, 'pagoEm'));
@@ -93,8 +103,8 @@ export function render(el) {
     el.querySelector('#acoes-aba').innerHTML = '';
     el.querySelector('#area').innerHTML = `
       <div class="metricas">
-        <div class="card metrica"><small><i class="ti ti-shopping-cart"></i>Vendas do cardápio</small><strong>${moeda(vendas)}</strong><span class="sub">${E.vendas.length} pedidos finalizados</span></div>
-        <div class="card metrica ok"><small><i class="ti ti-arrow-down-left"></i>Recebido</small><strong>${moeda(soma(recebidas))}</strong><span class="sub">A receber: ${moeda(soma(aReceber))}</span></div>
+        <div class="card metrica"><small><i class="ti ti-shopping-cart"></i>Vendas recebidas no mês</small><strong>${moeda(vendas)}</strong><span class="sub">${nVendas} venda(s) + fiado pago</span></div>
+        <div class="card metrica ok"><small><i class="ti ti-arrow-down-left"></i>Recebido</small><strong>${moeda(soma(recebidas))}</strong><span class="sub">A receber: ${moeda(soma(aReceber))}<br>Pagamento a prazo (fiado): ${moeda(fiadoAberto)}</span></div>
         <div class="card metrica danger"><small><i class="ti ti-arrow-up-right"></i>Pago</small><strong>${moeda(soma(pagas))}</strong><span class="sub">A pagar: ${moeda(soma(aPagar))}</span></div>
         <div class="card metrica ${saldo >= 0 ? 'ok' : 'danger'}"><small><i class="ti ti-scale"></i>Saldo realizado</small><strong>${moeda(saldo)}</strong><span class="sub">Previsto no mês: ${moeda(previsto)}</span></div>
       </div>
