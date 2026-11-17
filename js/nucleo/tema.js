@@ -19,3 +19,9 @@ export function contraste(hexA, hexB) {
 export function corTextoSobre(hex) {
   return contraste(hex, '#1C1C1C') >= contraste(hex, '#FFFFFF') ? '#1C1C1C' : '#FFFFFF';
 }
+
+/** Rota a abrir: a desejada se permitida, senão a primeira permitida, senão null (conta sem abas). */
+export function rotaInicial(permitidas, desejada) {
+  const lista = Array.isArray(permitidas) ? permitidas : [];
+  return lista.includes(desejada) ? desejada : (lista[0] ?? null);
+}

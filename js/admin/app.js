@@ -5,7 +5,7 @@ import { semear } from '../seed.js?v=2.0.0-f1';
 import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f1';
 import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f1';
 import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
-import { ABAS_PADRAO_ATENDENTE } from '../nucleo/tema.js?v=2.0.0-f1';
+import { ABAS_PADRAO_ATENDENTE, rotaInicial } from '../nucleo/tema.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 
@@ -33,7 +33,7 @@ const ROTAS = {
 export const ABAS_PAINEL = Object.entries(ROTAS).map(([k, r]) => [k, r.nome, ABAS_PADRAO_ATENDENTE.includes(k)]);
 // Dono vê tudo; atendente vê as abas liberadas no cadastro (sem lista, usa o padrão: Pedidos, Mesas e PDV)
 const podeVer = k => store.user?.perfil === 'dono' || (Array.isArray(store.user?.abas) ? store.user.abas : ABAS_PADRAO_ATENDENTE).includes(k);
-const permitidas = () => Object.entries(ROTAS).filter(([k, r]) => podeVer(k, r));
+const permitidas = () => Object.entries(ROTAS).filter(([k, r]) => podeVer(k));
 
 function renderMenu() {
   const atual = rotaAtual();
@@ -42,8 +42,7 @@ function renderMenu() {
 }
 const rotaAtual = () => {
   const r = location.hash.replace('#/', '').split('?')[0];
-  const ok = permitidas().map(([k]) => k);
-  return ok.includes(r) ? r : ok[0];
+  return rotaInicial(permitidas().map(([k]) => k), r);
 };
 
 let limpar = null;
@@ -52,6 +51,12 @@ async function navegar() {
   const r = ROTAS[k];
   limpar?.();
   limpar = null;
+  if (!r) {
+    $('#titulo-sec').textContent = 'Painel';
+    renderMenu();
+    $('#conteudo').innerHTML = '<div class="vazio"><i class="ti ti-lock"></i>Sua conta ainda não tem abas liberadas. Peça ao dono para liberar em Configurações › Equipe.</div>';
+    return;
+  }
   $('#titulo-sec').textContent = r.nome;
   renderMenu();
   $('#app').classList.remove('menu-aberto');

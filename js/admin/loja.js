@@ -273,9 +273,9 @@ export function render(el) {
       ev.preventDefault();
       if (!f.nome.value.trim() || !/\S+@\S+\.\S+/.test(f.email.value) || f.senha.value.length < 6) { m.el.querySelector('#eq-erro').textContent = 'Preencha nome, e-mail válido e senha com 6+ caracteres.'; return; }
       const abas = [...m.el.querySelectorAll('[data-aba-perm]:checked')].map(i => i.dataset.abaPerm);
+      if (f.perfil.value === 'atendente' && !abas.length) { m.el.querySelector('#eq-erro').textContent = 'Libere ao menos uma aba.'; return; }
       // A aba PDV só existe na Fase 4: já grava o padrão do atendente para valer quando ela chegar
       if (f.perfil.value === 'atendente' && !ABAS_PAINEL.some(([k]) => k === 'pdv') && !abas.includes('pdv')) abas.push('pdv');
-      if (f.perfil.value === 'atendente' && !abas.length) { m.el.querySelector('#eq-erro').textContent = 'Libere ao menos uma aba.'; return; }
       try {
         await auth.criarMembro(f.nome.value.trim(), f.email.value.trim(), f.senha.value, f.perfil.value, abas);
         m.fechar(); toast('Pessoa adicionada');

@@ -28,3 +28,17 @@ test('cardapio so do dono e atendente usa o padrao', () => {
   assert.match(app, /cardapio:\s*\{[^}]*perfis:\s*\['dono'\]/);
   assert.match(app, /ABAS_PADRAO_ATENDENTE/);
 });
+
+import { rotaInicial } from '../js/nucleo/tema.js';
+
+test('rotaInicial: desejada permitida, senao a primeira, senao null', () => {
+  assert.equal(rotaInicial(['pedidos', 'mesas'], 'mesas'), 'mesas');
+  assert.equal(rotaInicial(['pedidos', 'mesas'], 'loja'), 'pedidos');
+  assert.equal(rotaInicial(['pedidos'], undefined), 'pedidos');
+  assert.equal(rotaInicial([], 'pedidos'), null);
+});
+
+test('Equipe valida abas marcadas antes de somar o pdv', () => {
+  const l = ler('js/admin/loja.js');
+  assert.ok(l.indexOf('Libere ao menos uma aba') < l.indexOf("abas.push('pdv')"));
+});
