@@ -4,13 +4,25 @@ import { pagamentoRotulo } from './pedidos.js?v=2.0.0-f3';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-const itemDaVenda = i => ({
-  nome: i.nome ?? '',
-  preco: num(i.preco),
-  qtd: num(i.qtd) || 1,
-  adicionais: Array.isArray(i.adicionais) ? i.adicionais.map(a => ({ ...a })) : [],
-  observacao: i.obs || i.observacao || null
-});
+const arred = n => Math.round(n * 100) / 100;
+
+// Convenção V1 do item da venda: preco base, adicionais com preço à parte.
+// Item V2 (tem produtoId) traz o preco já com os adicionais: volta ao base. Item V1 vai como está.
+function itemDaVenda(i) {
+  const lista = Array.isArray(i.adicionais) ? i.adicionais : [];
+  const v2 = i.produtoId != null;
+  const adicionais = v2
+    ? lista.map(a => ({ nome: a.nome ?? '', preco: num(a.preco), ...(a.grupo != null ? { grupo: a.grupo } : {}) }))
+    : lista.map(a => ({ ...a }));
+  const preco = v2 ? Math.max(0, arred(num(i.preco) - adicionais.reduce((s, a) => s + a.preco, 0))) : num(i.preco);
+  return {
+    nome: i.nome ?? '',
+    preco,
+    qtd: num(i.qtd) || 1,
+    adicionais,
+    observacao: i.obs || i.observacao || null
+  };
+}
 
 export const idVendaPedido = p => 'ped-' + p.id;
 

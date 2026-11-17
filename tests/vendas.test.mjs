@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { resumoVendas } from '../js/nucleo/faturamento.js';
 import {
   cuponsAContar, idVendaFechamento, deveGerarVendaAoEntregar, vendaDePedidoOnline, vendaDeFechamentoMesa, pedidosParaFechar, idVendaPedido, idVendaMesa
 } from '../js/nucleo/vendas.js';
@@ -71,4 +72,39 @@ test('idVendaFechamento: conjunto novo e sobra de tentativa anterior', () => {
 test('cuponsAContar', () => {
   const r = cuponsAContar([{ id: 'a', cupom: 'X10' }, { id: 'b', cupom: 'Y', contabilizado: true }, { id: 'c', cupom: null }, { id: 'd' }, { id: 'e', cupom: '' }]);
   assert.deepEqual(r, [{ pedidoId: 'a', cupom: 'X10' }]);
+});
+
+// D2: venda segue a convenção V1 do item (preco base + adicionais à parte).
+const itemV2 = { produtoId: '9', nome: 'X-Bacon', preco: 38, qtd: 2, obs: '', adicionais: [{ grupo: 'Extras', nome: 'Bacon', preco: 10 }] };
+const itemV1 = { nome: 'X-Tudo', preco: 30, qtd: 1, variacao: null, observacao: 'bem passado', adicionais: [{ nome: 'Ovo', preco: 3, grupoId: 'g1' }] };
+
+test('item v2 vira preco base na venda', () => {
+  const v = vendaDePedidoOnline({ ...delivery, itens: [itemV2], subtotal: 76, total: 76 }, 1);
+  assert.equal(v.itens[0].preco, 28);
+  assert.deepEqual(v.itens[0].adicionais, [{ nome: 'Bacon', preco: 10, grupo: 'Extras' }]);
+  assert.equal(v.itens[0].qtd, 2);
+});
+
+test('item v2 com adicional maior que o preco nao fica negativo', () => {
+  const v = vendaDePedidoOnline({ ...delivery, itens: [{ ...itemV2, preco: 5 }] }, 1);
+  assert.equal(v.itens[0].preco, 0);
+});
+
+test('item v1 copiado como esta', () => {
+  const v = vendaDePedidoOnline({ ...delivery, itens: [itemV1] }, 1);
+  assert.equal(v.itens[0].preco, 30);
+  assert.deepEqual(v.itens[0].adicionais, [{ nome: 'Ovo', preco: 3, grupoId: 'g1' }]);
+  assert.equal(v.itens[0].observacao, 'bem passado');
+});
+
+test('mesa mista v1 e v2', () => {
+  const v = vendaDeFechamentoMesa(mesa, [pm('a', 33, { itens: [itemV1] }), pm('b', 76, { itens: [itemV2] })], 'pix', 1);
+  assert.deepEqual(v.itens.map(i => i.preco), [30, 28]);
+  assert.equal(v.total, 109);
+});
+
+test('mais vendidos da venda v2 soma 38 x qtd', () => {
+  const v = vendaDePedidoOnline({ ...delivery, itens: [itemV2], subtotal: 76, total: 76 }, 1000);
+  const r = resumoVendas([v], 0, Infinity);
+  assert.equal(r.maisVendidos[0].valor, 76);
 });
