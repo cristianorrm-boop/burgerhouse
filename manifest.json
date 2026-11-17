@@ -1,22 +1,40 @@
 {
   "name": "Burger House",
   "short_name": "Burger House",
-  "description": "O mestre do seu cardápio.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Peça seus lanches favoritos do Burger House em poucos toques.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#1C1C1C",
   "theme_color": "#1C1C1C",
+  "categories": [
+    "food",
+    "shopping"
+  ],
   "icons": [
     {
-      "src": "./assets/logo-burger-house.png",
+      "src": "/assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./assets/logo-burger-house.png",
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }
