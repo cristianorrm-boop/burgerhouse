@@ -1,4 +1,10 @@
 // Vendas no formato da V1 (coleção `vendas`). Módulo puro: sem db, DOM ou localStorage.
+//
+// Convenção do item (fixada antes da Fase 4):
+// - Item V2 = tem produtoId (gravado pelo cardápio da V2): preco JÁ inclui os adicionais.
+// - Item V1 = sem produtoId (pedidos da V1 convertidos pela Fase 2 não têm produtoId):
+//   preco é o base e cada adicional tem o seu preço à parte.
+// - A venda grava sempre na convenção V1 (itemDaVenda); valorLinhaItem (nucleo/pedidos.js) lê as duas.
 import { nomeMesa } from './mesas.js?v=2.0.0-f3';
 import { pagamentoRotulo } from './pedidos.js?v=2.0.0-f3';
 
@@ -69,11 +75,12 @@ export function pedidosParaFechar(pedidos, mesaId) {
 
 export function vendaDeFechamentoMesa(mesa, pedidos, forma, agora) {
   const validos = pedidos.filter(p => p.status !== 'cancelado');
-  const total = validos.reduce((s, p) => s + num(p.total), 0);
+  const total = arred(validos.reduce((s, p) => s + num(p.total), 0));
+  const desconto = arred(validos.reduce((s, p) => s + num(p.desconto) + num(p.descontoFidelidade), 0));
   return {
     itens: validos.flatMap(p => (p.itens || []).map(itemDaVenda)),
-    subtotal: total,
-    desconto: 0,
+    subtotal: arred(total + desconto),
+    desconto,
     total,
     fiado: false,
     pagamentos: [{ forma, valor: total }],
@@ -85,6 +92,15 @@ export function vendaDeFechamentoMesa(mesa, pedidos, forma, agora) {
     mesaFechamento: { mesaId: mesa.id, mesaNome: nomeMesa(mesa), pedidoIds: validos.map(p => p.id) },
     criadoEm: agora
   };
+}
+
+export const MOTIVO_CONTA_FECHADA = 'Conta já fechada — atualize a tela';
+
+/** Regra do fechamento, sobre os pedidos relidos dentro da transação: nenhum sumiu, foi cancelado ou já teve a conta fechada. */
+export function podeFecharConta(pedidosRelidos) {
+  const ok = Array.isArray(pedidosRelidos) && pedidosRelidos.length > 0 &&
+    pedidosRelidos.every(p => p && p.status !== 'cancelado' && !p.contaFechada);
+  return ok ? { ok: true, motivo: null } : { ok: false, motivo: MOTIVO_CONTA_FECHADA };
 }
 
 /** Pedidos do fechamento cujo cupom ainda não foi contado no limite de usos. */

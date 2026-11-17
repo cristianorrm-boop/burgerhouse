@@ -111,6 +111,30 @@ function localAplicar(atual = {}, data) {
   return out;
 }
 
+let filaTx = Promise.resolve();
+/** Transação do modo demo: relê o armazenamento, junta as escritas e só aplica se fn terminar sem erro. */
+async function transacaoLocal(fn) {
+  mem = null; // relê o que outra aba possa ter gravado
+  const ops = [];
+  const r = await fn({
+    get: async (col, id) => { const d = colecao(col)[id]; return d ? comId(id, structuredClone(d)) : null; },
+    set: (col, id, data, merge = false) => { ops.push({ tipo: merge ? 'merge' : 'set', col, id, data }); },
+    update: (col, id, data) => { ops.push({ tipo: 'update', col, id, data }); }
+  });
+  const criados = new Set();
+  for (const o of ops) {
+    const chave = o.col + '/' + o.id;
+    if (o.tipo === 'update' && !colecao(o.col)[o.id] && !criados.has(chave)) throw new Error('Documento não encontrado');
+    criados.add(chave);
+  }
+  for (const o of ops) {
+    const c = colecao(o.col);
+    c[o.id] = localAplicar(o.tipo === 'set' ? {} : c[o.id], o.data);
+  }
+  if (ops.length) salvar();
+  return r;
+}
+
 /* ------------------------------------------------------------------ */
 /*  API pública                                                       */
 /* ------------------------------------------------------------------ */
@@ -228,6 +252,27 @@ export const db = {
       else b.set(ref, fbValores(F, o.data));
     }
     await b.commit();
+  },
+
+  /**
+   * Transação: lê e grava tudo ou nada. fn(t) recebe t.get(col, id), t.set(col, id, data, merge?)
+   * e t.update(col, id, data); todas as leituras vêm antes das escritas (regra do Firestore).
+   * Se fn lançar erro, nada é gravado e o erro sobe. Firebase: runTransaction (refaz se um doc lido mudar).
+   * Demo: lê do armazenamento local, junta as escritas e aplica todas de uma vez, num único salvar().
+   */
+  async transacao(fn) {
+    if (DEMO) {
+      // Uma de cada vez (como o isolamento do Firestore) e relendo o que outra aba gravou.
+      const vez = filaTx.then(() => transacaoLocal(fn));
+      filaTx = vez.catch(() => {});
+      return vez;
+    }
+    const { F, fs } = await firebase();
+    return F.runTransaction(fs, async tx => fn({
+      get: async (col, id) => { const s = await tx.get(F.doc(fs, col, id)); return s.exists() ? comId(s.id, s.data()) : null; },
+      set: (col, id, data, merge = false) => { tx.set(F.doc(fs, col, id), fbValores(F, data), { merge }); },
+      update: (col, id, data) => { tx.update(F.doc(fs, col, id), fbValores(F, data)); }
+    }));
   },
 
   /** Cria o pedido com número sequencial (#1, #2, ...) de forma segura. */

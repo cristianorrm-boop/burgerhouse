@@ -6,7 +6,7 @@ import { detalhe } from './pedidos.js?v=2.0.0-f3';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f3';
 import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0-f3';
 import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f3';
-import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar } from '../nucleo/vendas.js?v=2.0.0-f3';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar, podeFecharConta } from '../nucleo/vendas.js?v=2.0.0-f3';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -157,15 +157,20 @@ function fecharConta(id, fecharContaModal) {
       if (!ps.length) { toast('Conta já fechada', 'erro'); mod.fechar(); fecharContaModal(); return; }
       const forma = mod.el.querySelector('[data-forma]').value;
       const agora = Date.now();
-      const vendaId = idVendaFechamento(ps);
-      await db.lote([
-        { tipo: 'set', col: 'vendas', id: vendaId, data: vendaDeFechamentoMesa(m, ps, forma, agora) },
-        ...ps.map(p => ({ tipo: 'update', col: 'pedidos', id: p.id, data: {
+      // Transação: relê os pedidos; se outro aparelho já fechou (ou cancelou um), nada é gravado.
+      const fechados = await db.transacao(async t => {
+        const relidos = await Promise.all(ps.map(p => t.get('pedidos', p.id)));
+        const pode = podeFecharConta(relidos);
+        if (!pode.ok) throw Object.assign(new Error(pode.motivo), { contaFechada: true });
+        const vendaId = idVendaFechamento(relidos);
+        t.set('vendas', vendaId, vendaDeFechamentoMesa(m, relidos, forma, agora));
+        for (const p of relidos) t.update('pedidos', p.id, {
           ...(p.status !== 'entregue' ? { status: 'entregue', historico: [...(p.historico || []), { status: 'entregue', em: agora }] } : {}),
-          contaFechada: true, pagamento: { forma, troco: null }, vendaId } })),
-        { tipo: 'update', col: 'mesas', id, data: { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null } }
-      ]);
-      for (const { pedidoId, cupom } of cuponsAContar(ps)) { // fora do lote: cupom apagado não pode travar o fechamento
+          contaFechada: true, pagamento: { forma, troco: null }, vendaId });
+        t.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null });
+        return relidos;
+      });
+      for (const { pedidoId, cupom } of cuponsAContar(fechados)) { // fora da transação: cupom apagado não pode travar o fechamento
         try {
           await db.update('cupons', cupom, { usos: inc(1) });
           await db.update('pedidos', pedidoId, { contabilizado: true });
@@ -175,6 +180,7 @@ function fecharConta(id, fecharContaModal) {
       mod.fechar();
       fecharContaModal();
     } catch (e) {
+      if (e?.contaFechada) { toast(e.message, 'erro'); mod.fechar(); fecharContaModal(); return; }
       console.error('Falha ao fechar conta', e);
       toast('Não foi possível fechar a conta. Tente de novo.', 'erro');
       btn.disabled = false;

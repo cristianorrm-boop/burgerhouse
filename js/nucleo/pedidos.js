@@ -45,6 +45,17 @@ export function valorLinhaItem(i) {
   return Math.round((num(i.preco) + adic) * qtd * 100) / 100;
 }
 
+const ENCERRADOS = ['entregue', 'cancelado'];
+
+/**
+ * O que mudarStatus faz com o pedido relido do banco: 'ignorar' se sumiu, se já está no status pedido
+ * (clique duplo) ou se já foi encerrado (entregue/cancelado); senão 'aplicar'.
+ */
+export function acaoDeStatus(atual, novo) {
+  if (!atual || atual.status === novo || ENCERRADOS.includes(atual.status)) return 'ignorar';
+  return 'aplicar';
+}
+
 /** Endereço do formato V1 ({texto, cep}) ou V2 (rua, número, bairro...). */
 export function enderecoTexto(e) {
   if (!e) return '';

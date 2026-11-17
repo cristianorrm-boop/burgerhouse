@@ -141,3 +141,18 @@ test('contador ignora numero em codigo', () => {
 test('contador sem numeros e 0', () => {
   assert.deepEqual(contadorInicial([{ numeroPedido: null }]), { n: 0, avisos: [] });
 });
+
+// M2: pedido convertido da V1 nunca tem produtoId (convenção V1: preco base + adicionais à parte).
+// O conversor não cria produtoId (e preserva o de um pedido nativo da V2, ver corte.test.mjs).
+test('itens convertidos da v1 nao tem produtoId e somam como v1', () => {
+  let n = 0;
+  for (const doc of Object.values(fx.pedidos)) {
+    for (const it of converterPedido(doc).campos.itens) { assert.equal('produtoId' in it, false); n++; }
+  }
+  assert.ok(n > 0);
+  const doc = { ...fx.pedidos.pDelivery, itens: [{ nome: 'X', preco: 30, qtd: 1, adicionais: [{ opcaoNome: 'Ovo', preco: 3 }] }] };
+  const [it] = converterPedido(doc).campos.itens;
+  assert.equal('produtoId' in it, false);
+  assert.equal(valorLinhaItem(it), 33);
+});
+import { valorLinhaItem } from '../js/nucleo/pedidos.js';

@@ -108,3 +108,41 @@ test('mais vendidos da venda v2 soma 38 x qtd', () => {
   const r = resumoVendas([v], 0, Infinity);
   assert.equal(r.maisVendidos[0].valor, 76);
 });
+
+// R1: dentro da transação, os pedidos relidos decidem se a conta pode fechar.
+import { podeFecharConta } from '../js/nucleo/vendas.js';
+
+test('pode fechar conta com pedidos abertos', () => {
+  assert.deepEqual(podeFecharConta([pm('a', 10), pm('b', 5, { status: 'entregue' })]), { ok: true, motivo: null });
+});
+test('nao fecha se algum pedido ja tem contaFechada', () => {
+  const r = podeFecharConta([pm('a', 10), pm('b', 5, { contaFechada: true })]);
+  assert.equal(r.ok, false);
+  assert.equal(r.motivo, 'Conta já fechada — atualize a tela');
+});
+test('nao fecha se algum pedido foi cancelado ou sumiu', () => {
+  assert.equal(podeFecharConta([pm('a', 10, { status: 'cancelado' })]).ok, false);
+  assert.equal(podeFecharConta([pm('a', 10), null]).ok, false);
+  assert.equal(podeFecharConta([]).ok, false);
+});
+
+// M1: desconto dos pedidos aparece na venda da mesa.
+test('venda da mesa leva o desconto dos pedidos', () => {
+  const comCupom = pm('a', 45, { subtotal: 50, desconto: 5, cupom: 'DEZ' });
+  const comFidel = pm('b', 20, { subtotal: 28, descontoFidelidade: 8 });
+  const v = vendaDeFechamentoMesa(mesa, [comCupom, comFidel, pm('c', 30), pm('d', 99, { status: 'cancelado', desconto: 7 })], 'pix', 1);
+  assert.equal(v.total, 95);
+  assert.equal(v.desconto, 13);
+  assert.equal(v.subtotal, 108);
+});
+
+// M2: item com produtoId é V2 (preco já com adicionais); sem produtoId é V1.
+import { valorLinhaItem } from '../js/nucleo/pedidos.js';
+test('item com produtoId e tratado como v2 na linha e na venda', () => {
+  const v2 = { produtoId: 'p', nome: 'X', preco: 40, qtd: 1, adicionais: [{ nome: 'Ovo', preco: 4 }] };
+  const v1 = { nome: 'X', preco: 36, qtd: 1, adicionais: [{ nome: 'Ovo', preco: 4 }] };
+  assert.equal(valorLinhaItem(v2), 40);
+  assert.equal(valorLinhaItem(v1), 40);
+  const v = vendaDePedidoOnline({ ...delivery, itens: [v2, v1] }, 1);
+  assert.deepEqual(v.itens.map(i => i.preco), [36, 36]);
+});

@@ -34,6 +34,8 @@ test('conversores rodam sobre o backup real mais recente', t => {
   };
 
   const ped = pedidos.map(d => converterPedido(d));
+  // M2: pedido convertido da V1 é item V1 (sem produtoId).
+  for (const r of ped) for (const it of r.campos.itens) assert.equal('produtoId' in it, false);
   const ven = vendas.map(d => converterVenda(d));
   const usu = usuarios.map(([id, d]) => converterUsuario(id, d));
   [...ped, ...ven, ...usu.filter(Boolean)].forEach(r => anotar(r.avisos));

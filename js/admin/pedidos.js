@@ -140,8 +140,11 @@ export function detalhe(id, avulso = null) {
       </div>`;
     const el = m.el;
     el.querySelector('[data-imprimir]').onclick = () => imprimir(p);
-    el.querySelector('[data-prox]')?.addEventListener('click', async () => {
-      await mudarStatus(p, prox);
+    el.querySelector('[data-prox]')?.addEventListener('click', async ev => {
+      const b = ev.currentTarget;
+      if (b.disabled) return;
+      b.disabled = true; // como no kanban: o 2º clique não chama mudarStatus de novo
+      try { await mudarStatus(p, prox); } finally { b.disabled = false; }
       await reler();
       desenhar();
       if (prox === 'entregue') m.fechar();

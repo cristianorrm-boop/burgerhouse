@@ -77,3 +77,21 @@ test('linha de item estranho nunca vira NaN', () => {
   assert.equal(valorLinhaItem({ nome: 'X', preco: 'abc', qtd: null, adicionais: [{ preco: null }] }), 0);
   assert.equal(valorLinhaItem(null), 0);
 });
+
+// I1: mudarStatus relê o pedido e decide aqui se age.
+import { acaoDeStatus } from '../js/nucleo/pedidos.js';
+
+test('mesmo status ignora (clique duplo em Finalizar)', () => {
+  assert.equal(acaoDeStatus({ id: 'a', status: 'entregue' }, 'entregue'), 'ignorar');
+  assert.equal(acaoDeStatus({ id: 'a', status: 'preparo' }, 'preparo'), 'ignorar');
+});
+test('avanco aplica', () => {
+  assert.equal(acaoDeStatus({ id: 'a', status: 'pronto' }, 'entregue'), 'aplicar');
+  assert.equal(acaoDeStatus({ id: 'a', status: 'novo' }, 'preparo'), 'aplicar');
+  assert.equal(acaoDeStatus({ id: 'a', status: 'novo' }, 'cancelado'), 'aplicar');
+});
+test('pedido sumido ou encerrado ignora', () => {
+  assert.equal(acaoDeStatus(null, 'entregue'), 'ignorar');
+  assert.equal(acaoDeStatus({ id: 'a', status: 'cancelado' }, 'entregue'), 'ignorar');
+  assert.equal(acaoDeStatus({ id: 'a', status: 'entregue' }, 'cancelado'), 'ignorar');
+});

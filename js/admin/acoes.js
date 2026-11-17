@@ -2,7 +2,7 @@
 import { db, inc } from '../db.js?v=2.0.0-f3';
 import { store } from './app.js?v=2.0.0-f3';
 import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f3';
-import { rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0-f3';
+import { acaoDeStatus, rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0-f3';
 import { deveGerarVendaAoEntregar, vendaDePedidoOnline, idVendaPedido } from '../nucleo/vendas.js?v=2.0.0-f3';
 import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f3';
 
@@ -19,7 +19,13 @@ export const rotuloAcao = {
   entregue: 'Finalizar'
 };
 
-export async function mudarStatus(p, status, extra = {}) {
+/**
+ * Relê o pedido antes de agir: clique duplo, outro aparelho ou pedido já encerrado não repetem
+ * a venda nem a contabilização (acaoDeStatus decide). Devolve false quando nada foi feito.
+ */
+export async function mudarStatus(p0, status, extra = {}) {
+  const p = await db.get('pedidos', p0.id);
+  if (acaoDeStatus(p, status) === 'ignorar') return false;
   const historico = [...(p.historico || []), { status, em: Date.now() }];
   const campos = { status, historico, ...extra };
   if (deveGerarVendaAoEntregar(p, status)) {
@@ -28,25 +34,34 @@ export async function mudarStatus(p, status, extra = {}) {
     campos.vendaId = vendaId;
   }
   await db.update('pedidos', p.id, campos);
-  if (status === 'entregue') await contabilizar(p);
+  if (status === 'entregue') await contabilizar(p); // p relido: contabilizado reflete o banco
+  return true;
 }
 
-/** Ao finalizar: soma ponto de fidelidade, atualiza cadastro do cliente e conta uso do cupom (uma única vez). */
-async function contabilizar(p) {
-  if (p.contabilizado) return;
-  const tel = p.cliente?.telefone;
+/**
+ * Ao finalizar: soma ponto de fidelidade, atualiza cadastro do cliente e conta uso do cupom, uma única vez.
+ * Em transação: relê o pedido e só conta se ainda não estiver contabilizado (clique duplo / dois aparelhos).
+ */
+async function contabilizar(p0) {
+  if (p0.contabilizado) return;
+  const meta = store.cfg.fidelidade.meta || 10;
   try {
-    if (tel) {
-      const meta = store.cfg.fidelidade.meta || 10;
-      const pontos = 1 - (p.usouFidelidade ? meta : 0);
-      await db.set('fidelidade', tel, { pontos: inc(pontos), nome: p.cliente.nome, atualizadoEm: Date.now() }, true);
-      await db.set('clientes', tel, {
-        nome: p.cliente.nome, telefone: tel, pedidos: inc(1), totalGasto: inc(p.total),
-        ultimoPedido: Date.now(), ...(p.endereco ? { endereco: p.endereco } : {})
-      }, true);
-    }
-    if (p.cupom) await db.update('cupons', p.cupom, { usos: inc(1) }).catch(() => {});
-    await db.update('pedidos', p.id, { contabilizado: true });
+    await db.transacao(async t => {
+      const p = await t.get('pedidos', p0.id);
+      if (!p || p.contabilizado) return;
+      const cupom = p.cupom ? await t.get('cupons', p.cupom) : null; // cupom apagado não trava a contagem
+      const tel = p.cliente?.telefone;
+      if (tel) {
+        const pontos = 1 - (p.usouFidelidade ? meta : 0);
+        t.set('fidelidade', tel, { pontos: inc(pontos), nome: p.cliente.nome, atualizadoEm: Date.now() }, true);
+        t.set('clientes', tel, {
+          nome: p.cliente.nome, telefone: tel, pedidos: inc(1), totalGasto: inc(p.total),
+          ultimoPedido: Date.now(), ...(p.endereco ? { endereco: p.endereco } : {})
+        }, true);
+      }
+      if (cupom) t.update('cupons', p.cupom, { usos: inc(1) });
+      t.update('pedidos', p.id, { contabilizado: true });
+    });
   } catch (e) {
     console.error('Falha ao contabilizar pedido', e);
   }
