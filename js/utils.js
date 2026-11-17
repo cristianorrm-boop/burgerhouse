@@ -266,7 +266,8 @@ export const CONFIG_PADRAO = {
   pagamentos: { dinheiro: true, credito: true, debito: true, pix: true, vale: false },
   fidelidade: { ativo: true, meta: 10, tipo: 'valor', valor: 20, descricao: 'R$ 20 de desconto' },
   upsell: { ativo: true, titulo: 'Que tal completar seu pedido?' },
-  seo: { titulo: '', descricao: '', imagem: '' }
+  seo: { titulo: '', descricao: '', imagem: '' },
+  taxaPadrao: 0 // taxa do delivery quando não há bairros cadastrados (loja vinda da V1)
 };
 
 export function mesclarConfig(cfg) {

@@ -8,6 +8,7 @@ import {
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
 } from './utils.js?v=2.0.0-f3';
 import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0-f3';
+import { taxaEntrega } from './nucleo/entrega.js?v=2.0.0-f3';
 import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.0-f3';
 
 const $= s => document.querySelector(s);
@@ -369,7 +370,7 @@ async function validarCupom(codigo) {
 /* ================= Cálculo do pedido ================= */
 function calcular({ tipo, bairro, fid } = {}) {
   const sub = subtotal();
-  const taxa = tipo === 'delivery' && bairro ? Number(bairro.taxa) || 0 : 0;
+  const taxa = tipo === 'delivery' ? taxaEntrega({ bairros: E.bairros, bairroId: bairro?.id, taxaPadrao: E.cfg.taxaPadrao }).taxa : 0;
   let descCupom = 0;
   let avisoCupom = '';
   if (E.cupom) {
@@ -517,13 +518,14 @@ function renderCheckout() {
       ${mesa ? '' : `
       <div class="sec-checkout" id="sec-end">
         <h3>Endereço de entrega</h3>
-        <label class="campo"><span>Bairro</span>
+        ${bairros.length ? `<label class="campo"><span>Bairro</span>
           <select name="bairro" required>
             <option value="">Selecione o bairro</option>
             ${bairros.map(b => `<option value="${b.id}" ${end.bairroId === b.id ? 'selected' : ''}>${esc(b.nome)} — ${Number(b.taxa) ? moeda(b.taxa) : 'grátis'}</option>`).join('')}
           </select>
-          ${bairros.length ? '' : '<small>Nenhum bairro cadastrado para entrega.</small>'}
-        </label>
+        </label>` : `<label class="campo"><span>Bairro (opcional)</span>
+          <input name="bairro" autocomplete="address-level3" value="${esc(end.bairroId ? '' : end.bairro || '')}" maxlength="60">
+        </label>`}
         <div class="grade3" style="grid-template-columns:2fr 1fr">
           <label class="campo"><span>Rua</span><input name="rua" autocomplete="address-line1" value="${esc(end.rua || '')}" required maxlength="100"></label>
           <label class="campo"><span>Número</span><input name="numero" value="${esc(end.numero || '')}" required maxlength="10"></label>
@@ -564,7 +566,9 @@ function renderCheckout() {
   let usarFid = false;
 
   const tipoAtual = () => (mesa ? 'mesa' : f.tipo?.value || 'retirada');
-  const bairroAtual = () => E.bairros.find(b => b.id === f.bairro?.value);
+  const bairroAtual = () => (bairros.length ? bairros.find(b => b.id === f.bairro?.value) : undefined);
+  // Sem bairros ativos (loja vinda da V1): endereço livre e taxa padrão
+  const entrega = () => taxaEntrega({ bairros: E.bairros, bairroId: bairroAtual()?.id, taxaPadrao: c.taxaPadrao });
 
   const atualizar = () => {
     const tipo = tipoAtual();
@@ -577,7 +581,7 @@ function renderCheckout() {
     const t = calcular({ tipo, bairro: bairroAtual(), fid: usarFid });
     box.querySelector('#ck-totais').innerHTML = `
       <div><span>Subtotal</span><span>${moeda(t.sub)}</span></div>
-      ${tipo === 'delivery' ? `<div><span>Taxa de entrega</span><span>${bairroAtual() ? (t.taxa ? moeda(t.taxa) : 'Grátis') : '—'}</span></div>` : ''}
+      ${tipo === 'delivery' ? `<div><span>Taxa de entrega</span><span>${entrega().erro ? '—' : t.taxa ? moeda(t.taxa) : 'Grátis'}</span></div>` : ''}
       ${t.descCupom ? `<div class="desc-v"><span>Cupom ${esc(E.cupom.codigo)}</span><span>− ${moeda(t.descCupom)}</span></div>` : ''}
       ${t.descFid ? `<div class="desc-v"><span>Recompensa fidelidade</span><span>− ${moeda(t.descFid)}</span></div>` : ''}
       <div class="total"><span>Total</span><span>${moeda(t.total)}</span></div>`;
@@ -622,7 +626,7 @@ function renderCheckout() {
     box.querySelector('#erro-pag') && (box.querySelector('#erro-pag').textContent = '');
     const tipo = tipoAtual();
     const obrig = ['nome', 'telefone'].filter(n => f[n] && f[n].required);
-    if (tipo === 'delivery') obrig.push('bairro', 'rua', 'numero');
+    if (tipo === 'delivery') obrig.push(...(entrega().exigeBairro ? ['bairro'] : []), 'rua', 'numero');
     let primeiroErro = null;
     for (const n of obrig) {
       if (!f[n].value.trim() || (n === 'telefone' && soDigitos(f[n].value).length < 10)) {
@@ -660,7 +664,7 @@ function renderCheckout() {
       ...(mesa ? { mesaNome: nomeMesa(E.mesaDoc) } : {}),
       cliente: { nome: f.nome.value.trim() || (mesa ? (E.mesaDoc ? nomeMesa(E.mesaDoc) : 'Mesa') : ''), telefone: mesa ? '' : soDigitos(f.telefone.value) },
       endereco: tipo === 'delivery' ? {
-        bairro: b.nome, bairroId: b.id, rua: f.rua.value.trim(), numero: f.numero.value.trim(),
+        bairro: b ? b.nome : f.bairro.value.trim(), bairroId: b ? b.id : null, rua: f.rua.value.trim(), numero: f.numero.value.trim(),
         complemento: f.complemento.value.trim(), referencia: f.referencia.value.trim()
       } : null,
       itens: E.sacola.map(i => ({ produtoId: i.produtoId, nome: i.nome, qtd: i.qtd, preco: i.preco, adicionais: i.adicionais, obs: i.obs })),
@@ -809,8 +813,10 @@ function abrirInfo() {
     }).join('')}</table>
     <h3 style="font-size:15px;margin:16px 0 6px">Pagamento na entrega</h3>
     <p style="color:var(--txt2)">${pags.map(esc).join(' · ') || '—'}</p>
-    ${c.entrega.delivery && E.bairros.length ? `<h3 style="font-size:15px;margin:16px 0 6px">Taxas de entrega</h3>
+    ${c.entrega.delivery && E.bairros.some(b => b.ativo !== false) ? `<h3 style="font-size:15px;margin:16px 0 6px">Taxas de entrega</h3>
     <table class="horarios-tab">${E.bairros.filter(b => b.ativo !== false).map(b => `<tr><td>${esc(b.nome)}</td><td>${Number(b.taxa) ? moeda(b.taxa) : 'Grátis'}</td></tr>`).join('')}</table>` : ''}
+    ${c.entrega.delivery && !E.bairros.some(b => b.ativo !== false) ? `<h3 style="font-size:15px;margin:16px 0 6px">Taxa de entrega</h3>
+    <p style="color:var(--txt2)">${Number(c.taxaPadrao) ? moeda(c.taxaPadrao) : 'Grátis'}</p>` : ''}
     ${c.endereco ? `<p style="margin-top:16px"><i class="ti ti-map-pin"></i> ${esc(c.endereco)}</p>` : ''}`);
 }
 
