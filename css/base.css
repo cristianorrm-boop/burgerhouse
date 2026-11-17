@@ -1,8 +1,8 @@
 /* ===== Tokens ===== */
 :root {
-  --pri: #EA580C;
-  --on-pri: #fff;
-  --sec: #1F2937;
+  --pri: #d4af37;
+  --on-pri: #1C1C1C;
+  --sec: #1c1c1c;
   --on-sec: #fff;
   --pri-soft: color-mix(in srgb, var(--pri) 12%, transparent);
   --pri-soft2: color-mix(in srgb, var(--pri) 22%, transparent);

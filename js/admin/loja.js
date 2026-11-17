@@ -8,7 +8,7 @@ import { qrDataURL } from './mesas.js?v=2.0.0-f1';
 import { esc, DIAS, PAGAMENTOS, statusLoja, aplicarTema, comprimirImagem, toast, modal, confirmar } from '../utils.js?v=2.0.0-f1';
 
 const ABAS = [['dados', 'Dados da loja'], ['horarios', 'Horários'], ['aparencia', 'Cores da marca'], ['pagamentos', 'Pagamentos'], ['vendas', 'Upsell e SEO'], ['impressora', 'Impressora'], ['equipe', 'Equipe'], ['ferramentas', 'Link e QR do cardápio']];
-const PALETAS = [['#EA580C', '#1F2937'], ['#DC2626', '#111827'], ['#16A34A', '#14532D'], ['#2563EB', '#0F172A'], ['#9333EA', '#1E1B4B'], ['#CA8A04', '#292524'], ['#DB2777', '#1F2937'], ['#0D9488', '#134E4A']];
+const PALETAS = [['#d4af37', '#1c1c1c'], ['#EA580C', '#1F2937'], ['#DC2626', '#111827'], ['#16A34A', '#14532D'], ['#2563EB', '#0F172A'], ['#9333EA', '#1E1B4B'], ['#CA8A04', '#292524'], ['#DB2777', '#1F2937'], ['#0D9488', '#134E4A']];
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
 
 export function render(el) {
@@ -273,6 +273,8 @@ export function render(el) {
       ev.preventDefault();
       if (!f.nome.value.trim() || !/\S+@\S+\.\S+/.test(f.email.value) || f.senha.value.length < 6) { m.el.querySelector('#eq-erro').textContent = 'Preencha nome, e-mail válido e senha com 6+ caracteres.'; return; }
       const abas = [...m.el.querySelectorAll('[data-aba-perm]:checked')].map(i => i.dataset.abaPerm);
+      // A aba PDV só existe na Fase 4: já grava o padrão do atendente para valer quando ela chegar
+      if (f.perfil.value === 'atendente' && !ABAS_PAINEL.some(([k]) => k === 'pdv') && !abas.includes('pdv')) abas.push('pdv');
       if (f.perfil.value === 'atendente' && !abas.length) { m.el.querySelector('#eq-erro').textContent = 'Libere ao menos uma aba.'; return; }
       try {
         await auth.criarMembro(f.nome.value.trim(), f.email.value.trim(), f.senha.value, f.perfil.value, abas);

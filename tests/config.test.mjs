@@ -70,3 +70,10 @@ test('todo semear() fora do seed esta sob guarda DEMO', () => {
   }
   assert.equal(chamadas, 5);
 });
+
+test('tema padrao dourado', () => {
+  const u = ler('js/utils.js');
+  assert.match(u, /tema:\s*\{\s*primaria:\s*'#d4af37',\s*secundaria:\s*'#1c1c1c'/);
+  assert.match(ler('css/base.css'), /--pri:\s*#d4af37/);
+  assert.match(ler('css/base.css'), /--on-pri:\s*#1C1C1C/);
+});

@@ -5,6 +5,7 @@ import { semear } from '../seed.js?v=2.0.0-f1';
 import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f1';
 import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f1';
 import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
+import { ABAS_PADRAO_ATENDENTE } from '../nucleo/tema.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 
@@ -22,16 +23,16 @@ const ROTAS = {
   dashboard: { nome: 'Dashboard', icone: 'ti-layout-dashboard', perfis: ['dono'], mod: () => import('./dashboard.js?v=2.0.0-f1') },
   pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js?v=2.0.0-f1'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
   mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js?v=2.0.0-f1'), cont: () => store.mesas.filter(m => m.chamado).length },
-  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono', 'atendente'], mod: () => import('./cardapio.js?v=2.0.0-f1') },
+  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono'], mod: () => import('./cardapio.js?v=2.0.0-f1') },
   cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js?v=2.0.0-f1') },
   clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js?v=2.0.0-f1') },
   financeiro: { nome: 'Financeiro', icone: 'ti-wallet', perfis: ['dono'], mod: () => import('./financeiro.js?v=2.0.0-f1') },
   entrega: { nome: 'Entrega', icone: 'ti-motorbike', perfis: ['dono'], mod: () => import('./entrega.js?v=2.0.0-f1') },
   loja: { nome: 'Configurações', icone: 'ti-settings', perfis: ['dono'], mod: () => import('./loja.js?v=2.0.0-f1') }
 };
-export const ABAS_PAINEL = Object.entries(ROTAS).map(([k, r]) => [k, r.nome, r.perfis.includes('atendente')]);
-// Dono vê tudo; atendente vê as abas liberadas no cadastro (sem lista, usa o padrão: Pedidos, Mesas e Cardápio)
-const podeVer = (k, r) => store.user?.perfil === 'dono' || (Array.isArray(store.user?.abas) ? store.user.abas.includes(k) : r.perfis.includes(store.user?.perfil));
+export const ABAS_PAINEL = Object.entries(ROTAS).map(([k, r]) => [k, r.nome, ABAS_PADRAO_ATENDENTE.includes(k)]);
+// Dono vê tudo; atendente vê as abas liberadas no cadastro (sem lista, usa o padrão: Pedidos, Mesas e PDV)
+const podeVer = k => store.user?.perfil === 'dono' || (Array.isArray(store.user?.abas) ? store.user.abas : ABAS_PADRAO_ATENDENTE).includes(k);
 const permitidas = () => Object.entries(ROTAS).filter(([k, r]) => podeVer(k, r));
 
 function renderMenu() {

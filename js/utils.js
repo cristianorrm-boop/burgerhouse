@@ -1,5 +1,6 @@
 // Funções compartilhadas entre cardápio, acompanhamento e painel admin.
 import { VERSAO } from './versao.js?v=2.0.0-f1';
+import { corTextoSobre } from './nucleo/tema.js?v=2.0.0-f1';
 
 export const moeda = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -92,20 +93,14 @@ export function statusLoja(cfg, agora = new Date()) {
 }
 
 /* ---------------- Tema com as cores da marca ---------------- */
-function luminancia(hex) {
-  const n = hex.replace('#', '');
-  const [r, g, b] = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255)
-    .map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
 export function aplicarTema(tema = {}) {
   const root = document.documentElement;
-  const pri = /^#[0-9a-f]{6}$/i.test(tema.primaria) ? tema.primaria : '#EA580C';
-  const sec = /^#[0-9a-f]{6}$/i.test(tema.secundaria) ? tema.secundaria : '#1F2937';
+  const pri = /^#[0-9a-f]{6}$/i.test(tema.primaria) ? tema.primaria : '#d4af37';
+  const sec = /^#[0-9a-f]{6}$/i.test(tema.secundaria) ? tema.secundaria : '#1c1c1c';
   root.style.setProperty('--pri', pri);
-  root.style.setProperty('--on-pri', luminancia(pri) > 0.45 ? '#111827' : '#ffffff');
+  root.style.setProperty('--on-pri', corTextoSobre(pri));
   root.style.setProperty('--sec', sec);
-  root.style.setProperty('--on-sec', luminancia(sec) > 0.45 ? '#111827' : '#ffffff');
+  root.style.setProperty('--on-sec', corTextoSobre(sec));
   if (tema.fundo === 'escuro' || tema.fundo === 'claro') root.dataset.theme = tema.fundo;
   else delete root.dataset.theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', pri);
@@ -255,7 +250,7 @@ export const CONFIG_PADRAO = {
   whatsapp: '',
   endereco: '',
   instagram: '',
-  tema: { primaria: '#EA580C', secundaria: '#1F2937', fundo: 'auto' },
+  tema: { primaria: '#d4af37', secundaria: '#1c1c1c', fundo: 'auto' },
   horarios: {
     0: { ativo: true, abre: '18:00', fecha: '23:30' },
     1: { ativo: false, abre: '18:00', fecha: '23:00' },
