@@ -208,6 +208,27 @@ export const db = {
     await F.deleteDoc(F.doc(fs, col, id));
   },
 
+  /** Várias escritas de uma vez, tudo ou nada. ops: [{ tipo: 'set'|'update', col, id, data }] */
+  async lote(ops) {
+    if (DEMO) {
+      for (const o of ops) if (o.tipo === 'update' && !colecao(o.col)[o.id]) throw new Error('Documento não encontrado');
+      for (const o of ops) {
+        const c = colecao(o.col);
+        c[o.id] = localAplicar(o.tipo === 'update' ? c[o.id] : {}, o.data);
+      }
+      salvar();
+      return;
+    }
+    const { F, fs } = await firebase();
+    const b = F.writeBatch(fs);
+    for (const o of ops) {
+      const ref = F.doc(fs, o.col, o.id);
+      if (o.tipo === 'update') b.update(ref, fbValores(F, o.data));
+      else b.set(ref, fbValores(F, o.data));
+    }
+    await b.commit();
+  },
+
   /** Cria o pedido com número sequencial (#1, #2, ...) de forma segura. */
   async criarPedido(pedido) {
     if (DEMO) {

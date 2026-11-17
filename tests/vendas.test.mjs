@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deveGerarVendaAoEntregar, vendaDePedidoOnline, vendaDeFechamentoMesa, pedidosParaFechar, idVendaPedido, idVendaMesa
+  idVendaFechamento, deveGerarVendaAoEntregar, vendaDePedidoOnline, vendaDeFechamentoMesa, pedidosParaFechar, idVendaPedido, idVendaMesa
 } from '../js/nucleo/vendas.js';
 
 const delivery = { id: 'p1', tipo: 'delivery', numero: 7, cliente: { nome: 'Ana' }, total: 50, subtotal: 45, desconto: 0,
@@ -58,4 +58,12 @@ test('ids deterministicos de venda', () => {
   assert.equal(idVendaPedido({ id: 'p1' }), 'ped-p1');
   assert.equal(idVendaMesa(['b', 'a', 'c']), 'mesa-a');
   assert.equal(idVendaMesa(['c', 'a', 'b']), idVendaMesa(['a', 'b', 'c']));
+});
+
+test('idVendaFechamento: conjunto novo e sobra de tentativa anterior', () => {
+  assert.equal(idVendaFechamento([{ id: 'c' }, { id: 'a' }, { id: 'b' }]), 'mesa-a');
+  const com = [{ id: 'a' }, { id: 'b', vendaId: 'mesa-x' }, { id: 'c' }];
+  assert.equal(idVendaFechamento(com), 'mesa-x');
+  assert.equal(idVendaFechamento([...com].reverse()), 'mesa-x');
+  assert.equal(idVendaFechamento([{ id: 'a' }, { id: 'b', vendaId: 'mesa-x', contaFechada: true }]), 'mesa-a');
 });

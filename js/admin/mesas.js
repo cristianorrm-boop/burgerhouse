@@ -1,12 +1,12 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
 import { db } from '../db.js?v=2.0.0-f1';
 import { store, onStore } from './app.js?v=2.0.0-f1';
-import { mudarStatus, imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f1';
+import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f1';
 import { detalhe } from './pedidos.js?v=2.0.0-f1';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
 import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
 import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
-import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaMesa } from '../nucleo/vendas.js?v=2.0.0-f1';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento } from '../nucleo/vendas.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -156,13 +156,15 @@ function fecharConta(id, fecharContaModal) {
       const ps = pedidosParaFechar(store.pedidos, id);
       if (!ps.length) { toast('Conta já fechada', 'erro'); mod.fechar(); fecharContaModal(); return; }
       const forma = mod.el.querySelector('[data-forma]').value;
-      await db.set('vendas', idVendaMesa(ps.map(p => p.id)), vendaDeFechamentoMesa(m, ps, forma, Date.now()));
-      for (const p of ps) {
-        const extra = { contaFechada: true, pagamento: { forma, troco: null } };
-        if (p.status !== 'entregue') await mudarStatus(p, 'entregue', extra);
-        else await db.update('pedidos', p.id, extra);
-      }
-      await db.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null });
+      const agora = Date.now();
+      const vendaId = idVendaFechamento(ps);
+      await db.lote([
+        { tipo: 'set', col: 'vendas', id: vendaId, data: vendaDeFechamentoMesa(m, ps, forma, agora) },
+        ...ps.map(p => ({ tipo: 'update', col: 'pedidos', id: p.id, data: {
+          ...(p.status !== 'entregue' ? { status: 'entregue', historico: [...(p.historico || []), { status: 'entregue', em: agora }] } : {}),
+          contaFechada: true, pagamento: { forma, troco: null }, vendaId } })),
+        { tipo: 'update', col: 'mesas', id, data: { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null } }
+      ]);
       toast(`Conta de ${nomeMesa(m)} fechada`);
       mod.fechar();
       fecharContaModal();

@@ -18,6 +18,14 @@ export function idVendaMesa(pedidoIds) {
   return 'mesa-' + [...pedidoIds].map(String).sort()[0];
 }
 
+/** Id da venda do fechamento: reaproveita o de uma tentativa anterior incompleta (vendaId 'mesa-…' sem contaFechada). */
+export function idVendaFechamento(pedidos) {
+  const sobra = pedidos
+    .filter(p => typeof p.vendaId === 'string' && p.vendaId.startsWith('mesa-') && !p.contaFechada)
+    .map(p => p.vendaId).sort()[0];
+  return sobra || idVendaMesa(pedidos.map(p => p.id));
+}
+
 export function deveGerarVendaAoEntregar(p, novoStatus) {
   return novoStatus === 'entregue' && p.tipo !== 'mesa' && !p.vendaId;
 }
