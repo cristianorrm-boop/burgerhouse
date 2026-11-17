@@ -35,3 +35,9 @@ test('nenhum arquivo cita o projeto do colega', () => {
   for (const d of ['js', 'api', 'admin']) varrer(d, true);
   assert.deepEqual(achados, []);
 });
+
+test('nome padrao da loja e Burger House', () => {
+  const u = ler('js/utils.js');
+  assert.match(u, /CONFIG_PADRAO = \{\s*nome: 'Burger House'/);
+  assert.ok(!u.includes("'Cardápio Online'"));
+});

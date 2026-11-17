@@ -246,7 +246,7 @@ async function conferirVersao(reg) {
 
 /** Configuração padrão da loja (usada no 1º acesso e como fallback) */
 export const CONFIG_PADRAO = {
-  nome: 'Cardápio Online',
+  nome: 'Burger House',
   slogan: 'Lanches artesanais feitos na hora',
   descricao: 'Peça online: lanches, porções, bebidas e sobremesas com entrega rápida.',
   logo: '',

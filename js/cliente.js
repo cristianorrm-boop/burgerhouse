@@ -117,7 +117,7 @@ function renderLoja() {
     ${c.telefone ? `<a href="tel:${soDigitos(c.telefone)}"><i class="ti ti-phone"></i>${esc(c.telefone)}</a>` : ''}
     ${zap ? `<a href="https://wa.me/55${zap}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i>WhatsApp</a>` : ''}
     ${c.instagram ? `<a href="https://instagram.com/${esc(c.instagram.replace('@', ''))}" target="_blank" rel="noopener"><i class="ti ti-brand-instagram"></i>${esc(c.instagram)}</a>` : ''}
-    <small style="color:var(--txt3)">Cardápio Online · Peça pelo app, rápido e sem complicação.</small>`;
+    <small style="color:var(--txt3)">Burger House · Peça pelo app, rápido e sem complicação.</small>`;
   atualizarSEO();
 }
 
