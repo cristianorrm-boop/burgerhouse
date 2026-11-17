@@ -2,7 +2,7 @@
 import { db, inc } from '../db.js?v=2.0.0-f3';
 import { store } from './app.js?v=2.0.0-f3';
 import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f3';
-import { rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo } from '../nucleo/pedidos.js?v=2.0.0-f3';
+import { rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0-f3';
 import { deveGerarVendaAoEntregar, vendaDePedidoOnline, idVendaPedido } from '../nucleo/vendas.js?v=2.0.0-f3';
 import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f3';
 
@@ -101,7 +101,7 @@ function imprimirNavegador(p) {
   ${p.cliente?.telefone ? `<div>Tel: ${esc(mascaraTelefone(p.cliente.telefone))}</div>` : ''}
   ${p.endereco ? `<div>End: ${esc(enderecoTexto(p.endereco))}</div>` : ''}
   <hr><table>
-  ${p.itens.map(i => `<tr><td>${i.qtd}x ${esc(i.nome)}</td><td>${moeda(i.preco * i.qtd)}</td></tr>
+  ${p.itens.map(i => `<tr><td>${i.qtd}x ${esc(i.nome)}</td><td>${moeda(valorLinhaItem(i))}</td></tr>
     ${(i.adicionais || []).map(a => `<tr><td class="s" colspan="2">+ ${esc(a.nome)}</td></tr>`).join('')}
     ${i.obs ? `<tr><td class="s" colspan="2">OBS: ${esc(i.obs)}</td></tr>` : ''}`).join('')}
   </table><hr><table>

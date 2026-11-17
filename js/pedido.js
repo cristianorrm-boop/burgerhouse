@@ -1,6 +1,6 @@
 // Acompanhamento do pedido em tempo real (status atualiza sozinho).
 import { db } from './db.js?v=2.0.0-f3';
-import { rotuloPedido, mesaDoPedido, enderecoTexto } from './nucleo/pedidos.js?v=2.0.0-f3';
+import { rotuloPedido, mesaDoPedido, enderecoTexto, valorLinhaItem } from './nucleo/pedidos.js?v=2.0.0-f3';
 import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js?v=2.0.0-f3';
 
 const $ = s => document.querySelector(s);
@@ -50,7 +50,7 @@ function render(p) {
       <h3>Resumo · ${p.tipo === 'mesa' ? esc(mesaDoPedido(p)) : TIPOS[p.tipo]}</h3>
       ${p.itens.map(i => `<div class="item-res"><div>${i.qtd}× ${esc(i.nome)}
         ${i.adicionais?.length ? `<small>${i.adicionais.map(a => esc(a.nome)).join(', ')}</small>` : ''}
-        ${i.obs ? `<small>Obs.: ${esc(i.obs)}</small>` : ''}</div><span>${moeda(i.preco * i.qtd)}</span></div>`).join('')}
+        ${i.obs ? `<small>Obs.: ${esc(i.obs)}</small>` : ''}</div><span>${moeda(valorLinhaItem(i))}</span></div>`).join('')}
       <div class="totais">
         <div><span>Subtotal</span><span>${moeda(p.subtotal)}</span></div>
         ${p.taxa ? `<div><span>Entrega</span><span>${moeda(p.taxa)}</span></div>` : ''}

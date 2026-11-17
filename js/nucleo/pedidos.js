@@ -32,6 +32,19 @@ export function rotuloPedido(p, mesasPorId = {}) {
   return id ? `#${id}` : 'Pedido';
 }
 
+const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+/**
+ * Valor da linha do item. Item V2 (tem produtoId): o preco já inclui os adicionais.
+ * Item V1 (sem produtoId): preco é o base e os adicionais têm preço à parte.
+ */
+export function valorLinhaItem(i) {
+  if (!i) return 0;
+  const qtd = num(i.qtd);
+  const adic = i.produtoId == null && Array.isArray(i.adicionais) ? i.adicionais.reduce((s, a) => s + num(a?.preco), 0) : 0;
+  return Math.round((num(i.preco) + adic) * qtd * 100) / 100;
+}
+
 /** Endereço do formato V1 ({texto, cep}) ou V2 (rua, número, bairro...). */
 export function enderecoTexto(e) {
   if (!e) return '';

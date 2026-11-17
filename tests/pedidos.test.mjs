@@ -59,3 +59,21 @@ test('nenhum arquivo mostra numero ou mesa crus', () => {
   for (const [nome, src] of fontes())
     for (const t of proibidos) assert.ok(!src.includes(t), `${nome} contem ${t}`);
 });
+
+// D3: valor da linha do item nas duas convenções.
+import { valorLinhaItem } from '../js/nucleo/pedidos.js';
+
+test('linha de item v1 soma os adicionais', () => {
+  assert.equal(valorLinhaItem({ nome: 'X', preco: 149.9, qtd: 1, adicionais: [{ nome: 'a', preco: 12 }, { nome: 'b', preco: 30 }] }), 191.9);
+  assert.equal(valorLinhaItem({ nome: 'X', preco: 10, qtd: 3, adicionais: [{ nome: 'a', preco: 2.5 }] }), 37.5);
+  assert.equal(valorLinhaItem({ nome: 'X', preco: 10, qtd: 2 }), 20);
+});
+
+test('linha de item v2 ja tem os adicionais no preco', () => {
+  assert.equal(valorLinhaItem({ produtoId: '9', nome: 'X', preco: 38, qtd: 2, adicionais: [{ nome: 'Bacon', preco: 10 }] }), 76);
+});
+
+test('linha de item estranho nunca vira NaN', () => {
+  assert.equal(valorLinhaItem({ nome: 'X', preco: 'abc', qtd: null, adicionais: [{ preco: null }] }), 0);
+  assert.equal(valorLinhaItem(null), 0);
+});

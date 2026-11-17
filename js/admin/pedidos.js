@@ -1,7 +1,7 @@
 // Pedidos em tempo real (kanban): aceitar, avançar status, cancelar, imprimir.
 import { db } from '../db.js?v=2.0.0-f3';
 import { store, onStore } from './app.js?v=2.0.0-f3';
-import { rotuloPedido, mesaDoPedido, filtroHistorico } from '../nucleo/pedidos.js?v=2.0.0-f3';
+import { rotuloPedido, mesaDoPedido, filtroHistorico, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0-f3';
 import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f3';
 import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, confirmar, toast, inicioDoDia, soDigitos } from '../utils.js?v=2.0.0-f3';
 
@@ -125,7 +125,7 @@ export function detalhe(id, avulso = null) {
         ${p.itens.map(i => `<tr><td><strong>${i.qtd}×</strong> ${esc(i.nome)}
           ${i.adicionais?.length ? `<br><small style="color:var(--txt2)">+ ${i.adicionais.map(a => esc(a.nome)).join(', ')}</small>` : ''}
           ${i.obs ? `<br><small style="color:var(--warn)">Obs.: ${esc(i.obs)}</small>` : ''}</td>
-          <td class="num">${moeda(i.preco * i.qtd)}</td></tr>`).join('')}
+          <td class="num">${moeda(valorLinhaItem(i))}</td></tr>`).join('')}
         <tr><td>Subtotal</td><td class="num">${moeda(p.subtotal)}</td></tr>
         ${p.taxa ? `<tr><td>Taxa de entrega</td><td class="num">${moeda(p.taxa)}</td></tr>` : ''}
         ${p.desconto ? `<tr><td>Cupom ${esc(p.cupom || '')}</td><td class="num">− ${moeda(p.desconto)}</td></tr>` : ''}
