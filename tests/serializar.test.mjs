@@ -25,3 +25,10 @@ test('listas de colecoes', () => {
   assert.equal(COLECOES_V1.length, 10);
   assert.equal(COLECOES_V2_NOVAS.length, 9);
 });
+
+test('erro em colecao da V1 bloqueia o backup; em colecao nova so avisa', async () => {
+  const { errosBloqueantes } = await import('../ferramentas/serializar.mjs');
+  assert.deepEqual(errosBloqueantes(undefined), []);
+  assert.deepEqual(errosBloqueantes({ bairros: 'x', clientes: 'y' }), []);
+  assert.deepEqual(errosBloqueantes({ pedidos: 'x', bairros: 'y', produtos: 'z' }), ['produtos', 'pedidos']);
+});

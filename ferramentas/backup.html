@@ -35,7 +35,7 @@
 
 <script type="module">
 import { exigirLocalhost, conectar, entrar } from '/ferramentas/firebase.mjs';
-import { serializar, COLECOES_V1, COLECOES_V2_NOVAS } from '/ferramentas/serializar.mjs';
+import { serializar, errosBloqueantes, COLECOES_V1, COLECOES_V2_NOVAS } from '/ferramentas/serializar.mjs';
 
 exigirLocalhost();
 
@@ -85,6 +85,13 @@ $('fazer').addEventListener('click', async () => {
       }
     }
     if (Object.keys(erros).length) backup.erros = erros;
+    // Erro numa coleção da V1: backup incompleto, não baixa.
+    const bloqueantes = errosBloqueantes(erros);
+    if (bloqueantes.length) {
+      $('estado').className = 'erro';
+      $('estado').textContent = `Backup NÃO foi baixado: erro ao ler ${bloqueantes.join(', ')}. Confira o login e tente de novo.`;
+      return;
+    }
     const nomeArq = `backup-${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}-${pad(agora.getHours())}${pad(agora.getMinutes())}.json`;
     const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
@@ -93,7 +100,9 @@ $('fazer').addEventListener('click', async () => {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     const n = Object.keys(erros).length;
     $('estado').className = n ? 'erro' : 'ok';
-    $('estado').textContent = n ? `Arquivo ${nomeArq} baixado, mas ${n} coleção(ões) deram erro.` : `Arquivo ${nomeArq} baixado.`;
+    $('estado').textContent = n
+      ? `Arquivo ${nomeArq} baixado. Aviso: ${n} coleção(ões) nova(s) da V2 deram erro (${Object.keys(erros).join(', ')}).`
+      : `Arquivo ${nomeArq} baixado.`;
   } catch (err) {
     $('estado').className = 'erro';
     $('estado').textContent = 'Falhou: ' + (err.code || err.message);
