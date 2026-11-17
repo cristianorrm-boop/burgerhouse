@@ -39,7 +39,7 @@ function swForaDaVersao(texto, versao) {
   return fora;
 }
 
-const IGNORAR = new Set(['scripts', 'tests', 'node_modules', 'api', 'assets', 'docs', '.git', '.superpowers', '.impeccable', '.vscode', '.claude']);
+const IGNORAR = new Set(['scripts', 'tests', 'node_modules', 'api', 'assets', 'docs', '.git', '.superpowers', '.impeccable', '.vscode', '.claude', 'ferramentas']);
 
 function arquivos(raiz, dir = '') {
   const out = [];

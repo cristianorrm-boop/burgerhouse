@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Backup completo</title>
+<link rel="stylesheet" href="/ferramentas/estilo.css">
+</head>
+<body>
+<main>
+  <h1>Backup completo do banco</h1>
+
+  <form id="login">
+    <label>E-mail <input id="email" type="email" autocomplete="username" required></label>
+    <label>Senha <input id="senha" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Entrar</button>
+    <p id="msgLogin" class="erro" role="alert"></p>
+  </form>
+
+  <section id="painel" hidden>
+    <div class="caixa">
+      <p>Lê todas as coleções e baixa um arquivo JSON. Nada é alterado no banco.</p>
+      <button id="fazer" type="button">Fazer backup</button>
+      <p id="estado"></p>
+    </div>
+    <div class="caixa">
+      <table>
+        <thead><tr><th>Coleção</th><th>Documentos</th></tr></thead>
+        <tbody id="tabela"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { exigirLocalhost, conectar, entrar } from '/ferramentas/firebase.mjs';
+import { serializar, COLECOES_V1, COLECOES_V2_NOVAS } from '/ferramentas/serializar.mjs';
+
+exigirLocalhost();
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+
+$('login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('msgLogin').textContent = '';
+  try {
+    await entrar($('email').value.trim(), $('senha').value);
+    $('login').hidden = true;
+    $('painel').hidden = false;
+  } catch (err) {
+    $('msgLogin').textContent = 'Não foi possível entrar: ' + (err.code || err.message);
+  }
+});
+
+$('fazer').addEventListener('click', async () => {
+  const botao = $('fazer');
+  botao.disabled = true;
+  $('estado').className = '';
+  $('estado').textContent = 'Lendo…';
+  $('tabela').textContent = '';
+  try {
+    const { fs, F } = await conectar();
+    const agora = new Date();
+    const backup = { projeto: 'moda-63d8d', geradoEm: agora.getTime(), colecoes: {}, contagens: {} };
+    const erros = {};
+    for (const nome of [...COLECOES_V1, ...COLECOES_V2_NOVAS]) {
+      const tr = document.createElement('tr');
+      const tdN = document.createElement('td'); tdN.textContent = nome;
+      const tdC = document.createElement('td');
+      tr.append(tdN, tdC);
+      $('tabela').append(tr);
+      try {
+        const snap = await F.getDocs(F.collection(fs, nome));
+        const docs = {};
+        snap.forEach(d => { docs[d.id] = serializar(d.data()); });
+        backup.colecoes[nome] = docs;
+        backup.contagens[nome] = snap.size;
+        tdC.textContent = snap.size;
+      } catch (err) {
+        erros[nome] = err.code ? `${err.code}: ${err.message}` : String(err.message || err);
+        tdC.textContent = 'erro: ' + erros[nome];
+        tdC.className = 'erro';
+      }
+    }
+    if (Object.keys(erros).length) backup.erros = erros;
+    const nomeArq = `backup-${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}-${pad(agora.getHours())}${pad(agora.getMinutes())}.json`;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = nomeArq;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    const n = Object.keys(erros).length;
+    $('estado').className = n ? 'erro' : 'ok';
+    $('estado').textContent = n ? `Arquivo ${nomeArq} baixado, mas ${n} coleção(ões) deram erro.` : `Arquivo ${nomeArq} baixado.`;
+  } catch (err) {
+    $('estado').className = 'erro';
+    $('estado').textContent = 'Falhou: ' + (err.code || err.message);
+  } finally {
+    botao.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
