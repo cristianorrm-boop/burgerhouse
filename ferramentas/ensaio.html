@@ -46,8 +46,10 @@ function processar(texto) {
     ].map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join('');
     links.hidden = false;
   } catch (e) {
+    // Nada é gravado: o demo continua com o que tinha antes.
     estado.textContent = `Erro: ${e.message}`;
     estado.dataset.pronto = 'erro';
+    links.hidden = true;
   }
 }
 

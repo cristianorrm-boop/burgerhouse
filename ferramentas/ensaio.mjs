@@ -1,8 +1,7 @@
 // Ensaio geral: monta, a partir de um backup, o banco demo (formato de localStorage['co_db_v1']
 // do js/db.js) com TUDO o que o corte aplicará. Função pura (Node e navegador), sem Firebase.
-import { desserializar } from './serializar.mjs';
-import { planejarAditivos } from './plano.mjs';
-import { converterPedido, converterVenda, contadorInicial } from './conversores.mjs';
+import { desserializar, errosBloqueantes } from './serializar.mjs';
+import { planejarAditivos, planejarCorte } from './plano.mjs';
 
 const ehObjeto = v => v !== null && typeof v === 'object';
 
@@ -18,32 +17,36 @@ function datasParaMs(v) {
   return v;
 }
 
+// Backup que não serve para o ensaio falha alto (em vez de um "Pronto: 0 produtos").
+function conferirBackup(backup) {
+  if (!ehObjeto(backup) || !ehObjeto(backup.colecoes)) {
+    throw new Error('Backup inválido: o arquivo não tem "colecoes".');
+  }
+  const ruins = errosBloqueantes(backup.erros);
+  if (ruins.length) throw new Error(`Backup incompleto: erro ao ler ${ruins.join(', ')}.`);
+  const p = backup.colecoes.produtos;
+  if (!ehObjeto(p) || Object.keys(p).length === 0) throw new Error('Backup sem produtos.');
+}
+
 export function montarBancoDemo(backup) {
-  const colecoes = desserializar(backup?.colecoes ?? backup ?? {}, null);
+  conferirBackup(backup);
+  const colecoes = desserializar(backup.colecoes, null);
   const banco = structuredClone(colecoes);
   const col = nome => (banco[nome] ??= {});
 
-  // 1. Aditivos (mesmo plano do corte).
-  for (const op of planejarAditivos(colecoes).operacoes) {
+  // 1. Aditivos e 2. corte (pedidos, vendas, contador): os mesmos planos do banco real,
+  // aplicados em memória (update = mescla rasa; criar = set).
+  const aplicar = op => {
     const c = col(op.colecao);
-    if (op.tipo === 'completar') c[op.id] = { ...c[op.id], ...op.campos };
-    else if (!(op.id in c)) c[op.id] = { ...op.campos };
+    if (op.tipo === 'criar') { if (!(op.id in c)) c[op.id] = { ...op.campos }; }
+    else c[op.id] = { ...c[op.id], ...op.campos };
+  };
+  planejarAditivos(colecoes).operacoes.forEach(aplicar);
+  for (const op of planejarCorte(banco).operacoes) {
+    // O demo guarda JSON: o Timestamp original (criadoEmTs) não entra.
+    const { criadoEmTs, ...campos } = op.campos;
+    if (Object.keys(campos).length) aplicar({ ...op, campos });
   }
-
-  // 2. Pedidos e vendas: patch mesclado ao documento original (sem criadoEmTs no demo).
-  for (const [id, doc] of Object.entries(col('pedidos'))) {
-    if (!ehObjeto(doc)) continue;
-    const { criadoEmTs, ...campos } = converterPedido(doc).campos;
-    col('pedidos')[id] = { ...doc, ...campos };
-  }
-  for (const [id, doc] of Object.entries(col('vendas'))) {
-    if (!ehObjeto(doc)) continue;
-    const { criadoEmTs, ...campos } = converterVenda(doc).campos;
-    col('vendas')[id] = { ...doc, ...campos };
-  }
-
-  // 3. Contador de pedidos.
-  col('contadores').pedidos = { n: contadorInicial(Object.values(colecoes.pedidos ?? {})).n };
 
   // Garante as coleções esperadas pelo app.
   for (const n of ['config', 'categorias', 'produtos', 'adicionais', 'mesas', 'cupons', 'pedidos', 'vendas', 'equipe']) col(n);

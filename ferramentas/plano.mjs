@@ -7,9 +7,18 @@
 //   - completar: só campos do conversor AUSENTES no doc (chave inexistente; null/'' conta
 //     como presente). Vai como update só desses campos.
 //   - criar: só se o doc de destino não existe. Vai como set sem merge.
+//
+// planejarCorte(atual) => { operacoes, avisos }   (só no corte; pode rodar mais de uma vez)
+//   Op = { colecao: 'pedidos' | 'vendas', id, tipo: 'converter', campos }
+//      | { colecao: 'contadores', id: 'pedidos', tipo: 'criar' | 'atualizar', campos: { n } }
+//   - converter: só pedidos/vendas ainda no formato V1, e só os campos cujo valor muda.
+//     Vai como update desses campos. Doc criado pela V2 ou já convertido não é tocado.
+//   - contador: criar se não existe; atualizar só se o número calculado for maior.
 import {
   converterProduto, converterCategoria, converterCupom, converterMesa,
   converterConfig, converterGrupoAdicional, converterUsuario,
+  converterPedido, converterVenda, contadorInicial,
+  precisaConverterPedido, precisaConverterVenda,
 } from './conversores.mjs';
 
 // Campos que a V1 lê e que nenhuma operação pode conter.
@@ -143,6 +152,106 @@ export function planejarAditivos(atual) {
 
   conferirSeguranca(operacoes);
   return { operacoes, avisos };
+}
+
+// ---------- Corte: pedidos, vendas e contador ----------
+
+// Campos que o corte pode escrever (os campos de origem da V1 nunca são tocados).
+const CAMPOS_CORTE = {
+  pedidos: ['status', 'tipo', 'numero', 'mesa', 'taxa', 'pagamento', 'contaFechada',
+    'criadoEm', 'criadoEmTs', 'itens', 'historico', 'endereco'],
+  vendas: ['criadoEm', 'criadoEmTs'],
+};
+
+const ehData = v => v instanceof Date || (ehObjeto(v) && typeof v.toMillis === 'function');
+
+function igual(a, b) {
+  if (a === b) return true;
+  if (ehData(a) || ehData(b)) {
+    if (!ehData(a) || !ehData(b)) return false;
+    const ms = v => (v instanceof Date ? v.getTime() : v.toMillis());
+    return ms(a) === ms(b);
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => igual(x, b[i]));
+  }
+  if (ehObjeto(a) && ehObjeto(b)) {
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every(k => k in b && igual(a[k], b[k]));
+  }
+  return false;
+}
+
+function mudancas(doc, campos) {
+  const out = {};
+  for (const k of Object.keys(campos)) if (!(k in doc) || !igual(doc[k], campos[k])) out[k] = campos[k];
+  return out;
+}
+
+export function planejarCorte(atual) {
+  const operacoes = [];
+  const avisos = [];
+
+  const converter = (nomeColecao, precisa, conversor) => {
+    const docs = colecao(atual, nomeColecao);
+    for (const id of idsOrdenados(docs)) {
+      const doc = docs[id];
+      if (!precisa(doc)) continue;
+      const r = conversor(doc);
+      avisos.push(...r.avisos);
+      const campos = mudancas(doc, r.campos);
+      if (Object.keys(campos).length) operacoes.push({ colecao: nomeColecao, id, tipo: 'converter', campos });
+    }
+  };
+  converter('pedidos', precisaConverterPedido, converterPedido);
+  converter('vendas', precisaConverterVenda, converterVenda);
+
+  // Contador: começa no maior número real; nunca desce.
+  const cont = contadorInicial(Object.values(colecao(atual, 'pedidos')));
+  avisos.push(...cont.avisos);
+  const docCont = colecao(atual, 'contadores').pedidos;
+  if (!ehObjeto(docCont)) {
+    operacoes.push({ colecao: 'contadores', id: 'pedidos', tipo: 'criar', campos: { n: cont.n } });
+  } else if (!(typeof docCont.n === 'number' && docCont.n >= cont.n)) {
+    operacoes.push({ colecao: 'contadores', id: 'pedidos', tipo: 'atualizar', campos: { n: cont.n } });
+  }
+
+  conferirSegurancaCorte(operacoes, atual);
+  return { operacoes, avisos };
+}
+
+function temUndefined(v) {
+  if (v === undefined) return true;
+  if (Array.isArray(v)) return v.some(temUndefined);
+  if (ehObjeto(v) && !ehData(v)) return Object.values(v).some(temUndefined);
+  return false;
+}
+
+// Trava final do corte, conferida contra o estado lido agora.
+export function conferirSegurancaCorte(operacoes, atual) {
+  for (const op of operacoes) {
+    const onde = `${op.colecao}/${op.id}`;
+    const chaves = Object.keys(op.campos || {});
+    if (!chaves.length) throw new Error(`Plano inválido: ${onde} sem campos.`);
+    if (temUndefined(op.campos)) throw new Error(`Plano inválido: ${onde} com valor indefinido.`);
+    if (op.colecao === 'contadores') {
+      const ok = op.id === 'pedidos' && ['criar', 'atualizar'].includes(op.tipo)
+        && chaves.length === 1 && Number.isFinite(op.campos.n);
+      const existeDoc = existe(atual, 'contadores', 'pedidos');
+      if (!ok || (op.tipo === 'criar') === existeDoc) throw new Error(`Plano inválido: ${op.tipo} em ${onde}.`);
+      continue;
+    }
+    const permitidos = CAMPOS_CORTE[op.colecao];
+    if (op.tipo !== 'converter' || !permitidos) throw new Error(`Plano inválido: ${op.tipo} em ${onde}.`);
+    const doc = colecao(atual, op.colecao)[op.id];
+    if (!ehObjeto(doc)) throw new Error(`Plano inválido: ${onde} não existe.`);
+    for (const k of chaves) {
+      if (!permitidos.includes(k)) throw new Error(`Plano inválido: ${onde} contém ${k}.`);
+    }
+    if ('criadoEmTs' in op.campos && 'criadoEmTs' in doc) {
+      throw new Error(`Plano inválido: ${onde} já tem criadoEmTs.`);
+    }
+  }
 }
 
 // Trava final: nenhuma operação fora dos destinos permitidos nem com campo da V1.

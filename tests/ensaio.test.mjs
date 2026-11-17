@@ -64,3 +64,31 @@ test('backup sintetico minimo', () => {
   assert.equal(banco.vendas.v1.criadoEm, 2000);
   assert.ok(!JSON.stringify(banco).includes('__tipo'));
 });
+
+const minimo = () => ({ colecoes: {
+  produtos: { a: { id: 1, nome: 'X', preco: 5, categoria: 'lanches', imagem: './img/x.jpg', ativo: true } },
+  configuracoes: { geral: { nomeLoja: 'T' } },
+} });
+
+test('ensaio usa o plano do corte: pedido da v2 intacto', () => {
+  const b = minimo();
+  const nativo = { status: 'preparo', tipo: 'delivery', mesa: null, numero: 21, taxa: 6,
+    pagamento: { forma: 'pix', troco: null }, criadoEm: 1790020000000,
+    itens: [{ produtoId: 'a', nome: 'X', qtd: 1, preco: 5, adicionais: [], obs: 'sem sal' }],
+    historico: [{ status: 'novo', em: 1790020000000 }, { status: 'preparo', em: 1790020100000 }] };
+  b.colecoes.pedidos = { n1: nativo };
+  b.colecoes.contadores = { pedidos: { n: 21 } };
+  const banco = montarBancoDemo(b);
+  assert.deepEqual(banco.pedidos.n1, nativo);
+  assert.deepEqual(banco.contadores.pedidos, { n: 21 });
+});
+
+test('backup malformado falha alto', () => {
+  assert.throws(() => montarBancoDemo({}), /colecoes/);
+  assert.throws(() => montarBancoDemo({ produtos: minimo().colecoes.produtos }), /colecoes/);
+  assert.throws(() => montarBancoDemo({ colecoes: { configuracoes: {} } }), /produtos/);
+  assert.throws(() => montarBancoDemo({ colecoes: { produtos: {} } }), /produtos/);
+  assert.throws(() => montarBancoDemo({ ...minimo(), erros: { pedidos: 'permission-denied' } }), /pedidos/);
+  // Erro só numa coleção nova da V2 não impede o ensaio.
+  montarBancoDemo({ ...minimo(), erros: { bairros: 'permission-denied' } });
+});

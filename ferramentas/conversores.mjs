@@ -152,18 +152,46 @@ export function converterUsuario(uid, doc) {
   return { campos, avisos };
 }
 
+const ehObj = v => v !== null && typeof v === 'object';
+// Data "de verdade" (Timestamp do Firestore ou Date): só ela vai para criadoEmTs.
+const ehDataReal = v => v instanceof Date || (ehObj(v) && typeof v.toMillis === 'function');
+const STATUS_SO_V2 = ['novo', 'preparo', 'entrega'];
+const STATUS_V1_ABERTOS = ['recebido', 'em_preparo'];
+const TIPOS = ['delivery', 'retirada', 'mesa'];
+
+// true só se o pedido ainda está no formato V1. Pedido criado pela V2 ou já convertido -> false.
+export function precisaConverterPedido(doc) {
+  if (!ehObj(doc)) return false;
+  if (typeof doc.criadoEm !== 'number') return true;
+  if (STATUS_V1_ABERTOS.includes(doc.status) && 'origem' in doc) return true;
+  if (!('tipo' in doc) && 'origem' in doc) return true;
+  return false;
+}
+
+export function precisaConverterVenda(doc) {
+  return ehObj(doc) && typeof doc.criadoEm !== 'number';
+}
+
+// O conversor preserva o que já está no formato V2 (doc convertido ou nativo): rodar de novo
+// sobre o próprio resultado devolve os mesmos valores.
 export function converterPedido(doc) {
   const avisos = [];
-  const id = doc.numeroPedido ?? doc.mesaNome ?? '?';
+  const id = doc.numeroPedido ?? doc.numero ?? doc.mesaNome ?? '?';
 
   let status = STATUS[doc.status];
   if (!status) {
-    status = doc.status;
-    avisos.push(`Pedido ${id}: status desconhecido "${doc.status}" mantido.`);
+    if (doc.status === undefined || doc.status === null || doc.status === '') {
+      status = 'novo';
+      avisos.push(`Pedido ${id}: sem status, virou novo.`);
+    } else {
+      status = doc.status;
+      if (!STATUS_SO_V2.includes(status)) avisos.push(`Pedido ${id}: status desconhecido "${doc.status}" mantido.`);
+    }
   }
 
   let tipo;
-  if (doc.origem === 'mesa') tipo = 'mesa';
+  if (TIPOS.includes(doc.tipo)) tipo = doc.tipo;
+  else if (doc.origem === 'mesa') tipo = 'mesa';
   else if (doc.tipoEntrega === 'delivery') tipo = 'delivery';
   else if (doc.tipoEntrega === 'retirada') tipo = 'retirada';
   else {
@@ -172,7 +200,8 @@ export function converterPedido(doc) {
   }
 
   let pagamento = null;
-  if (tipo !== 'mesa') {
+  if ('pagamento' in doc && doc.pagamento !== undefined) pagamento = doc.pagamento;
+  else if (tipo !== 'mesa') {
     const forma = typeof doc.formaPagamento === 'string' ? doc.formaPagamento.toLowerCase() : null;
     if (forma === null) avisos.push(`Pedido ${id}: sem forma de pagamento.`);
     else if (!FORMAS.includes(forma)) avisos.push(`Pedido ${id}: forma de pagamento desconhecida "${forma}" mantida.`);
@@ -181,12 +210,22 @@ export function converterPedido(doc) {
 
   let itens;
   if (Array.isArray(doc.itens)) {
-    itens = doc.itens.map(it => ({
-      ...it,
-      obs: it.observacao ?? '',
-      adicionais: (Array.isArray(it.adicionais) ? it.adicionais : [])
-        .map(a => ({ ...a, nome: a.nome ?? a.opcaoNome ?? '' })),
-    }));
+    const validos = doc.itens.filter(ehObj);
+    if (validos.length !== doc.itens.length) {
+      avisos.push(`Pedido ${id}: ${doc.itens.length - validos.length} item(ns) inválido(s) descartado(s).`);
+    }
+    let adicionaisRuins = 0;
+    itens = validos.map(it => {
+      const lista = Array.isArray(it.adicionais) ? it.adicionais : [];
+      const adicionais = lista.filter(ehObj);
+      adicionaisRuins += lista.length - adicionais.length;
+      return {
+        ...it,
+        obs: it.obs ?? it.observacao ?? '',
+        adicionais: adicionais.map(a => ({ ...a, nome: a.nome ?? a.opcaoNome ?? '' })),
+      };
+    });
+    if (adicionaisRuins) avisos.push(`Pedido ${id}: ${adicionaisRuins} adicional(is) inválido(s) descartado(s).`);
   } else {
     itens = [];
     avisos.push(`Pedido ${id}: sem itens, ficou com lista vazia.`);
@@ -198,38 +237,52 @@ export function converterPedido(doc) {
   const campos = {
     status,
     tipo,
-    numero: doc.numeroPedido ?? null,
-    mesa: doc.mesaId ?? null,
-    taxa: doc.taxaEntrega ?? 0,
+    numero: 'numero' in doc ? doc.numero ?? null : doc.numeroPedido ?? null,
+    mesa: 'mesa' in doc ? doc.mesa ?? null : doc.mesaId ?? null,
+    taxa: 'taxa' in doc ? doc.taxa ?? 0 : doc.taxaEntrega ?? 0,
     pagamento,
-    contaFechada: doc.fechada ?? false,
-    criadoEm: ms,
-    criadoEmTs: doc.criadoEm ?? null,
-    itens,
-    historico: [{ status, em: ms }],
+    contaFechada: 'contaFechada' in doc ? doc.contaFechada ?? false : doc.fechada ?? false,
   };
-  const c = doc.cliente;
-  if (tipo === 'delivery' && c && typeof c === 'object' && c.endereco) {
-    campos.endereco = { texto: c.endereco, cep: c.cep ?? '' };
+  if (ms !== null) campos.criadoEm = ms;
+  if (ehDataReal(doc.criadoEm) && !('criadoEmTs' in doc)) campos.criadoEmTs = doc.criadoEm;
+  campos.itens = itens;
+  campos.historico = Array.isArray(doc.historico) ? doc.historico : [{ status, em: ms }];
+
+  if ('endereco' in doc && doc.endereco !== undefined) campos.endereco = doc.endereco;
+  else if (tipo === 'delivery') {
+    const c = doc.cliente;
+    if (ehObj(c) && c.endereco) campos.endereco = { texto: c.endereco, cep: c.cep ?? '' };
+    else avisos.push(`Pedido ${id}: delivery sem endereço.`);
   }
   return { campos, avisos };
 }
 
 export function converterVenda(doc) {
   const avisos = [];
+  const campos = {};
   const ms = paraMs(doc.criadoEm);
   if (ms === null) avisos.push('Venda sem data de criação válida.');
-  return { campos: { criadoEm: ms, criadoEmTs: doc.criadoEm ?? null }, avisos };
+  else campos.criadoEm = ms;
+  if (ehDataReal(doc.criadoEm) && !('criadoEmTs' in doc)) campos.criadoEmTs = doc.criadoEm;
+  return { campos, avisos };
 }
+
+// Número que entra no contador: o dado pela V2 (pedido com `tipo` e sem `origem`) ou, nos
+// pedidos da V1, só valores pequenos — código de 8 dígitos não é número de sequência.
+const LIMITE_NUMERO_V1 = 100000;
 
 export function contadorInicial(pedidos) {
   let n = 0;
   let ignorados = 0;
   for (const p of pedidos) {
+    if (!ehObj(p)) continue;
     const v = p.numeroPedido ?? p.numero;
     if (v === null || v === undefined || v === '') continue;
-    if (typeof v === 'number' && Number.isFinite(v)) n = Math.max(n, v);
-    else if (typeof v === 'string' && /^\d+$/.test(v)) n = Math.max(n, parseInt(v, 10));
+    let num = NaN;
+    if (typeof v === 'number' && Number.isFinite(v)) num = v;
+    else if (typeof v === 'string' && /^\d+$/.test(v)) num = parseInt(v, 10);
+    const daV2 = 'tipo' in p && !('origem' in p);
+    if (Number.isFinite(num) && (daV2 || num < LIMITE_NUMERO_V1)) n = Math.max(n, num);
     else ignorados++;
   }
   const avisos = ignorados
