@@ -4,6 +4,7 @@ import { store, onStore } from './app.js?v=2.0.0-f1';
 import { mudarStatus, imprimir, statusBadge } from './acoes.js?v=2.0.0-f1';
 import { detalhe } from './pedidos.js?v=2.0.0-f1';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
+import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -11,7 +12,7 @@ export function qrDataURL(texto, cel = 8) {
   qr.make();
   return qr.createDataURL(cel, 2);
 }
-export const urlMesa = n => `${location.origin}/?mesa=${encodeURIComponent(n)}`;
+const linkMesa = id => urlMesa(location.origin, id);
 
 const pedidosDaMesa = id => store.pedidos.filter(p => p.tipo === 'mesa' && String(p.mesa) === String(id) && p.status !== 'cancelado' && !p.contaFechada);
 
@@ -38,7 +39,7 @@ export function render(el) {
         const total = ps.reduce((s, p) => s + p.total, 0);
         const cls = m.chamado ? 'chamando' : ps.length ? 'ocupada' : '';
         return `<div class="card mesa ${cls}" style="${m.ativa === false ? 'opacity:.5' : ''}">
-          <h3><i class="ti ti-armchair"></i>Mesa ${esc(m.numero)}</h3>
+          <h3><i class="ti ti-armchair"></i>${esc(nomeMesa(m))}</h3>
           ${m.chamado ? `<span class="badge badge-danger"><i class="ti ti-bell-ringing"></i>${m.chamado === 'conta' ? 'Pediu a conta' : 'Chamou o garçom'} · ${tempoDesde(m.chamadoEm)}</span>` : ''}
           ${m.chamado === 'conta' && m.contaPagamento ? `<span class="mv">Vai pagar com ${esc(PAGAMENTOS[m.contaPagamento.forma] || '')}${m.contaPagamento.troco ? ` · troco p/ ${moeda(m.contaPagamento.troco)}` : ''}</span>` : ''}
           <span class="mv">${ps.length ? `${ps.length} pedido(s) · <strong>${moeda(total)}</strong>` : m.ativa === false ? 'Desativada' : 'Livre'}</span>
@@ -50,9 +51,9 @@ export function render(el) {
       }).join('') || '<div class="vazio">Nenhuma mesa cadastrada.</div>'}</div>`;
 
     area.querySelector('[data-nova]').onclick = async () => {
-      const n = Math.max(0, ...store.mesas.map(m => Number(m.numero) || 0)) + 1;
-      await db.set('mesas', String(n), { numero: n, ativa: true, chamado: null, chamadoEm: null });
-      toast(`Mesa ${n} criada`);
+      const { id, numero } = proximaMesa(store.mesas);
+      await db.set('mesas', id, { numero, nome: `Mesa ${numero}`, ativa: true, chamado: null, chamadoEm: null });
+      toast(`Mesa ${numero} criada`);
     };
     area.querySelectorAll('[data-atender]').forEach(b => b.onclick = () =>
       db.update('mesas', b.dataset.atender, { chamado: null, chamadoEm: null }));
@@ -64,8 +65,8 @@ export function render(el) {
       <div class="barra-acoes"><p style="color:var(--txt2);font-size:14px">Cada mesa tem um QR Code próprio: o cliente escaneia, pede e acompanha o status no celular.</p>
         <span class="espaco"></span><button class="btn btn-pri" data-imprimir-qr><i class="ti ti-printer"></i>Imprimir todos</button></div>
       <div class="qr-grade">${store.mesas.filter(m => m.ativa !== false).map(m => `
-        <div class="card qr-card"><img src="${qrDataURL(urlMesa(m.numero), 5)}" alt="QR Code da mesa ${esc(m.numero)}" style="image-rendering:pixelated">
-        <strong>Mesa ${esc(m.numero)}</strong><a href="${urlMesa(m.numero)}" target="_blank" rel="noopener" style="font-size:12px">Abrir link</a></div>`).join('')}</div>`;
+        <div class="card qr-card"><img src="${qrDataURL(linkMesa(m.id), 5)}" alt="QR Code: ${esc(nomeMesa(m))}" style="image-rendering:pixelated">
+        <strong>${esc(nomeMesa(m))}</strong><a href="${esc(linkMesa(m.id))}" target="_blank" rel="noopener" style="font-size:12px">Abrir link</a></div>`).join('')}</div>`;
     area.querySelector('[data-imprimir-qr]').onclick = imprimirQRs;
   }
 
@@ -79,7 +80,11 @@ export function render(el) {
       const total = ps.reduce((s, p) => s + p.total, 0);
       const abertos = ps.filter(p => p.status !== 'entregue').length;
       mod.el.querySelector('#ct').innerHTML = `
-        <h2>Mesa ${esc(m.numero)}</h2>
+        <h2>${esc(nomeMesa(m))}</h2>
+        <form class="linha-btns" data-renomear style="margin:0 0 12px;align-items:end">
+          <label class="campo" style="flex:1;margin:0"><span>Nome da mesa</span><input name="nome" maxlength="30" value="${esc(nomeMesa(m))}"></label>
+          <button class="btn btn-s">Salvar</button>
+        </form>
         ${ps.length ? `<table class="tabela">${ps.map(p => `
           <tr data-ped="${p.id}" style="cursor:pointer"><td>#${p.numero} · ${p.itens.map(i => `${i.qtd}× ${esc(i.nome)}`).join(', ')}</td>
           <td>${statusBadge(p.status)}</td><td class="num">${moeda(p.total)}</td></tr>`).join('')}
@@ -94,30 +99,40 @@ export function render(el) {
         </div>`;
       const e = mod.el;
       e.querySelectorAll('[data-ped]').forEach(r => r.onclick = () => detalhe(r.dataset.ped));
+      e.querySelector('[data-renomear]').onsubmit = async ev => {
+        ev.preventDefault();
+        const nome = ev.target.nome.value.trim();
+        if (!nome) { toast('Digite o nome da mesa', 'erro'); return; }
+        await db.update('mesas', id, { nome });
+        toast('Nome salvo');
+      };
       e.querySelector('[data-ativa]').onclick = () => db.update('mesas', id, { ativa: m.ativa === false });
       e.querySelector('[data-excluir]')?.addEventListener('click', async () => {
-        if (await confirmar(`Excluir a mesa ${m.numero}? O QR Code dela deixará de funcionar.`, { ok: 'Excluir', perigo: true })) {
+        if (await confirmar(`Excluir "${nomeMesa(m)}"? O QR Code dela deixará de funcionar.`, { ok: 'Excluir', perigo: true })) {
           await db.remove('mesas', id); mod.fechar();
         }
       });
       e.querySelector('[data-imp]')?.addEventListener('click', () => {
         const itens = ps.flatMap(p => p.itens);
-        imprimir({ numero: `Mesa ${m.numero}`, tipo: 'mesa', mesa: m.numero, criadoEm: Date.now(), cliente: {}, itens,
+        imprimir({ numero: nomeMesa(m), tipo: 'mesa', mesa: m.numero, criadoEm: Date.now(), cliente: {}, itens,
           subtotal: total, total, taxa: 0, desconto: 0, pagamento: m.contaPagamento || null, obs: 'Conta da mesa' });
       });
       e.querySelector('[data-fechar-conta]')?.addEventListener('click', async () => {
-        if (!await confirmar(`Fechar a conta da mesa ${m.numero} no valor de ${moeda(total)}?`, { ok: 'Fechar conta' })) return;
+        if (!await confirmar(`Fechar a conta de "${nomeMesa(m)}" no valor de ${moeda(total)}?`, { ok: 'Fechar conta' })) return;
         for (const p of ps) {
           if (p.status !== 'entregue') await mudarStatus(p, 'entregue');
           await db.update('pedidos', p.id, { contaFechada: true, pagamento: m.contaPagamento || { forma: 'dinheiro', troco: null } });
         }
         await db.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null });
-        toast(`Conta da mesa ${m.numero} fechada`);
+        toast(`Conta de ${nomeMesa(m)} fechada`);
         mod.fechar();
       });
     };
     desenharConta();
-    parar = onStore(desenharConta);
+    parar = onStore(() => {
+      if (mod.el.querySelector('[data-renomear] input') === document.activeElement) return; // não apaga o que está sendo digitado
+      desenharConta();
+    });
   }
 
   desenhar();
@@ -139,7 +154,7 @@ function imprimirQRs() {
     h2 { margin: 0 0 4mm; font-size: 16pt; } h1 { font-size: 26pt; margin: 4mm 0 0; } p { margin: 2mm 0 0; color: #444; }
   </style></head><body><div class="g">
   ${store.mesas.filter(m => m.ativa !== false).map(m => `<div class="c"><h2>${nome}</h2>
-    <img src="${qrDataURL(urlMesa(m.numero), 10)}" alt=""><h1>Mesa ${esc(m.numero)}</h1>
+    <img src="${qrDataURL(urlMesa(location.origin, m.id), 10)}" alt=""><h1>${esc(nomeMesa(m))}</h1>
     <p>Aponte a câmera do celular para ver o cardápio e pedir</p></div>`).join('')}
   </div><script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();

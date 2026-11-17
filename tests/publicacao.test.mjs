@@ -55,6 +55,6 @@ test('pre-cache do SW so tem arquivos que existem', () => {
 
 test('documentos e ferramentas nao vao ao ar', () => {
   const ign = ler('.vercelignore').split(/\r?\n/).map(l => l.trim());
-  for (const x of ['docs/', 'tests/', 'scripts/', 'ferramentas/', 'regras/', 'package.json', 'README.md', 'firestore.rules', 'backups/']) assert.ok(ign.includes(x), x);
+  for (const x of ['docs/', 'tests/', 'scripts/', 'ferramentas/', 'regras/', 'package.json', 'README.md', 'firestore.rules', 'backups/', 'js/package.json']) assert.ok(ign.includes(x), x);
   assert.ok(!ign.some(l => l.startsWith('api')), 'api/ precisa ir ao ar');
 });

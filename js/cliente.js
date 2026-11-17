@@ -7,8 +7,9 @@ import {
   moeda, esc, soDigitos, mascaraTelefone, hojeISO, statusLoja, aplicarTema, mesclarConfig,
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
 } from './utils.js?v=2.0.0-f1';
+import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0-f1';
 
-const $ = s => document.querySelector(s);
+const $= s => document.querySelector(s);
 const E = {
   cfg: mesclarConfig(null),
   cats: [],
@@ -495,7 +496,7 @@ function renderCheckout() {
   box.innerHTML = `
     <h2><button class="btn btn-ghost btn-ico btn-s" data-voltar aria-label="Voltar"><i class="ti ti-arrow-left"></i></button> Finalizar pedido</h2>
     <form id="form-ck" novalidate>
-      ${mesa ? `<div class="aviso aviso-info" style="margin:0 0 16px"><i class="ti ti-armchair"></i>Pedido para a <strong>Mesa ${esc(mesa)}</strong>. O pagamento é feito ao pedir a conta.</div>` : `
+      ${mesa ? `<div class="aviso aviso-info" style="margin:0 0 16px"><i class="ti ti-armchair"></i>Pedido para a <strong>${esc(E.mesaDoc ? nomeMesa(E.mesaDoc) : 'Mesa')}</strong>. O pagamento é feito ao pedir a conta.</div>` : `
       <div class="sec-checkout">
         <h3>Como você quer receber?</h3>
         <div class="opcoes">${tipos.map(([v, n, ic], i) => `
@@ -655,7 +656,7 @@ function renderCheckout() {
       status: 'novo',
       tipo,
       mesa: mesa || null,
-      cliente: { nome: f.nome.value.trim() || (mesa ? `Mesa ${mesa}` : ''), telefone: mesa ? '' : soDigitos(f.telefone.value) },
+      cliente: { nome: f.nome.value.trim() || (mesa ? (E.mesaDoc ? nomeMesa(E.mesaDoc) : 'Mesa') : ''), telefone: mesa ? '' : soDigitos(f.telefone.value) },
       endereco: tipo === 'delivery' ? {
         bairro: b.nome, bairroId: b.id, rua: f.rua.value.trim(), numero: f.numero.value.trim(),
         complemento: f.complemento.value.trim(), referencia: f.referencia.value.trim()
@@ -722,7 +723,7 @@ function renderAcompanhar() {
     const s = STATUS[d.status];
     return `<a class="ped-ativo" href="/pedido.html?id=${id}">
       <span class="ico"><i class="ti ${s.icone} ${d.status === 'novo' ? 'pulso' : ''}"></i></span>
-      <span class="tx"><strong>Pedido #${d.numero}${d.mesa ? ` · Mesa ${esc(d.mesa)}` : ''}</strong>
+      <span class="tx"><strong>Pedido #${d.numero}${d.mesa ? ` · ${esc(E.mesaDoc && String(E.mesa) === String(d.mesa) ? nomeMesa(E.mesaDoc) : 'Mesa')}` : ''}</strong>
       <span>${s.nome}</span><span class="barra"><i style="width:${pct}%"></i></span></span>
       <i class="ti ti-chevron-right" aria-hidden="true"></i></a>`;
   }).join('');
@@ -734,7 +735,7 @@ function iniciarMesa() {
     E.mesaDoc = d;
     if (!d || d.ativa === false) {
       $('#mesa-box').classList.remove('oculto');
-      $('#mesa-box').innerHTML = `<div class="aviso aviso-warn"><i class="ti ti-alert-circle"></i>Mesa ${esc(E.mesa)} não encontrada. Peça ajuda ao atendente.</div>`;
+      $('#mesa-box').innerHTML = `<div class="aviso aviso-warn"><i class="ti ti-alert-circle"></i>Mesa não encontrada. Peça ajuda ao atendente.</div>`;
       return;
     }
     renderMesa();
@@ -747,7 +748,7 @@ function renderMesa() {
   const chamado = d.chamado;
   box.innerHTML = `<div class="mesa-card">
     <i class="ti ti-armchair" aria-hidden="true"></i>
-    <div class="mt"><strong>Mesa ${esc(d.numero ?? E.mesa)}</strong><small>Peça por aqui. Levamos até você.</small></div>
+    <div class="mt"><strong>${esc(nomeMesa(d))}</strong><small>Peça por aqui. Levamos até você.</small></div>
     <button class="btn ${chamado === 'garcom' ? 'ativo' : ''}" data-garcom><i class="ti ti-bell-ringing"></i>${chamado === 'garcom' ? 'Garçom a caminho' : 'Chamar garçom'}</button>
     <button class="btn ${chamado === 'conta' ? 'ativo' : ''}" data-conta><i class="ti ti-receipt"></i>${chamado === 'conta' ? 'Conta solicitada' : 'Pedir a conta'}</button>
   </div>`;
@@ -822,8 +823,9 @@ async function iniciar() {
   }
 
   const q = new URLSearchParams(location.search);
-  if (q.get('mesa')) {
-    sessionStorage.setItem('co_mesa', soDigitos(q.get('mesa')) || q.get('mesa'));
+  const idLink = idMesaDoLink(q.get('mesa'));
+  if (idLink) {
+    sessionStorage.setItem('co_mesa', idLink);
     history.replaceState(null, '', location.pathname);
   }
   E.mesa = sessionStorage.getItem('co_mesa');

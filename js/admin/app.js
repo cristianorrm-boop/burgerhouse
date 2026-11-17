@@ -4,6 +4,7 @@ import { DEMO } from '../config.js?v=2.0.0-f1';
 import { semear } from '../seed.js?v=2.0.0-f1';
 import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f1';
 import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f1';
+import { nomeMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 
@@ -109,7 +110,7 @@ function verificarNovidades() {
     if (!vistos.has(p.id)) {
       vistos.add(p.id);
       if (!primeiraCarga) {
-        notificar(`Novo pedido #${p.numero}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? 'Mesa ' + p.mesa : p.tipo}`);
+        notificar(`Novo pedido #${p.numero}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? nomeMesa(store.mesas.find(m => m.id === p.mesa) || {}) : p.tipo}`);
         toast(`Novo pedido #${p.numero}`);
         if (impressaoAutomatica() && conectada()) import('./acoes.js?v=2.0.0-f1').then(m => m.imprimir(p));
       }
@@ -160,8 +161,8 @@ function iniciarPainel(u) {
   db.watch('mesas', { orderBy: ['numero'] }, l => {
     for (const m of l) {
       if (m.chamado && mesasAntes[m.id] !== m.chamado && Object.keys(mesasAntes).length) {
-        notificar(`Mesa ${m.numero}`, m.chamado === 'conta' ? 'Pediu a conta' : 'Chamou o garçom');
-        toast(`Mesa ${m.numero}: ${m.chamado === 'conta' ? 'pediu a conta' : 'chamou o garçom'}`);
+        notificar(nomeMesa(m), m.chamado === 'conta' ? 'Pediu a conta' : 'Chamou o garçom');
+        toast(`${nomeMesa(m)}: ${m.chamado === 'conta' ? 'pediu a conta' : 'chamou o garçom'}`);
       }
     }
     mesasAntes = Object.fromEntries(l.map(m => [m.id, m.chamado || null]));
