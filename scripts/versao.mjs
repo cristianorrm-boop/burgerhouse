@@ -10,8 +10,9 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// prefixo (from / import( / src= / href=), aspas, caminho local .js/.css, ?v= opcional
-const REF = /(\bfrom\s*|\bimport\s*\(\s*|\b(?:src|href)\s*=\s*)(['"])((?:\.{1,2}\/|\/(?!\/))[^'"?#]*?\.(?:js|css))(\?v=[^'"]*)?\2/g;
+// prefixo (from / import( / import só de efeito / src= / href=), aspas, caminho local .js/.css, ?v= opcional.
+// Caminho local: ./ ../ ou /x; em src/href também o relativo "sem ponto" (style.css, js/a.js), mas nunca http(s): etc.
+const REF = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+(?=['"])|\b(?:src|href)\s*=\s*)(['"])((?:\.{1,2}\/|\/(?!\/)|(?<=\b(?:src|href)\s*=\s*['"])(?![a-zA-Z][a-zA-Z0-9+.-]*:)[\w-])[^'"?#]*?\.(?:js|css))(\?v=[^'"]*)?\2/g;
 // strings soltas com caminho absoluto local .js/.css (lista de pré-cache do sw.js)
 const LISTA = /(['"])(\/(?!\/)[^'"?#]*?\.(?:js|css))(\?v=[^'"]*)?\1/g;
 

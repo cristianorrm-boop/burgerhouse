@@ -1,0 +1,8 @@
+docs/
+tests/
+scripts/
+package.json
+README.md
+firestore.rules
+.superpowers/
+.impeccable/

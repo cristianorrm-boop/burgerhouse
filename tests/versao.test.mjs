@@ -37,3 +37,13 @@ test('--check falha com import sem versao', () => {
   assert.deepEqual(referenciasSemVersao("import a from './a.js?v=1.0'", V), ['./a.js?v=1.0']);
   assert.deepEqual(referenciasSemVersao("import a from './a.js?v=2.0.0-f1'", V), []);
 });
+
+test('--check pega import so de efeito', () => {
+  assert.deepEqual(referenciasSemVersao("import './a.js';", V), ['./a.js']);
+  assert.equal(aplicarVersao("import './a.js';", V), "import './a.js?v=2.0.0-f1';");
+});
+
+test('--check pega caminho relativo sem ponto', () => {
+  assert.deepEqual(referenciasSemVersao('<link rel="stylesheet" href="style.css">', V), ['style.css']);
+  assert.equal(aplicarVersao('<script src="js/a.js"></script>', V), '<script src="js/a.js?v=2.0.0-f1"></script>');
+});

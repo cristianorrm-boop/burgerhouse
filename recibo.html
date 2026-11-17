@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
   <title>Recibo</title>
   <style>
+    /* Cores da V1 (antes vinham do style.css, que saiu na V2): links de recibo antigos continuam iguais */
+    :root{--primary-color:#D4AF37;--secondary-color:#1C1C1C;--text-color:#201C18;--border-color:#E2D9C8;--light:#F7F4EF}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--light);color:var(--text-color)}
     body{display:flex;justify-content:center;padding:2rem 1rem}
     .recibo-card{
       width:100%;max-width:420px;background:#fff;border:1px solid var(--border-color);
