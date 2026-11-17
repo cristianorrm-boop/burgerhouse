@@ -41,7 +41,7 @@ function processar(texto) {
     estado.dataset.pronto = '1';
     links.innerHTML = [
       ['/?demo=1', 'Cardápio (cliente)'],
-      [`/index.html?mesa=${encodeURIComponent(mesaId)}&demo=1`, 'Cardápio de uma mesa real'],
+      [`/?mesa=${encodeURIComponent(mesaId)}&demo=1`, 'Cardápio de uma mesa real'],
       ['/admin/?demo=1', 'Admin (qualquer e-mail, senha com 6+ caracteres)'],
     ].map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join('');
     links.hidden = false;
