@@ -1,5 +1,6 @@
 // Impressora térmica Bluetooth (BLE, comandos ESC/POS) via Web Bluetooth. A configuração fica neste aparelho.
-import { moeda, dataHoraBR, TIPOS, PAGAMENTOS } from '../utils.js?v=2.0.0-f1';
+import { rotuloPedido, enderecoTexto, pagamentoRotulo } from '../nucleo/pedidos.js?v=2.0.0-f1';
+import { moeda, dataHoraBR, TIPOS } from '../utils.js?v=2.0.0-f1';
 
 // Serviços BLE mais comuns em impressoras térmicas 58/80 mm
 const SERVICOS = [
@@ -96,14 +97,13 @@ function montar(p, cfg) {
 
   alinhar(1); negrito(true); lin(cfg.nome); negrito(false);
   lin(dataHoraBR(p.criadoEm)); sep();
-  grande(true); lin(`PEDIDO #${p.numero}`); grande(false);
-  negrito(true); lin(`${TIPOS[p.tipo] || p.tipo}${p.mesa ? ' ' + p.mesa : ''}`.toUpperCase()); negrito(false);
+  grande(true); lin(`PEDIDO ${rotuloPedido(p)}`); grande(false);
+  negrito(true); lin((p.tipo === 'mesa' ? rotuloPedido({ ...p, numero: null }) : (TIPOS[p.tipo] || p.tipo)).toUpperCase()); negrito(false);
   alinhar(0); sep();
   if (p.cliente?.nome) lin(`Cliente: ${p.cliente.nome}`);
   if (p.cliente?.telefone) lin(`Tel: ${p.cliente.telefone}`);
   if (p.endereco) {
-    const e = p.endereco;
-    lin(`End: ${e.rua}, ${e.numero}${e.complemento ? ' - ' + e.complemento : ''} - ${e.bairro}${e.referencia ? ' (ref.: ' + e.referencia + ')' : ''}`);
+    lin(`End: ${enderecoTexto(p.endereco)}`);
   }
   sep();
   for (const i of p.itens || []) {
@@ -118,7 +118,7 @@ function montar(p, cfg) {
   if (p.descontoFidelidade) dupla('Fidelidade', '-' + moeda(p.descontoFidelidade));
   negrito(true); dupla('TOTAL', moeda(p.total)); negrito(false);
   sep();
-  const forma = p.pagamento ? (PAGAMENTOS[p.pagamento.forma] || p.pagamento.forma) : (p.tipo === 'mesa' ? 'Na conta da mesa' : '-');
+  const forma = p.pagamento ? pagamentoRotulo(p.pagamento.forma) : (p.tipo === 'mesa' ? 'Na conta da mesa' : '-');
   lin(`Pagamento: ${forma}${p.pagamento?.forma === 'dinheiro' && p.pagamento.troco ? ' - troco para ' + moeda(p.pagamento.troco) : ''}`);
   if (p.obs) { sep(); lin(`OBS: ${p.obs}`); }
   sep(); alinhar(1); lin('Obrigado pela preferencia!');

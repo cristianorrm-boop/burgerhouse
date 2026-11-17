@@ -1,9 +1,10 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
 import { db } from '../db.js?v=2.0.0-f1';
 import { store, onStore } from './app.js?v=2.0.0-f1';
-import { mudarStatus, imprimir, statusBadge } from './acoes.js?v=2.0.0-f1';
+import { mudarStatus, imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f1';
 import { detalhe } from './pedidos.js?v=2.0.0-f1';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
+import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
 import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
@@ -86,7 +87,7 @@ export function render(el) {
           <button class="btn btn-s">Salvar</button>
         </form>
         ${ps.length ? `<table class="tabela">${ps.map(p => `
-          <tr data-ped="${p.id}" style="cursor:pointer"><td>#${p.numero} · ${p.itens.map(i => `${i.qtd}× ${esc(i.nome)}`).join(', ')}</td>
+          <tr data-ped="${p.id}" style="cursor:pointer"><td>${esc(rotuloPedido(p, mesasPorId()))} · ${p.itens.map(i => `${i.qtd}× ${esc(i.nome)}`).join(', ')}</td>
           <td>${statusBadge(p.status)}</td><td class="num">${moeda(p.total)}</td></tr>`).join('')}
           <tr><td colspan="2"><strong>Total da mesa</strong></td><td class="num"><strong>${moeda(total)}</strong></td></tr></table>
           ${m.contaPagamento ? `<p style="margin-top:10px;color:var(--txt2)">Cliente vai pagar com ${esc(PAGAMENTOS[m.contaPagamento.forma] || '')}${m.contaPagamento.troco ? ` · troco para ${moeda(m.contaPagamento.troco)}` : ''}</p>` : ''}
@@ -114,7 +115,7 @@ export function render(el) {
       });
       e.querySelector('[data-imp]')?.addEventListener('click', () => {
         const itens = ps.flatMap(p => p.itens);
-        imprimir({ numero: nomeMesa(m), tipo: 'mesa', mesa: m.numero, criadoEm: Date.now(), cliente: {}, itens,
+        imprimir({ numero: null, tipo: 'mesa', mesa: m.id, mesaNome: nomeMesa(m), criadoEm: Date.now(), cliente: {}, itens,
           subtotal: total, total, taxa: 0, desconto: 0, pagamento: m.contaPagamento || null, obs: 'Conta da mesa' });
       });
       e.querySelector('[data-fechar-conta]')?.addEventListener('click', async () => {

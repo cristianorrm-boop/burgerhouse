@@ -2,7 +2,8 @@
 import { db, inc } from '../db.js?v=2.0.0-f1';
 import { store } from './app.js?v=2.0.0-f1';
 import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f1';
-import { moeda, esc, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f1';
+import { rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo } from '../nucleo/pedidos.js?v=2.0.0-f1';
+import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f1';
 
 export function proximoStatus(p) {
   const f = fluxoStatus(p.tipo);
@@ -46,17 +47,16 @@ async function contabilizar(p) {
 
 export async function cancelar(p, motivo) {
   await mudarStatus(p, 'cancelado', { motivoCancelamento: motivo || '' });
-  toast(`Pedido #${p.numero} cancelado`);
+  toast(`Pedido ${rotuloPedido(p, mesasPorId())} cancelado`);
 }
 
-export function enderecoTexto(e) {
-  if (!e) return '';
-  return `${e.rua}, ${e.numero}${e.complemento ? ' - ' + e.complemento : ''} · ${e.bairro}${e.referencia ? ` (ref.: ${e.referencia})` : ''}`;
-}
+export const enderecoTexto = enderecoTextoPuro;
+
+export const mesasPorId = () => Object.fromEntries((store.mesas || []).map(m => [m.id, m]));
 
 export function pagamentoTexto(p) {
   if (!p.pagamento) return p.tipo === 'mesa' ? 'Na conta da mesa' : '—';
-  const f = PAGAMENTOS[p.pagamento.forma] || p.pagamento.forma;
+  const f = pagamentoRotulo(p.pagamento.forma);
   if (p.pagamento.forma !== 'dinheiro') return f;
   return p.pagamento.troco ? `${f} · troco para ${moeda(p.pagamento.troco)} (levar ${moeda(p.pagamento.troco - p.total)})` : `${f} · sem troco`;
 }
@@ -65,7 +65,8 @@ export function pagamentoTexto(p) {
 export function imprimir(p) {
   const c = store.cfg;
   if (conectada()) {
-    imprimirBluetooth(p, c).catch(() => { toast('Falha na impressora Bluetooth. Imprimindo pelo navegador.', 'erro'); imprimirNavegador(p); });
+    const pb = p.tipo === 'mesa' ? { ...p, mesaNome: mesaDoPedido(p, mesasPorId()) } : p;
+    imprimirBluetooth(pb, c).catch(() => { toast('Falha na impressora Bluetooth. Imprimindo pelo navegador.', 'erro'); imprimirNavegador(p); });
     return;
   }
   imprimirNavegador(p);
@@ -75,7 +76,7 @@ function imprimirNavegador(p) {
   const c = store.cfg;
   const w = window.open('', '_blank', 'width=380,height=640');
   if (!w) { toast('Permita pop-ups para imprimir', 'erro'); return; }
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Pedido #${p.numero}</title>
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Pedido ${esc(rotuloPedido(p, mesasPorId()))}</title>
   <style>
     @page { margin: 0; size: 80mm auto; }
     body { font-family: 'Courier New', monospace; font-size: 12px; width: 72mm; margin: 4mm; color: #000; }
@@ -87,8 +88,8 @@ function imprimirNavegador(p) {
   </style></head><body>
   <h1>${esc(c.nome)}</h1>
   <div class="c">${dataHoraBR(p.criadoEm)}</div><hr>
-  <div class="c g">PEDIDO #${p.numero}</div>
-  <div class="c"><b>${esc(TIPOS[p.tipo].toUpperCase())}${p.mesa ? ' ' + esc(p.mesa) : ''}</b></div><hr>
+  <div class="c g">PEDIDO ${esc(rotuloPedido(p, mesasPorId()))}</div>
+  <div class="c"><b>${esc(p.tipo === 'mesa' ? mesaDoPedido(p, mesasPorId()).toUpperCase() : TIPOS[p.tipo].toUpperCase())}</b></div><hr>
   ${p.cliente?.nome ? `<div>Cliente: ${esc(p.cliente.nome)}</div>` : ''}
   ${p.cliente?.telefone ? `<div>Tel: ${esc(mascaraTelefone(p.cliente.telefone))}</div>` : ''}
   ${p.endereco ? `<div>End: ${esc(enderecoTexto(p.endereco))}</div>` : ''}

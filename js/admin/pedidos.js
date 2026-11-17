@@ -1,7 +1,9 @@
 // Pedidos em tempo real (kanban): aceitar, avançar status, cancelar, imprimir.
+import { db } from '../db.js?v=2.0.0-f1';
 import { store, onStore } from './app.js?v=2.0.0-f1';
-import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge } from './acoes.js?v=2.0.0-f1';
-import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, inicioDoDia, soDigitos } from '../utils.js?v=2.0.0-f1';
+import { rotuloPedido, mesaDoPedido, filtroHistorico } from '../nucleo/pedidos.js?v=2.0.0-f1';
+import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f1';
+import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, confirmar, toast, inicioDoDia, soDigitos } from '../utils.js?v=2.0.0-f1';
 
 const COLUNAS = [
   ['novo', 'Novos', s => s === 'novo'],
@@ -13,13 +15,26 @@ const COLUNAS = [
 export function render(el) {
   let filtro = 'todos';
   el.innerHTML = `
+    <div class="opcoes" id="abas-ped" style="margin-bottom:12px">
+      <label class="opcao"><input type="radio" name="ap" value="kanban" checked><span>Pedidos</span></label>
+      <label class="opcao"><input type="radio" name="ap" value="hist"><span>Histórico</span></label>
+    </div>
+    <div id="hist" class="oculto"></div>
+    <div id="vista-kanban">
     <div class="barra-acoes">
       <div class="opcoes" id="filtro-tipo">
         ${[['todos', 'Todos'], ['delivery', 'Delivery'], ['retirada', 'Retirada'], ['mesa', 'Mesa']].map(([v, n], i) =>
           `<label class="opcao"><input type="radio" name="ft" value="${v}" ${i === 0 ? 'checked' : ''}><span>${n}</span></label>`).join('')}
       </div>
     </div>
-    <div class="kanban" id="kanban"></div>`;
+    <div class="kanban" id="kanban"></div>
+    </div>`;
+  el.querySelector('#abas-ped').onchange = e => {
+    const h = e.target.value === 'hist';
+    el.querySelector('#vista-kanban').classList.toggle('oculto', h);
+    el.querySelector('#hist').classList.toggle('oculto', !h);
+    if (h) historico(el.querySelector('#hist'));
+  };
 
   el.querySelector('#filtro-tipo').onchange = e => { filtro = e.target.value; desenhar(); };
 
@@ -41,8 +56,8 @@ export function render(el) {
     const ativo = !['entregue', 'cancelado'].includes(p.status);
     const prox = proximoStatus(p);
     return `<div class="ped ${p.status === 'novo' ? 'novo' : ''}" data-id="${p.id}">
-      <div class="ped-cab"><strong>#${p.numero}</strong>
-        <span class="badge ${p.tipo === 'mesa' ? 'badge-info' : p.tipo === 'delivery' ? 'badge-pri' : ''}">${TIPOS[p.tipo]}${p.mesa ? ' ' + esc(p.mesa) : ''}</span>
+      <div class="ped-cab"><strong>${esc(rotuloPedido(p, mesasPorId()))}</strong>
+        <span class="badge ${p.tipo === 'mesa' ? 'badge-info' : p.tipo === 'delivery' ? 'badge-pri' : ''}">${p.tipo === 'mesa' ? esc(mesaDoPedido(p, mesasPorId())) : TIPOS[p.tipo]}</span>
         <span class="ped-tempo ${ativo && min > 40 ? 'atraso' : ''}">${ativo ? tempoDesde(p.criadoEm) : horaBR(p.criadoEm)}</span>
       </div>
       <div class="ped-cli">${esc(p.cliente?.nome || '')}${p.endereco ? ` · ${esc(p.endereco.bairro)}` : ''}</div>
@@ -75,21 +90,22 @@ export function render(el) {
   return () => { parar(); clearInterval(relogio); };
 }
 
-export function detalhe(id) {
-  const p0 = store.pedidos.find(x => x.id === id);
+export function detalhe(id, avulso = null) {
+  const busca = x => store.pedidos.find(p => p.id === x) || (avulso?.id === x ? avulso : undefined);
+  const p0 = busca(id);
   if (!p0) return;
   let parar = null;
   const m = modal('<div id="det"></div>', { classe: 'modal-g', aoFechar: () => parar?.() });
   const desenhar = () => {
-    const p = store.pedidos.find(x => x.id === id);
+    const p = busca(id);
     if (!p) return;
     const prox = proximoStatus(p);
     const ativo = !['entregue', 'cancelado'].includes(p.status);
     const tel = soDigitos(p.cliente?.telefone);
     m.el.querySelector('#det').innerHTML = `
-      <h2>Pedido #${p.numero} ${statusBadge(p.status)}</h2>
+      <h2>Pedido ${esc(rotuloPedido(p, mesasPorId()))} ${statusBadge(p.status)}</h2>
       <div class="det-grade">
-        <div><small>Tipo</small>${TIPOS[p.tipo]}${p.mesa ? ' ' + esc(p.mesa) : ''}</div>
+        <div><small>Tipo</small>${p.tipo === 'mesa' ? esc(mesaDoPedido(p, mesasPorId())) : TIPOS[p.tipo]}</div>
         <div><small>Recebido</small>${dataHoraBR(p.criadoEm)}</div>
         <div><small>Cliente</small>${esc(p.cliente?.nome || '—')}${tel ? `<br><a href="https://wa.me/55${tel}" target="_blank" rel="noopener">${esc(mascaraTelefone(tel))}</a>` : ''}</div>
         <div><small>Pagamento</small>${esc(pagamentoTexto(p))}</div>
@@ -109,6 +125,7 @@ export function detalhe(id) {
         <tr><td><strong>Total</strong></td><td class="num"><strong>${moeda(p.total)}</strong></td></tr>
       </table>
       <div class="linha-btns">
+        ${store.user?.perfil === 'dono' ? '<button class="btn btn-ghost" data-excluir style="color:var(--danger)"><i class="ti ti-trash"></i>Excluir pedido</button>' : ''}
         ${ativo ? '<button class="btn btn-ghost" data-cancelar style="color:var(--danger);margin-right:auto"><i class="ti ti-x"></i>Cancelar pedido</button>' : ''}
         <button class="btn" data-imprimir><i class="ti ti-printer"></i>Imprimir</button>
         ${ativo && prox ? `<button class="btn btn-pri" data-prox>${rotuloAcao[prox]}</button>` : ''}
@@ -119,8 +136,15 @@ export function detalhe(id) {
       await mudarStatus(p, prox);
       if (prox === 'entregue') m.fechar();
     });
+    el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
+      if (!await confirmar(`Excluir o pedido ${rotuloPedido(p, mesasPorId())} de vez? Isso não pode ser desfeito.`, { ok: 'Excluir', perigo: true })) return;
+      await db.remove('pedidos', p.id);
+      toast('Pedido excluído');
+      m.fechar();
+      document.dispatchEvent(new CustomEvent('pedido-excluido', { detail: p.id }));
+    });
     el.querySelector('[data-cancelar]')?.addEventListener('click', () => {
-      const c = modal(`<h2>Cancelar pedido #${p.numero}</h2>
+      const c = modal(`<h2>Cancelar pedido ${esc(rotuloPedido(p, mesasPorId()))}</h2>
         <label class="campo"><span>Motivo (o cliente verá esta mensagem)</span>
         <select id="mot"><option>Produto em falta</option><option>Fora da área de entrega</option><option>Loja fechando</option><option>Solicitado pelo cliente</option><option>Outro</option></select></label>
         <div class="linha-btns"><button class="btn" data-n>Voltar</button><button class="btn btn-perigo" data-s>Cancelar pedido</button></div>`, { classe: 'modal-p' });
@@ -130,4 +154,63 @@ export function detalhe(id) {
   };
   desenhar();
   parar = onStore(desenhar);
+}
+
+/* ================= Histórico ================= */
+const DIA = 86400e3;
+function historico(box) {
+  if (box.dataset.pronto) return;
+  box.dataset.pronto = '1';
+  const hoje = inicioDoDia();
+  let periodo = '30', dados = [];
+  const isoParaMs = (v, fimDoDia) => v ? new Date(v + 'T00:00:00').getTime() + (fimDoDia ? DIA : 0) : null;
+  box.innerHTML = `
+    <div class="barra-acoes">
+      <div class="opcoes" id="h-per">
+        ${[['0', 'Hoje'], ['7', '7 dias'], ['30', '30 dias'], ['x', 'De–Até']].map(([v, n]) =>
+          `<label class="opcao"><input type="radio" name="hp" value="${v}" ${v === periodo ? 'checked' : ''}><span>${n}</span></label>`).join('')}
+      </div>
+      <span id="h-datas" class="oculto"><input type="date" id="h-de" aria-label="De"> <input type="date" id="h-ate" aria-label="Até"></span>
+      <input type="search" id="h-busca" placeholder="Buscar cliente, mesa ou número" style="flex:1;min-width:180px">
+    </div>
+    <div id="h-tab"></div>`;
+  const intervalo = () => {
+    if (periodo === 'x') {
+      const ini = isoParaMs(box.querySelector('#h-de').value, false);
+      const fim = isoParaMs(box.querySelector('#h-ate').value, true);
+      return { ini: ini ?? 0, fim: fim ?? Date.now() + DIA };
+    }
+    return { ini: hoje - Number(periodo) * DIA, fim: Date.now() + DIA };
+  };
+  const desenhar = () => {
+    const lista = filtroHistorico(dados, { ...intervalo(), busca: box.querySelector('#h-busca').value }, mesasPorId());
+    box.querySelector('#h-tab').innerHTML = lista.length ? `<table class="tabela">
+      <tr><th>Data</th><th>Pedido</th><th>Tipo</th><th>Cliente / mesa</th><th class="num">Total</th><th>Status</th></tr>
+      ${lista.map(p => `<tr data-id="${p.id}" style="cursor:pointer"><td>${dataHoraBR(p.criadoEm)}</td>
+        <td>${esc(rotuloPedido(p, mesasPorId()))}</td><td>${TIPOS[p.tipo] || esc(p.tipo || '')}</td>
+        <td>${esc(p.tipo === 'mesa' ? mesaDoPedido(p, mesasPorId()) : (p.cliente?.nome || '—'))}</td>
+        <td class="num">${moeda(p.total)}</td><td>${statusBadge(p.status)}</td></tr>`).join('')}</table>`
+      : '<p class="vazio">Nenhum pedido neste período.</p>';
+  };
+  const carregar = async () => {
+    const { ini, fim } = intervalo();
+    box.querySelector('#h-tab').innerHTML = '<p class="vazio">Carregando…</p>';
+    try {
+      dados = await db.list('pedidos', { where: [['criadoEm', '>=', ini], ['criadoEm', '<', fim]], orderBy: ['criadoEm', 'desc'] });
+    } catch (e) { console.error(e); dados = []; toast('Não foi possível carregar o histórico', 'erro'); }
+    desenhar();
+  };
+  box.querySelector('#h-per').onchange = e => {
+    periodo = e.target.value;
+    box.querySelector('#h-datas').classList.toggle('oculto', periodo !== 'x');
+    carregar();
+  };
+  box.querySelector('#h-de').onchange = box.querySelector('#h-ate').onchange = carregar;
+  box.querySelector('#h-busca').oninput = desenhar;
+  box.addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-id]');
+    if (tr) detalhe(tr.dataset.id, dados.find(x => x.id === tr.dataset.id));
+  });
+  document.addEventListener('pedido-excluido', e => { dados = dados.filter(p => p.id !== e.detail); desenhar(); });
+  carregar();
 }

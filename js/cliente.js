@@ -8,6 +8,7 @@ import {
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
 } from './utils.js?v=2.0.0-f1';
 import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0-f1';
+import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.0-f1';
 
 const $= s => document.querySelector(s);
 const E = {
@@ -656,6 +657,7 @@ function renderCheckout() {
       status: 'novo',
       tipo,
       mesa: mesa || null,
+      ...(mesa ? { mesaNome: nomeMesa(E.mesaDoc) } : {}),
       cliente: { nome: f.nome.value.trim() || (mesa ? (E.mesaDoc ? nomeMesa(E.mesaDoc) : 'Mesa') : ''), telefone: mesa ? '' : soDigitos(f.telefone.value) },
       endereco: tipo === 'delivery' ? {
         bairro: b.nome, bairroId: b.id, rua: f.rua.value.trim(), numero: f.numero.value.trim(),
@@ -707,10 +709,11 @@ function acompanhar(id) {
   db.watchDoc('pedidos', id, d => {
     const anterior = pedidosAtivos[id]?.status;
     pedidosAtivos[id] = d;
-    if (anterior && d && anterior !== d.status) toast(`Pedido #${d.numero}: ${STATUS[d.status]?.nome}`);
+    if (anterior && d && anterior !== d.status) toast(`Pedido ${rotuloPedido(d, mesaAtual())}: ${STATUS[d.status]?.nome}`);
     renderAcompanhar();
   });
 }
+const mesaAtual = () => (E.mesaDoc ? { [E.mesa]: E.mesaDoc } : {});
 function renderAcompanhar() {
   const ativos = Object.entries(pedidosAtivos)
     .filter(([, d]) => d && !['entregue', 'cancelado'].includes(d.status))
@@ -723,7 +726,7 @@ function renderAcompanhar() {
     const s = STATUS[d.status];
     return `<a class="ped-ativo" href="/pedido.html?id=${id}">
       <span class="ico"><i class="ti ${s.icone} ${d.status === 'novo' ? 'pulso' : ''}"></i></span>
-      <span class="tx"><strong>Pedido #${d.numero}${d.mesa ? ` · ${esc(E.mesaDoc && String(E.mesa) === String(d.mesa) ? nomeMesa(E.mesaDoc) : 'Mesa')}` : ''}</strong>
+      <span class="tx"><strong>${d.numero ? 'Pedido ' : ''}${esc(rotuloPedido(d, mesaAtual()))}${d.mesa && d.numero ? ` · ${esc(rotuloPedido({ tipo: 'mesa', mesa: d.mesa, mesaNome: d.mesaNome }, mesaAtual()))}` : ''}</strong>
       <span>${s.nome}</span><span class="barra"><i style="width:${pct}%"></i></span></span>
       <i class="ti ti-chevron-right" aria-hidden="true"></i></a>`;
   }).join('');

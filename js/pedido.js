@@ -1,5 +1,6 @@
 // Acompanhamento do pedido em tempo real (status atualiza sozinho).
 import { db } from './db.js?v=2.0.0-f1';
+import { rotuloPedido, mesaDoPedido, enderecoTexto } from './nucleo/pedidos.js?v=2.0.0-f1';
 import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
@@ -21,8 +22,8 @@ function render(p) {
     $('#conteudo').innerHTML = '<div class="vazio"><i class="ti ti-receipt-off"></i>Pedido não encontrado.</div>';
     return;
   }
-  $('#titulo').textContent = `Pedido #${p.numero}`;
-  document.title = `Pedido #${p.numero} · ${STATUS[p.status]?.nome} — ${cfg.nome}`;
+  $('#titulo').textContent = `Pedido ${rotuloPedido(p)}`;
+  document.title = `Pedido ${rotuloPedido(p)} · ${STATUS[p.status]?.nome} — ${cfg.nome}`;
   const s = STATUS[p.status];
   const fluxo = fluxoStatus(p.tipo);
   const idx = fluxo.indexOf(p.status);
@@ -46,7 +47,7 @@ function render(p) {
     </ol></div>`}
 
     <div class="card bloco">
-      <h3>Resumo · ${TIPOS[p.tipo]}${p.mesa ? ` ${esc(p.mesa)}` : ''}</h3>
+      <h3>Resumo · ${p.tipo === 'mesa' ? esc(mesaDoPedido(p)) : TIPOS[p.tipo]}</h3>
       ${p.itens.map(i => `<div class="item-res"><div>${i.qtd}× ${esc(i.nome)}
         ${i.adicionais?.length ? `<small>${i.adicionais.map(a => esc(a.nome)).join(', ')}</small>` : ''}
         ${i.obs ? `<small>Obs.: ${esc(i.obs)}</small>` : ''}</div><span>${moeda(i.preco * i.qtd)}</span></div>`).join('')}
@@ -58,11 +59,11 @@ function render(p) {
         <div class="total"><span>Total</span><span>${moeda(p.total)}</span></div>
       </div>
       ${pag ? `<p style="margin-top:10px;font-size:14px;color:var(--txt2)"><i class="ti ti-cash"></i> ${esc(PAGAMENTOS[pag.forma] || pag.forma)} na ${p.tipo === 'delivery' ? 'entrega' : 'retirada'}${pag.troco ? ` · troco para ${moeda(pag.troco)}` : ''}</p>` : ''}
-      ${p.endereco ? `<p style="margin-top:6px;font-size:14px;color:var(--txt2)"><i class="ti ti-map-pin"></i> ${esc(`${p.endereco.rua}, ${p.endereco.numero}${p.endereco.complemento ? ' - ' + p.endereco.complemento : ''} · ${p.endereco.bairro}`)}</p>` : ''}
+      ${p.endereco ? `<p style="margin-top:6px;font-size:14px;color:var(--txt2)"><i class="ti ti-map-pin"></i> ${esc(enderecoTexto(p.endereco))}</p>` : ''}
     </div>
 
     <div class="linha-btns" style="justify-content:stretch">
-      ${zap ? `<a class="btn btn-ok" style="flex:1" target="_blank" rel="noopener" href="https://wa.me/55${zap}?text=${encodeURIComponent(`Olá! Sobre o meu pedido #${p.numero}`)}"><i class="ti ti-brand-whatsapp"></i>Falar com a loja</a>` : ''}
+      ${zap ? `<a class="btn btn-ok" style="flex:1" target="_blank" rel="noopener" href="https://wa.me/55${zap}?text=${encodeURIComponent(`Olá! Sobre o meu pedido ${rotuloPedido(p)}`)}"><i class="ti ti-brand-whatsapp"></i>Falar com a loja</a>` : ''}
       <a class="btn btn-pri" style="flex:1" href="/"><i class="ti ti-tools-kitchen-2"></i>Voltar ao cardápio</a>
     </div>`;
 

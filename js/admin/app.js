@@ -4,7 +4,7 @@ import { DEMO } from '../config.js?v=2.0.0-f1';
 import { semear } from '../seed.js?v=2.0.0-f1';
 import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f1';
 import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f1';
-import { nomeMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
+import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 
@@ -110,8 +110,9 @@ function verificarNovidades() {
     if (!vistos.has(p.id)) {
       vistos.add(p.id);
       if (!primeiraCarga) {
-        notificar(`Novo pedido #${p.numero}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? nomeMesa(store.mesas.find(m => m.id === p.mesa) || {}) : p.tipo}`);
-        toast(`Novo pedido #${p.numero}`);
+        const mp = Object.fromEntries(store.mesas.map(m => [m.id, m]));
+        notificar(`Novo pedido ${rotuloPedido(p, mp)}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? mesaDoPedido(p, mp) : p.tipo}`);
+        toast(`Novo pedido ${rotuloPedido(p, mp)}`);
         if (impressaoAutomatica() && conectada()) import('./acoes.js?v=2.0.0-f1').then(m => m.imprimir(p));
       }
     }
