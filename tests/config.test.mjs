@@ -53,3 +53,20 @@ test('dados de exemplo so no demo', () => {
   assert.equal((src.match(/semear\(/g) || []).length, 2);
   assert.equal((src.match(/querySelector\('\[data-seed(-cardapio)?\]'\)\?\.addEventListener\('click'/g) || []).length, 2);
 });
+
+test('todo semear() fora do seed esta sob guarda DEMO', () => {
+  const arqs = [];
+  const varrer = d => { for (const n of readdirSync(join(raiz, d))) { const q = join(d, n); if (statSync(join(raiz, q)).isDirectory()) varrer(q); else if (/\.js$/.test(n)) arqs.push(q); } };
+  varrer('js');
+  let chamadas = 0;
+  for (const f of arqs) {
+    if (f.replace(/[\\/]/g, '/') === 'js/seed.js') continue;
+    const src = ler(f);
+    for (const m of src.matchAll(/\bsemear\(/g)) {
+      chamadas++;
+      const antes = src.slice(Math.max(0, m.index - 250), m.index);
+      assert.match(antes, /if \(DEMO\)|DEMO \?|if \(!DEMO\) return/, f + ': semear() sem guarda DEMO');
+    }
+  }
+  assert.equal(chamadas, 5);
+});

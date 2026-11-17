@@ -308,10 +308,12 @@ export function render(el) {
     const a = area();
     a.querySelector('[data-copiar]').onclick = async () => { try { await navigator.clipboard.writeText(url); toast('Link copiado'); } catch { a.querySelector('input').select(); } };
     a.querySelector('[data-seed]')?.addEventListener('click', async () => {
+      if (!DEMO) return;
       if (!await confirmar('Carregar os dados de exemplo? Isso adiciona produtos ao seu cardápio e redefine as configurações da loja.', { ok: 'Carregar' })) return;
       await semear(); toast('Dados de exemplo carregados');
     });
     a.querySelector('[data-seed-cardapio]')?.addEventListener('click', async () => {
+      if (!DEMO) return;
       if (!await confirmar('Carregar 5 categorias, 15 produtos de exemplo e os adicionais? Os dados da loja, logo e banner não serão alterados.', { ok: 'Carregar' })) return;
       try { await semear({ soCardapio: true }); toast('Produtos de exemplo carregados'); } catch { toast('Não foi possível carregar. Confira as regras do Firestore.', 'erro'); }
     });

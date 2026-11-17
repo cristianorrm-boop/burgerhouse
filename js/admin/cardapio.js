@@ -1,5 +1,6 @@
 // Cardápio: produtos (foto, preço, promoção, selos, adicionais, upsell, esgotado), categorias e grupos de adicionais.
 import { db } from '../db.js?v=2.0.0-f1';
+import { DEMO } from '../config.js?v=2.0.0-f1';
 import { semear } from '../seed.js?v=2.0.0-f1';
 import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.0-f1';
 
@@ -73,9 +74,10 @@ export function render(el) {
         <button class="btn btn-ghost btn-ico btn-s" data-del="${p.id}" aria-label="Excluir"><i class="ti ti-trash"></i></button>
       </td></tr>`).join('') || (E.prods.length
       ? '<tr><td colspan="5" class="vazio">Nenhum produto encontrado.</td></tr>'
-      : '<tr><td colspan="5" class="vazio">Nenhum produto cadastrado.<br><button class="btn btn-pri" data-exemplo style="margin-top:10px"><i class="ti ti-database-import"></i>Carregar categorias e produtos de exemplo</button></td></tr>');
+      : `<tr><td colspan="5" class="vazio">Nenhum produto cadastrado.${DEMO ? '<br><button class="btn btn-pri" data-exemplo style="margin-top:10px"><i class="ti ti-database-import"></i>Carregar categorias e produtos de exemplo</button>' : ''}</td></tr>`);
 
     tb.querySelector('[data-exemplo]')?.addEventListener('click', async () => {
+      if (!DEMO) return;
       try { await semear({ soCardapio: true }); toast('Categorias e produtos de exemplo carregados'); } catch { toast('Não foi possível carregar. Confira as regras do Firestore.', 'erro'); }
     });
 

@@ -1,7 +1,8 @@
+rules_version = '2';
+
 // REGRAS DE TRANSIÇÃO (Fase 2): regras da V1 sem alteração + coleções novas da V2.
 // Servem para o site V1 continuar funcionando enquanto os dados da V2 são preparados.
 // As regras finais da V2 estão em firestore.rules e só são publicadas na virada (Fase 5).
-rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
