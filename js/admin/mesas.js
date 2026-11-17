@@ -1,12 +1,12 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
-import { db } from '../db.js?v=2.0.0-f1';
+import { db, inc } from '../db.js?v=2.0.0-f1';
 import { store, onStore } from './app.js?v=2.0.0-f1';
 import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.0-f1';
 import { detalhe } from './pedidos.js?v=2.0.0-f1';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
 import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
 import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
-import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento } from '../nucleo/vendas.js?v=2.0.0-f1';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar } from '../nucleo/vendas.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -165,6 +165,12 @@ function fecharConta(id, fecharContaModal) {
           contaFechada: true, pagamento: { forma, troco: null }, vendaId } })),
         { tipo: 'update', col: 'mesas', id, data: { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null } }
       ]);
+      for (const { pedidoId, cupom } of cuponsAContar(ps)) { // fora do lote: cupom apagado não pode travar o fechamento
+        try {
+          await db.update('cupons', cupom, { usos: inc(1) });
+          await db.update('pedidos', pedidoId, { contabilizado: true });
+        } catch (e) { console.error('Falha ao contar uso do cupom', cupom, e); }
+      }
       toast(`Conta de ${nomeMesa(m)} fechada`);
       mod.fechar();
       fecharContaModal();

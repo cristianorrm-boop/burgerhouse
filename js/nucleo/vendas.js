@@ -74,3 +74,8 @@ export function vendaDeFechamentoMesa(mesa, pedidos, forma, agora) {
     criadoEm: agora
   };
 }
+
+/** Pedidos do fechamento cujo cupom ainda não foi contado no limite de usos. */
+export function cuponsAContar(pedidos) {
+  return pedidos.filter(p => !p.contabilizado && p.cupom).map(p => ({ pedidoId: p.id, cupom: p.cupom }));
+}

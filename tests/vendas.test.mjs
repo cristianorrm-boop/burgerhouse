@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  idVendaFechamento, deveGerarVendaAoEntregar, vendaDePedidoOnline, vendaDeFechamentoMesa, pedidosParaFechar, idVendaPedido, idVendaMesa
+  cuponsAContar, idVendaFechamento, deveGerarVendaAoEntregar, vendaDePedidoOnline, vendaDeFechamentoMesa, pedidosParaFechar, idVendaPedido, idVendaMesa
 } from '../js/nucleo/vendas.js';
 
 const delivery = { id: 'p1', tipo: 'delivery', numero: 7, cliente: { nome: 'Ana' }, total: 50, subtotal: 45, desconto: 0,
@@ -66,4 +66,9 @@ test('idVendaFechamento: conjunto novo e sobra de tentativa anterior', () => {
   assert.equal(idVendaFechamento(com), 'mesa-x');
   assert.equal(idVendaFechamento([...com].reverse()), 'mesa-x');
   assert.equal(idVendaFechamento([{ id: 'a' }, { id: 'b', vendaId: 'mesa-x', contaFechada: true }]), 'mesa-a');
+});
+
+test('cuponsAContar', () => {
+  const r = cuponsAContar([{ id: 'a', cupom: 'X10' }, { id: 'b', cupom: 'Y', contabilizado: true }, { id: 'c', cupom: null }, { id: 'd' }, { id: 'e', cupom: '' }]);
+  assert.deepEqual(r, [{ pedidoId: 'a', cupom: 'X10' }]);
 });
