@@ -1,6 +1,7 @@
 // Camada de dados única: usa o Firestore quando configurado,
 // ou o localStorage no modo demo. Todo o resto do sistema só fala com este arquivo.
 import { DEMO, firebaseConfig, FIREBASE_SDK, SUPERADMIN_EMAIL } from './config.js?v=2.0.0-f3';
+import { comId } from './nucleo/documento.js?v=2.0.0-f3';
 
 const INC = '__inc';
 /** Incrementa um campo numérico de forma atômica: db.update('x', id, { total: inc(1) }) */
@@ -48,7 +49,7 @@ function fbQuery(F, fs, col, o = {}) {
   return F.query(F.collection(fs, col), ...partes);
 }
 
-const snapLista = s => s.docs.map(d => ({ id: d.id, ...d.data() }));
+const snapLista = s => s.docs.map(d => comId(d.id, d.data()));
 
 /* ------------------------------------------------------------------ */
 /*  Modo demo (localStorage)                                          */
@@ -93,7 +94,7 @@ function compara(a, op, b) {
   }
 }
 function localQuery(col, o = {}) {
-  let arr = Object.entries(colecao(col)).map(([id, d]) => ({ id, ...structuredClone(d) }));
+  let arr = Object.entries(colecao(col)).map(([id, d]) => comId(id, structuredClone(d)));
   (o.where || []).forEach(([f, op, v]) => { arr = arr.filter(d => compara(d[f], op, v)); });
   if (o.orderBy) {
     const [f, dir] = o.orderBy;
@@ -140,16 +141,16 @@ export const db = {
   async get(col, id) {
     if (DEMO) {
       const d = colecao(col)[id];
-      return d ? { id, ...structuredClone(d) } : null;
+      return d ? comId(id, structuredClone(d)) : null;
     }
     const { F, fs } = await firebase();
     const s = await F.getDoc(F.doc(fs, col, id));
-    return s.exists() ? { id: s.id, ...s.data() } : null;
+    return s.exists() ? comId(s.id, s.data()) : null;
   },
 
   watchDoc(col, id, cb) {
     if (DEMO) {
-      const fn = () => { const d = colecao(col)[id]; cb(d ? { id, ...structuredClone(d) } : null); };
+      const fn = () => { const d = colecao(col)[id]; cb(d ? comId(id, structuredClone(d)) : null); };
       ouvintes.add(fn);
       queueMicrotask(fn);
       return () => ouvintes.delete(fn);
@@ -158,7 +159,7 @@ export const db = {
     let ativo = true;
     firebase().then(({ F, fs }) => {
       if (!ativo) return;
-      parar = F.onSnapshot(F.doc(fs, col, id), s => cb(s.exists() ? { id: s.id, ...s.data() } : null), e => console.error(col, id, e));
+      parar = F.onSnapshot(F.doc(fs, col, id), s => cb(s.exists() ? comId(s.id, s.data()) : null), e => console.error(col, id, e));
     });
     return () => { ativo = false; parar(); };
   },
