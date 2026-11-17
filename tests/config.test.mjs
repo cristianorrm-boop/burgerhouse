@@ -41,3 +41,15 @@ test('nome padrao da loja e Burger House', () => {
   assert.match(u, /CONFIG_PADRAO = \{\s*nome: 'Burger House'/);
   assert.ok(!u.includes("'Cardápio Online'"));
 });
+
+test('dados de exemplo so no demo', () => {
+  const src = ler('js/admin/loja.js');
+  const h2 = src.indexOf('<h2>Dados de exemplo</h2>');
+  assert.ok(h2 > 0, 'card de exemplo existe');
+  // o card inteiro so e renderizado quando DEMO e verdadeiro
+  assert.match(src.slice(Math.max(0, h2 - 160), h2), /\$\{\s*DEMO\s*\?\s*`[^`]*$/, 'card dentro de ${DEMO ? `...`}');
+  // os handlers nao podem existir sem o botao (ficam opcionais)
+  assert.ok(!/querySelector\('\[data-seed(-cardapio)?\]'\)\.onclick/.test(src), 'handler de semear sem ?.');
+  assert.equal((src.match(/semear\(/g) || []).length, 2);
+  assert.equal((src.match(/querySelector\('\[data-seed(-cardapio)?\]'\)\?\.addEventListener\('click'/g) || []).length, 2);
+});

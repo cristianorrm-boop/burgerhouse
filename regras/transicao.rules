@@ -1,0 +1,119 @@
+// REGRAS DE TRANSIÇÃO (Fase 2): regras da V1 sem alteração + coleções novas da V2.
+// Servem para o site V1 continuar funcionando enquanto os dados da V2 são preparados.
+// As regras finais da V2 estão em firestore.rules e só são publicadas na virada (Fase 5).
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // SUPERADMIN: e-mail do dono do sistema. Crie esse usuário em Firebase › Authentication › Usuários.
+    // Ele acessa tudo sem precisar estar na coleção "equipe". Deve ser igual a SUPERADMIN_EMAIL em js/config.js.
+    function logado() { return request.auth != null; }
+    function superadmin() { return logado() && request.auth.token.email.lower() == 'admin@gmail.com'; }
+    function equipe() { return superadmin() || (logado() && exists(/databases/$(database)/documents/equipe/$(request.auth.uid))); }
+    function dono() { return superadmin() || (equipe() && get(/databases/$(database)/documents/equipe/$(request.auth.uid)).data.perfil == 'dono'); }
+    function soMudou(campos) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos); }
+
+    // Configuração da loja: pública para leitura, só o dono altera
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if dono();
+      allow update: if equipe() && soMudou(['pausado']); // atendente pode pausar/reabrir a loja
+    }
+
+    // Cardápio V2 (produtos e categorias seguem a regra V1 abaixo)
+    match /adicionais/{id} { allow read: if true; allow write: if equipe(); }
+    match /bairros/{id}    { allow read: if true; allow write: if dono(); }
+
+    // Pontos de fidelidade: consulta pelo telefone exato; só a equipe altera
+    match /fidelidade/{tel} {
+      allow get: if true;
+      allow list, write: if equipe();
+    }
+
+    // Cadastro de clientes: só a equipe
+    match /clientes/{tel} { allow read, write: if equipe(); }
+
+    // Número sequencial dos pedidos (#1, #2, ...): só pode avançar de 1 em 1
+    match /contadores/pedidos {
+      allow read: if true;
+      allow create: if request.resource.data.n == 1;
+      allow update: if request.resource.data.n == resource.data.n + 1 || equipe();
+    }
+
+    // Financeiro: somente o dono
+    match /contas_pagar/{id}   { allow read, write: if dono(); }
+    match /contas_receber/{id} { allow read, write: if dono(); }
+
+    // Cadastro de um membro da equipe: campos obrigatórios, e-mail com formato válido e perfil permitido.
+    // (A senha NÃO fica aqui: o e-mail e a senha de login ficam no Firebase Authentication.)
+    function cadastroValido() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['nome', 'email', 'perfil', 'abas', 'criadoEm'])
+          && d.keys().hasAll(['nome', 'email', 'perfil'])
+          && d.nome is string && d.nome.size() > 0 && d.nome.size() <= 80
+          && d.email is string && d.email.size() <= 120 && d.email.matches('.+@.+\\..+')
+          && d.perfil in ['dono', 'atendente']
+          && (!('abas' in d) || (d.abas is list && d.abas.size() <= 12));
+    }
+
+    // Equipe: pessoas autorizadas a entrar no painel. O ID do documento é o uid do usuário no Authentication.
+    //  - O superadmin (e-mail definido no topo) não precisa estar aqui: ele cadastra os demais.
+    //  - Só o dono/superadmin cria, altera e remove pessoas (e-mail + perfil dono/atendente).
+    //  - Ninguém remove o próprio acesso.
+    match /equipe/{uid} {
+      allow read: if equipe();
+      allow create, update: if dono() && cadastroValido();
+      allow delete: if dono() && request.auth.uid != uid;
+    }
+
+    // ---- Regras da V1 (inalteradas) ----
+    match /produtos/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /categorias/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /cupons/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /configuracoes/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /tiposVariacao/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /gruposAdicionais/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /vendas/{doc} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /mesas/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /pedidos/{doc} {
+      allow read: if request.auth != null;
+      allow create: if true;
+      allow update, delete: if request.auth != null;
+    }
+
+    match /usuarios/{doc} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -297,23 +297,24 @@ export function render(el) {
             <a class="btn btn-s" download="qrcode-cardapio.gif" href="${qrDataURL(url, 16)}"><i class="ti ti-download"></i>Baixar QR Code</a></div>
         </div>
       </div>
+      ${DEMO ? `
       <div class="card form-sec">
         <h2>Dados de exemplo</h2><p>Carrega categorias, produtos, adicionais, bairros, 10 mesas, cupons e contas de exemplo. Útil para conhecer o sistema.</p>
         <button class="btn" data-seed><i class="ti ti-database-import"></i>Carregar dados de exemplo</button>
         <button class="btn btn-pri" data-seed-cardapio><i class="ti ti-tools-kitchen-2"></i>Carregar só categorias e produtos</button>
         <p style="color:var(--txt2);font-size:13px;margin-top:8px">“Só categorias e produtos” não mexe nos dados da loja, logo e banner. Pode clicar mais de uma vez sem duplicar.</p>
-        ${DEMO ? '<button class="btn btn-ghost" data-limpar style="color:var(--danger)"><i class="ti ti-trash"></i>Apagar dados do modo demo</button>' : ''}
-      </div>`;
+        <button class="btn btn-ghost" data-limpar style="color:var(--danger)"><i class="ti ti-trash"></i>Apagar dados do modo demo</button>
+      </div>` : ''}`;
     const a = area();
     a.querySelector('[data-copiar]').onclick = async () => { try { await navigator.clipboard.writeText(url); toast('Link copiado'); } catch { a.querySelector('input').select(); } };
-    a.querySelector('[data-seed]').onclick = async () => {
+    a.querySelector('[data-seed]')?.addEventListener('click', async () => {
       if (!await confirmar('Carregar os dados de exemplo? Isso adiciona produtos ao seu cardápio e redefine as configurações da loja.', { ok: 'Carregar' })) return;
       await semear(); toast('Dados de exemplo carregados');
-    };
-    a.querySelector('[data-seed-cardapio]').onclick = async () => {
+    });
+    a.querySelector('[data-seed-cardapio]')?.addEventListener('click', async () => {
       if (!await confirmar('Carregar 5 categorias, 15 produtos de exemplo e os adicionais? Os dados da loja, logo e banner não serão alterados.', { ok: 'Carregar' })) return;
       try { await semear({ soCardapio: true }); toast('Produtos de exemplo carregados'); } catch { toast('Não foi possível carregar. Confira as regras do Firestore.', 'erro'); }
-    };
+    });
     a.querySelector('[data-limpar]')?.addEventListener('click', async () => {
       if (!await confirmar('Apagar todos os dados do modo demo neste navegador?', { ok: 'Apagar', perigo: true })) return;
       localStorage.removeItem('co_db_v1'); location.reload();
