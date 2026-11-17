@@ -6,6 +6,11 @@ module.exports = async (req, res) => {
   const id = limparId(req.query.id);
   let p = null;
   try { p = id ? await lerDoc(`produtos/${id}`) : null; } catch { /* sem imagem */ }
+  const foto = String(p?.foto || '');
+  if (foto.startsWith('/') && !foto.startsWith('//')) {
+    const host = `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+    return res.redirect(302, `${host}${foto}`);
+  }
   const m = /^data:(image\/(?:webp|jpeg|png));base64,(.+)$/.exec(p?.foto || '');
   if (!m) return res.redirect(302, '/assets/og-image.png');
   res.setHeader('Content-Type', m[1]);

@@ -19,7 +19,11 @@ module.exports = async (req, res) => {
   const nomeLoja = loja?.nome || 'Cardápio Online';
   const titulo = `${p.nome} · ${moeda(preco)} — ${nomeLoja}`;
   const desc = p.descricao || `Peça agora pelo cardápio online do ${nomeLoja}.`;
-  const img = /^https:\/\//.test(p.foto || '') ? p.foto : p.foto ? `${host}/api/imagem?id=${id}` : `${host}/assets/og-image.png`;
+  const foto = String(p.foto || '');
+  const img = /^https:\/\//.test(foto) ? foto
+    : foto.startsWith('/') ? `${host}${foto}`
+    : foto ? `${host}/api/imagem?id=${id}`
+    : `${host}/assets/og-image.png`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
