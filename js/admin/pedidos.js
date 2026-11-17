@@ -92,6 +92,14 @@ export function render(el) {
 
 export function detalhe(id, avulso = null) {
   const busca = x => store.pedidos.find(p => p.id === x) || (avulso?.id === x ? avulso : undefined);
+  // pedido antigo (fora de store.pedidos) não atualiza sozinho: relê do banco depois de cada ação
+  const reler = async () => {
+    if (!avulso || store.pedidos.some(x => x.id === id)) return;
+    const novo = await db.get('pedidos', id);
+    if (!novo) return;
+    avulso = novo;
+    document.dispatchEvent(new CustomEvent('pedido-atualizado', { detail: novo }));
+  };
   const p0 = busca(id);
   if (!p0) return;
   let parar = null;
@@ -134,6 +142,8 @@ export function detalhe(id, avulso = null) {
     el.querySelector('[data-imprimir]').onclick = () => imprimir(p);
     el.querySelector('[data-prox]')?.addEventListener('click', async () => {
       await mudarStatus(p, prox);
+      await reler();
+      desenhar();
       if (prox === 'entregue') m.fechar();
     });
     el.querySelector('[data-excluir]')?.addEventListener('click', async () => {
@@ -149,7 +159,7 @@ export function detalhe(id, avulso = null) {
         <select id="mot"><option>Produto em falta</option><option>Fora da área de entrega</option><option>Loja fechando</option><option>Solicitado pelo cliente</option><option>Outro</option></select></label>
         <div class="linha-btns"><button class="btn" data-n>Voltar</button><button class="btn btn-perigo" data-s>Cancelar pedido</button></div>`, { classe: 'modal-p' });
       c.el.querySelector('[data-n]').onclick = c.fechar;
-      c.el.querySelector('[data-s]').onclick = async () => { await cancelar(p, c.el.querySelector('#mot').value); c.fechar(); m.fechar(); };
+      c.el.querySelector('[data-s]').onclick = async () => { await cancelar(p, c.el.querySelector('#mot').value); await reler(); c.fechar(); m.fechar(); };
     });
   };
   desenhar();
@@ -211,6 +221,7 @@ function historico(box) {
     const tr = e.target.closest('tr[data-id]');
     if (tr) detalhe(tr.dataset.id, dados.find(x => x.id === tr.dataset.id));
   });
+  document.addEventListener('pedido-atualizado', e => { dados = dados.map(p => p.id === e.detail.id ? e.detail : p); desenhar(); });
   document.addEventListener('pedido-excluido', e => { dados = dados.filter(p => p.id !== e.detail); desenhar(); });
   carregar();
 }
