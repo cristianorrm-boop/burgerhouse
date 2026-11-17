@@ -1,14 +1,14 @@
 // Cardápio do cliente: catálogo, sacola, upsell, cupom, fidelidade, checkout,
 // modo mesa (QR Code) e acompanhamento de pedidos em tempo real.
-import { db } from './db.js?v=2.0.0-f1';
-import { DEMO } from './config.js?v=2.0.0-f1';
-import { semear } from './seed.js?v=2.0.0-f1';
+import { db } from './db.js?v=2.0.0-f3';
+import { DEMO } from './config.js?v=2.0.0-f3';
+import { semear } from './seed.js?v=2.0.0-f3';
 import {
   moeda, esc, soDigitos, mascaraTelefone, hojeISO, statusLoja, aplicarTema, mesclarConfig,
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
-} from './utils.js?v=2.0.0-f1';
-import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0-f1';
-import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.0-f1';
+} from './utils.js?v=2.0.0-f3';
+import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0-f3';
+import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.0-f3';
 
 const $= s => document.querySelector(s);
 const E = {

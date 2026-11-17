@@ -1,6 +1,6 @@
 // Cupons de desconto: percentual, valor fixo ou frete grátis, com mínimo, validade e limite de usos.
-import { db } from '../db.js?v=2.0.0-f1';
-import { moeda, esc, modal, confirmar, toast, hojeISO, dataBR } from '../utils.js?v=2.0.0-f1';
+import { db } from '../db.js?v=2.0.0-f3';
+import { moeda, esc, modal, confirmar, toast, hojeISO, dataBR } from '../utils.js?v=2.0.0-f3';
 
 const TIPOS_CUPOM = { percentual: 'Percentual (%)', valor: 'Valor fixo (R$)', frete: 'Frete grátis' };
 

@@ -92,3 +92,23 @@ test('backup malformado falha alto', () => {
   // Erro só numa coleção nova da V2 não impede o ensaio.
   montarBancoDemo({ ...minimo(), erros: { bairros: 'permission-denied' } });
 });
+
+test('abrir 24h so muda horarios da copia', () => {
+  const b = minimo();
+  const antes = JSON.stringify(b);
+  const normal = montarBancoDemo(b);
+  const aberta = montarBancoDemo(b, { aberta24h: true });
+  assert.equal(JSON.stringify(b), antes);
+  const h = aberta.config.loja.horarios;
+  assert.equal(Object.keys(h).length, 7);
+  for (let d = 0; d < 7; d++) assert.deepEqual(h[d], { ativo: true, abre: '00:00', fecha: '23:59' });
+  const semHorarios = banco => {
+    const c = structuredClone(banco);
+    delete c.config.loja.horarios;
+    return c;
+  };
+  assert.deepEqual(semHorarios(aberta), semHorarios(normal));
+  assert.notDeepEqual(normal.config.loja.horarios, h);
+  // Sem a opção, nada muda.
+  assert.deepEqual(montarBancoDemo(b, {}), normal);
+});

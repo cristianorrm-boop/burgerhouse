@@ -28,7 +28,8 @@ function conferirBackup(backup) {
   if (!ehObjeto(p) || Object.keys(p).length === 0) throw new Error('Backup sem produtos.');
 }
 
-export function montarBancoDemo(backup) {
+// opcoes.aberta24h: a cópia demo abre todos os dias, 00:00–23:59 (só os horarios mudam).
+export function montarBancoDemo(backup, opcoes = {}) {
   conferirBackup(backup);
   const colecoes = desserializar(backup.colecoes, null);
   const banco = structuredClone(colecoes);
@@ -50,6 +51,11 @@ export function montarBancoDemo(backup) {
 
   // Garante as coleções esperadas pelo app.
   for (const n of ['config', 'categorias', 'produtos', 'adicionais', 'mesas', 'cupons', 'pedidos', 'vendas', 'equipe']) col(n);
+
+  if (opcoes.aberta24h && banco.config.loja) {
+    banco.config.loja.horarios = Array.from({ length: 7 },
+      () => ({ ativo: true, abre: '00:00', fecha: '23:59' }));
+  }
 
   return datasParaMs(banco);
 }

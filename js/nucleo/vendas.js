@@ -1,6 +1,6 @@
 // Vendas no formato da V1 (coleção `vendas`). Módulo puro: sem db, DOM ou localStorage.
-import { nomeMesa } from './mesas.js?v=2.0.0-f1';
-import { pagamentoRotulo } from './pedidos.js?v=2.0.0-f1';
+import { nomeMesa } from './mesas.js?v=2.0.0-f3';
+import { pagamentoRotulo } from './pedidos.js?v=2.0.0-f3';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 

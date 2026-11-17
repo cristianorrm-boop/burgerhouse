@@ -12,6 +12,8 @@
   <h1>Ensaio geral em modo demo</h1>
   <div class="caixa">
     <p>Escolha o arquivo de backup. A cópia convertida é gravada só neste navegador (localStorage do demo). Nada vai ao banco real.</p>
+    <p><label><input id="aberta24h" type="checkbox"> Loja aberta 24h neste ensaio</label><br>
+      <small>Muda só os horários da cópia demo, para testar pedidos a qualquer hora.</small></p>
     <input id="arquivo" type="file" accept="application/json,.json">
     <p id="estado" role="status"></p>
     <ul id="links" hidden></ul>
@@ -29,15 +31,19 @@ if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
 
 const estado = document.getElementById('estado');
 const links = document.getElementById('links');
+const aberta24h = document.getElementById('aberta24h');
+const params = new URLSearchParams(location.search);
+// Automação local: &aberta24h=1 já marca a opção.
+if (params.get('aberta24h') === '1') aberta24h.checked = true;
 
 function processar(texto) {
   try {
-    const banco = montarBancoDemo(JSON.parse(texto));
+    const banco = montarBancoDemo(JSON.parse(texto), { aberta24h: aberta24h.checked });
     localStorage.setItem('co_db_v1', JSON.stringify(banco));
     sessionStorage.setItem('bh_demo', '1');
     const n = c => Object.keys(banco[c] || {}).length;
     const mesaId = Object.keys(banco.mesas || {})[0] || '';
-    estado.textContent = `Pronto: ${n('produtos')} produtos, ${n('categorias')} categorias, ${n('mesas')} mesas, ${n('pedidos')} pedidos, ${n('vendas')} vendas.`;
+    estado.textContent = `Pronto: ${n('produtos')} produtos, ${n('categorias')} categorias, ${n('mesas')} mesas, ${n('pedidos')} pedidos, ${n('vendas')} vendas.${aberta24h.checked ? ' Loja aberta 24h.' : ''}`;
     estado.dataset.pronto = '1';
     links.innerHTML = [
       ['/?demo=1', 'Cardápio (cliente)'],
@@ -58,8 +64,8 @@ document.getElementById('arquivo').addEventListener('change', async ev => {
   if (f) processar(await f.text());
 });
 
-// Automação local: /ferramentas/ensaio?arquivo=/backups/<nome>.json
-const alvo = new URLSearchParams(location.search).get('arquivo');
+// Automação local: /ferramentas/ensaio?arquivo=/backups/<nome>.json[&aberta24h=1]
+const alvo = params.get('arquivo');
 if (alvo && /^\/backups\/[\w.-]+\.json$/.test(alvo)) {
   fetch(alvo).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
     .then(processar)
