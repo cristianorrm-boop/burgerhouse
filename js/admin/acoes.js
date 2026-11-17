@@ -1,8 +1,8 @@
 // Ações sobre pedidos usadas em Pedidos e Mesas: mudar status, finalizar, cancelar, imprimir.
-import { db, inc } from '../db.js';
-import { store } from './app.js';
-import { conectada, imprimirBluetooth } from './impressora.js';
-import { moeda, esc, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js';
+import { db, inc } from '../db.js?v=2.0.0-f1';
+import { store } from './app.js?v=2.0.0-f1';
+import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f1';
+import { moeda, esc, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f1';
 
 export function proximoStatus(p) {
   const f = fluxoStatus(p.tipo);

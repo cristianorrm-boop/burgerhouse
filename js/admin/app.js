@@ -1,9 +1,9 @@
 // Painel administrativo: login, menu, rotas, dados compartilhados e alertas sonoros.
-import { db, auth } from '../db.js';
-import { DEMO } from '../config.js';
-import { semear } from '../seed.js';
-import { impressaoAutomatica, conectada, reconectar } from './impressora.js';
-import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js';
+import { db, auth } from '../db.js?v=2.0.0-f1';
+import { DEMO } from '../config.js?v=2.0.0-f1';
+import { semear } from '../seed.js?v=2.0.0-f1';
+import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f1';
+import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 
@@ -18,15 +18,15 @@ export const salvarConfig = dados => db.set('config', 'loja', dados, true);
 
 /* ================= Rotas ================= */
 const ROTAS = {
-  dashboard: { nome: 'Dashboard', icone: 'ti-layout-dashboard', perfis: ['dono'], mod: () => import('./dashboard.js') },
-  pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
-  mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js'), cont: () => store.mesas.filter(m => m.chamado).length },
-  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono', 'atendente'], mod: () => import('./cardapio.js') },
-  cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js') },
-  clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js') },
-  financeiro: { nome: 'Financeiro', icone: 'ti-wallet', perfis: ['dono'], mod: () => import('./financeiro.js') },
-  entrega: { nome: 'Entrega', icone: 'ti-motorbike', perfis: ['dono'], mod: () => import('./entrega.js') },
-  loja: { nome: 'Configurações', icone: 'ti-settings', perfis: ['dono'], mod: () => import('./loja.js') }
+  dashboard: { nome: 'Dashboard', icone: 'ti-layout-dashboard', perfis: ['dono'], mod: () => import('./dashboard.js?v=2.0.0-f1') },
+  pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js?v=2.0.0-f1'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
+  mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js?v=2.0.0-f1'), cont: () => store.mesas.filter(m => m.chamado).length },
+  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono', 'atendente'], mod: () => import('./cardapio.js?v=2.0.0-f1') },
+  cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js?v=2.0.0-f1') },
+  clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js?v=2.0.0-f1') },
+  financeiro: { nome: 'Financeiro', icone: 'ti-wallet', perfis: ['dono'], mod: () => import('./financeiro.js?v=2.0.0-f1') },
+  entrega: { nome: 'Entrega', icone: 'ti-motorbike', perfis: ['dono'], mod: () => import('./entrega.js?v=2.0.0-f1') },
+  loja: { nome: 'Configurações', icone: 'ti-settings', perfis: ['dono'], mod: () => import('./loja.js?v=2.0.0-f1') }
 };
 export const ABAS_PAINEL = Object.entries(ROTAS).map(([k, r]) => [k, r.nome, r.perfis.includes('atendente')]);
 // Dono vê tudo; atendente vê as abas liberadas no cadastro (sem lista, usa o padrão: Pedidos, Mesas e Cardápio)
@@ -111,7 +111,7 @@ function verificarNovidades() {
       if (!primeiraCarga) {
         notificar(`Novo pedido #${p.numero}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? 'Mesa ' + p.mesa : p.tipo}`);
         toast(`Novo pedido #${p.numero}`);
-        if (impressaoAutomatica() && conectada()) import('./acoes.js').then(m => m.imprimir(p));
+        if (impressaoAutomatica() && conectada()) import('./acoes.js?v=2.0.0-f1').then(m => m.imprimir(p));
       }
     }
   }

@@ -1,13 +1,13 @@
 // Service Worker: app abre rápido e funciona com internet instável.
 // Ao publicar uma nova versão, aumente o número abaixo para forçar a atualização.
-const VERSAO = 'co-v11';
+const VERSAO = 'bh-2.0.0-f1';
 const ESSENCIAIS = [
   '/', '/index.html', '/pedido.html', '/admin/', '/admin/index.html', '/offline.html',
-  '/css/base.css', '/css/cliente.css', '/css/admin.css',
-  '/js/config.js', '/js/db.js', '/js/utils.js', '/js/seed.js', '/js/cliente.js', '/js/pedido.js',
-  '/js/admin/app.js', '/js/admin/acoes.js', '/js/admin/pedidos.js', '/js/admin/mesas.js', '/js/admin/cardapio.js',
-  '/js/admin/cupons.js', '/js/admin/clientes.js', '/js/admin/financeiro.js', '/js/admin/dashboard.js',
-  '/js/admin/entrega.js', '/js/admin/loja.js', '/js/admin/impressora.js',
+  '/css/base.css?v=2.0.0-f1', '/css/cliente.css?v=2.0.0-f1', '/css/admin.css?v=2.0.0-f1',
+  '/js/config.js?v=2.0.0-f1', '/js/db.js?v=2.0.0-f1', '/js/utils.js?v=2.0.0-f1', '/js/seed.js?v=2.0.0-f1', '/js/cliente.js?v=2.0.0-f1', '/js/pedido.js?v=2.0.0-f1',
+  '/js/admin/app.js?v=2.0.0-f1', '/js/admin/acoes.js?v=2.0.0-f1', '/js/admin/pedidos.js?v=2.0.0-f1', '/js/admin/mesas.js?v=2.0.0-f1', '/js/admin/cardapio.js?v=2.0.0-f1',
+  '/js/admin/cupons.js?v=2.0.0-f1', '/js/admin/clientes.js?v=2.0.0-f1', '/js/admin/financeiro.js?v=2.0.0-f1', '/js/admin/dashboard.js?v=2.0.0-f1',
+  '/js/admin/entrega.js?v=2.0.0-f1', '/js/admin/loja.js?v=2.0.0-f1', '/js/admin/impressora.js?v=2.0.0-f1',
   '/manifest.json', '/admin/manifest.json', '/assets/icon.svg', '/assets/icon-192.png', '/assets/icon-512.png'
 ];
 

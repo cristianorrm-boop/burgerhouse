@@ -1,7 +1,7 @@
 // Pedidos em tempo real (kanban): aceitar, avançar status, cancelar, imprimir.
-import { store, onStore } from './app.js';
-import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge } from './acoes.js';
-import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, inicioDoDia, soDigitos } from '../utils.js';
+import { store, onStore } from './app.js?v=2.0.0-f1';
+import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge } from './acoes.js?v=2.0.0-f1';
+import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, inicioDoDia, soDigitos } from '../utils.js?v=2.0.0-f1';
 
 const COLUNAS = [
   ['novo', 'Novos', s => s === 'novo'],

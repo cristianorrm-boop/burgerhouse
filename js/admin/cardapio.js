@@ -1,7 +1,7 @@
 // Cardápio: produtos (foto, preço, promoção, selos, adicionais, upsell, esgotado), categorias e grupos de adicionais.
-import { db } from '../db.js';
-import { semear } from '../seed.js';
-import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js';
+import { db } from '../db.js?v=2.0.0-f1';
+import { semear } from '../seed.js?v=2.0.0-f1';
+import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.0-f1';
 
 const SELOS = ['Mais vendido', 'Promoção', 'Novo', 'Vegano', 'Picante', 'Mais pedido'];
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');

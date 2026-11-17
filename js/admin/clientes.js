@@ -1,8 +1,8 @@
 // Clientes (cadastro automático ao finalizar pedidos) e programa de fidelidade.
-import { db, inc } from '../db.js';
-import { store, onStore, salvarConfig, cadastrarClientes } from './app.js';
-import { moeda, esc, dataHoraBR, mascaraTelefone, soDigitos, toast, modal } from '../utils.js';
-import { baixarCSV } from './financeiro.js';
+import { db, inc } from '../db.js?v=2.0.0-f1';
+import { store, onStore, salvarConfig, cadastrarClientes } from './app.js?v=2.0.0-f1';
+import { moeda, esc, dataHoraBR, mascaraTelefone, soDigitos, toast, modal } from '../utils.js?v=2.0.0-f1';
+import { baixarCSV } from './financeiro.js?v=2.0.0-f1';
 
 export function render(el) {
   let clientes = [], fid = {}, busca = '';

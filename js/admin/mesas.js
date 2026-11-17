@@ -1,9 +1,9 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
-import { db } from '../db.js';
-import { store, onStore } from './app.js';
-import { mudarStatus, imprimir, statusBadge } from './acoes.js';
-import { detalhe } from './pedidos.js';
-import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js';
+import { db } from '../db.js?v=2.0.0-f1';
+import { store, onStore } from './app.js?v=2.0.0-f1';
+import { mudarStatus, imprimir, statusBadge } from './acoes.js?v=2.0.0-f1';
+import { detalhe } from './pedidos.js?v=2.0.0-f1';
+import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');

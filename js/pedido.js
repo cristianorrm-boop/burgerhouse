@@ -1,6 +1,6 @@
 // Acompanhamento do pedido em tempo real (status atualiza sozinho).
-import { db } from './db.js';
-import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js';
+import { db } from './db.js?v=2.0.0-f1';
+import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js?v=2.0.0-f1';
 
 const $ = s => document.querySelector(s);
 const id = new URLSearchParams(location.search).get('id');

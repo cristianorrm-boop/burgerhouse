@@ -1,4 +1,5 @@
 // Funções compartilhadas entre cardápio, acompanhamento e painel admin.
+import { VERSAO } from './versao.js?v=2.0.0-f1';
 
 export const moeda = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -218,9 +219,29 @@ export function liberarSom() {
 
 /* ---------------- PWA ---------------- */
 export function registrarSW(caminho = '/sw.js') {
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register(caminho).catch(() => {});
-  }
+  if (location.protocol === 'file:') return;
+  const reg = 'serviceWorker' in navigator ? navigator.serviceWorker.register(caminho).catch(() => null) : Promise.resolve(null);
+  conferirVersao(reg);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferirVersao(reg); });
+}
+
+/** Compara a versão em uso com a publicada (versao.json) e oferece atualizar. */
+async function conferirVersao(reg) {
+  try {
+    const r = await fetch('/versao.json', { cache: 'no-store' });
+    const { versao } = await r.json();
+    if (!versao || versao === VERSAO || document.getElementById('faixa-versao')) return;
+    const f = document.createElement('div');
+    f.id = 'faixa-versao';
+    f.setAttribute('role', 'status');
+    f.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 16px;border-radius:12px;background:#1C1C1C;color:#fff;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3)';
+    f.innerHTML = '<span>Nova versão disponível</span><button type="button" style="border:0;border-radius:8px;padding:8px 14px;background:#d4af37;color:#1C1C1C;font:inherit;cursor:pointer">Atualizar</button>';
+    f.querySelector('button').onclick = async () => {
+      try { const sw = await reg; await sw?.update(); } catch { /* segue para recarregar */ }
+      location.reload();
+    };
+    document.body.appendChild(f);
+  } catch { /* offline ou versao.json indisponível: tenta de novo na próxima visita */ }
 }
 
 /** Configuração padrão da loja (usada no 1º acesso e como fallback) */

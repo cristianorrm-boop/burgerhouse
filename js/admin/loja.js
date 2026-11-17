@@ -1,11 +1,11 @@
 // Configurações: dados da loja, horários automáticos, cores da marca, pagamentos, upsell, SEO, equipe e ferramentas.
-import { db, auth } from '../db.js';
-import { DEMO } from '../config.js';
-import { semear } from '../seed.js';
-import { store, onStore, salvarConfig, ABAS_PAINEL } from './app.js';
-import * as imp from './impressora.js';
-import { qrDataURL } from './mesas.js';
-import { esc, DIAS, PAGAMENTOS, statusLoja, aplicarTema, comprimirImagem, toast, modal, confirmar } from '../utils.js';
+import { db, auth } from '../db.js?v=2.0.0-f1';
+import { DEMO } from '../config.js?v=2.0.0-f1';
+import { semear } from '../seed.js?v=2.0.0-f1';
+import { store, onStore, salvarConfig, ABAS_PAINEL } from './app.js?v=2.0.0-f1';
+import * as imp from './impressora.js?v=2.0.0-f1';
+import { qrDataURL } from './mesas.js?v=2.0.0-f1';
+import { esc, DIAS, PAGAMENTOS, statusLoja, aplicarTema, comprimirImagem, toast, modal, confirmar } from '../utils.js?v=2.0.0-f1';
 
 const ABAS = [['dados', 'Dados da loja'], ['horarios', 'Horários'], ['aparencia', 'Cores da marca'], ['pagamentos', 'Pagamentos'], ['vendas', 'Upsell e SEO'], ['impressora', 'Impressora'], ['equipe', 'Equipe'], ['ferramentas', 'Link e QR do cardápio']];
 const PALETAS = [['#EA580C', '#1F2937'], ['#DC2626', '#111827'], ['#16A34A', '#14532D'], ['#2563EB', '#0F172A'], ['#9333EA', '#1E1B4B'], ['#CA8A04', '#292524'], ['#DB2777', '#1F2937'], ['#0D9488', '#134E4A']];
