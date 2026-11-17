@@ -6,6 +6,7 @@ import { detalhe } from './pedidos.js?v=2.0.0-f1';
 import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0-f1';
 import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0-f1';
 import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0-f1';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaMesa } from '../nucleo/vendas.js?v=2.0.0-f1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -15,7 +16,7 @@ export function qrDataURL(texto, cel = 8) {
 }
 const linkMesa = id => urlMesa(location.origin, id);
 
-const pedidosDaMesa = id => store.pedidos.filter(p => p.tipo === 'mesa' && String(p.mesa) === String(id) && p.status !== 'cancelado' && !p.contaFechada);
+const pedidosDaMesa = id => pedidosParaFechar(store.pedidos, id);
 
 export function render(el) {
   let aba = 'mesas';
@@ -118,16 +119,7 @@ export function render(el) {
         imprimir({ numero: null, tipo: 'mesa', mesa: m.id, mesaNome: nomeMesa(m), criadoEm: Date.now(), cliente: {}, itens,
           subtotal: total, total, taxa: 0, desconto: 0, pagamento: m.contaPagamento || null, obs: 'Conta da mesa' });
       });
-      e.querySelector('[data-fechar-conta]')?.addEventListener('click', async () => {
-        if (!await confirmar(`Fechar a conta de "${nomeMesa(m)}" no valor de ${moeda(total)}?`, { ok: 'Fechar conta' })) return;
-        for (const p of ps) {
-          if (p.status !== 'entregue') await mudarStatus(p, 'entregue');
-          await db.update('pedidos', p.id, { contaFechada: true, pagamento: m.contaPagamento || { forma: 'dinheiro', troco: null } });
-        }
-        await db.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null });
-        toast(`Conta de ${nomeMesa(m)} fechada`);
-        mod.fechar();
-      });
+      e.querySelector('[data-fechar-conta]')?.addEventListener('click', () => fecharConta(id, mod.fechar));
     };
     desenharConta();
     parar = onStore(() => {
@@ -140,6 +132,46 @@ export function render(el) {
   const parar = onStore(() => { if (aba === 'mesas') desenhar(); });
   const t = setInterval(() => { if (aba === 'mesas') desenhar(); }, 30000);
   return () => { parar(); clearInterval(t); };
+}
+
+/** Modal de fechamento: a equipe confirma a forma de pagamento e grava uma venda consolidada. */
+function fecharConta(id, fecharContaModal) {
+  const m0 = store.mesas.find(x => x.id === id);
+  if (!m0) return;
+  const total0 = pedidosParaFechar(store.pedidos, id).reduce((s, p) => s + p.total, 0);
+  const mod = modal(`
+    <h2>Fechar conta · ${esc(nomeMesa(m0))}</h2>
+    <p style="font-size:20px;margin:8px 0 12px">Total: <strong>${moeda(total0)}</strong></p>
+    <label class="campo"><span>Forma de pagamento</span>
+      <select data-forma>${Object.entries(PAGAMENTOS).map(([k, v]) =>
+        `<option value="${k}"${k === m0.contaPagamento?.forma ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+    <div class="linha-btns"><button class="btn btn-ghost" data-cancelar>Cancelar</button>
+      <button class="btn btn-ok" data-confirmar><i class="ti ti-cash"></i>Confirmar</button></div>`);
+  mod.el.querySelector('[data-cancelar]').onclick = mod.fechar;
+  const btn = mod.el.querySelector('[data-confirmar]');
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const m = store.mesas.find(x => x.id === id) || m0;
+      const ps = pedidosParaFechar(store.pedidos, id);
+      if (!ps.length) { toast('Conta já fechada', 'erro'); mod.fechar(); fecharContaModal(); return; }
+      const forma = mod.el.querySelector('[data-forma]').value;
+      await db.set('vendas', idVendaMesa(ps.map(p => p.id)), vendaDeFechamentoMesa(m, ps, forma, Date.now()));
+      for (const p of ps) {
+        const extra = { contaFechada: true, pagamento: { forma, troco: null } };
+        if (p.status !== 'entregue') await mudarStatus(p, 'entregue', extra);
+        else await db.update('pedidos', p.id, extra);
+      }
+      await db.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null });
+      toast(`Conta de ${nomeMesa(m)} fechada`);
+      mod.fechar();
+      fecharContaModal();
+    } catch (e) {
+      console.error('Falha ao fechar conta', e);
+      toast('Não foi possível fechar a conta. Tente de novo.', 'erro');
+      btn.disabled = false;
+    }
+  };
 }
 
 function imprimirQRs() {

@@ -3,6 +3,7 @@ import { db, inc } from '../db.js?v=2.0.0-f1';
 import { store } from './app.js?v=2.0.0-f1';
 import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f1';
 import { rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo } from '../nucleo/pedidos.js?v=2.0.0-f1';
+import { deveGerarVendaAoEntregar, vendaDePedidoOnline, idVendaPedido } from '../nucleo/vendas.js?v=2.0.0-f1';
 import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f1';
 
 export function proximoStatus(p) {
@@ -20,7 +21,13 @@ export const rotuloAcao = {
 
 export async function mudarStatus(p, status, extra = {}) {
   const historico = [...(p.historico || []), { status, em: Date.now() }];
-  await db.update('pedidos', p.id, { status, historico, ...extra });
+  const campos = { status, historico, ...extra };
+  if (deveGerarVendaAoEntregar(p, status)) {
+    const vendaId = idVendaPedido(p);
+    await db.set('vendas', vendaId, vendaDePedidoOnline(p, Date.now())); // id fixo: repetir não duplica a venda
+    campos.vendaId = vendaId;
+  }
+  await db.update('pedidos', p.id, campos);
   if (status === 'entregue') await contabilizar(p);
 }
 
