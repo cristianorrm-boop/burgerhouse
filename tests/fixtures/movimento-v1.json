@@ -1,0 +1,96 @@
+{
+  "colecoes": {
+    "usuarios": {
+      "uDono": { "nome": "Dono Teste", "email": "dono@teste.com", "perfil": "dono", "ativo": true },
+      "uGarcom": { "nome": "Garcom Teste", "email": "garcom@teste.com", "perfil": "garcom", "ativo": true },
+      "uInativo": { "nome": "Inativo Teste", "email": "inativo@teste.com", "perfil": "garcom", "ativo": false }
+    },
+    "pedidos": {
+      "pMesa": {
+        "fechada": true, "subtotal": 40, "mesaNome": "Mesa 3", "status": "entregue", "total": 40,
+        "numeroPedido": null, "desconto": 0, "origem": "mesa", "mesaId": "mesaFx3", "cupom": null,
+        "cliente": { "nome": "Cliente Teste" }, "tipoEntrega": null,
+        "atualizadoEm": { "__tipo": "ts", "ms": 1790000100000 }, "criadoEm": { "__tipo": "ts", "ms": 1790000000000 },
+        "itens": [
+          { "nome": "Lanche Teste", "preco": 30, "qtd": 1, "variacao": null, "observacao": "sem cebola",
+            "adicionais": [{ "grupoNome": "Extras", "opcaoNome": "Bacon", "preco": 10 }] }
+        ]
+      },
+      "pDelivery": {
+        "fechada": false, "subtotal": 50, "status": "entregue", "total": 58, "numeroPedido": "AB12CD34",
+        "desconto": 0, "origem": "delivery", "tipoEntrega": "delivery", "formaPagamento": "PIX", "taxaEntrega": 8,
+        "mesaId": null, "mesaNome": null, "cupom": null,
+        "cliente": { "nome": "Cliente Teste", "telefone": "34900000000", "endereco": "Rua Teste, 100", "cep": "00000-000" },
+        "atualizadoEm": { "__tipo": "ts", "ms": 1790001100000 }, "criadoEm": { "__tipo": "ts", "ms": 1790001000000 },
+        "itens": [{ "nome": "Lanche Teste", "preco": 50, "qtd": 1, "variacao": null, "adicionais": [] }]
+      },
+      "pRecebido": {
+        "status": "recebido", "total": 20, "subtotal": 20, "numeroPedido": "ZZ99YY88", "origem": "delivery",
+        "tipoEntrega": "retirada", "formaPagamento": "dinheiro", "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790002000000 },
+        "itens": [{ "nome": "Suco Teste", "preco": 20, "qtd": 1, "adicionais": [] }]
+      },
+      "pPreparo": {
+        "status": "em_preparo", "total": 25, "subtotal": 25, "numeroPedido": 7, "origem": "delivery",
+        "tipoEntrega": "delivery", "formaPagamento": "cartao", "taxaEntrega": 5,
+        "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790003000000 },
+        "itens": [{ "nome": "Suco Teste", "preco": 20, "qtd": 1, "adicionais": [] }]
+      },
+      "pPronto": {
+        "status": "pronto", "total": 15, "subtotal": 15, "numeroPedido": "12", "origem": "delivery",
+        "tipoEntrega": "retirada", "formaPagamento": "pix",
+        "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790004000000 },
+        "itens": [{ "nome": "Suco Teste", "preco": 15, "qtd": 1, "adicionais": [] }]
+      },
+      "pSemItens": {
+        "status": "recebido", "total": 0, "subtotal": 0, "numeroPedido": null, "origem": "mesa", "mesaId": "mesaFx3",
+        "tipoEntrega": null, "cliente": { "nome": "Cliente Teste" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790005000000 }
+      }
+    },
+    "vendas": {
+      "vPdv1": {
+        "subtotal": 30, "fiado": false, "desconto": 0, "recebidoDinheiro": 30, "total": 30, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 30, "qtd": 1 }], "pagamento": "dinheiro",
+        "pagamentos": [{ "forma": "dinheiro", "valor": 30 }], "cliente": null, "troco": 0,
+        "criadoEm": { "__tipo": "ts", "ms": 1790010000000 }
+      },
+      "vPdv2": {
+        "subtotal": 60, "fiado": false, "desconto": 0, "recebidoDinheiro": 20, "total": 60, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 30, "qtd": 2 }], "pagamento": "misto",
+        "pagamentos": [{ "forma": "dinheiro", "valor": 20 }, { "forma": "PIX", "valor": 40 }], "cliente": null, "troco": 0,
+        "criadoEm": { "__tipo": "ts", "ms": 1790011000000 }
+      },
+      "vFiadoAberto": {
+        "subtotal": 30, "fiado": true, "valorPago": 0, "pagamentosFiado": [], "desconto": 0, "total": 30, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 30, "qtd": 1 }], "pagamento": "fiado", "pagamentos": [],
+        "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" }, "troco": 0,
+        "criadoEm": { "__tipo": "ts", "ms": 1790012000000 }
+      },
+      "vFiadoParcial": {
+        "subtotal": 50, "fiado": true, "valorPago": 20,
+        "pagamentosFiado": [{ "forma": "pix", "valor": 20, "em": { "__tipo": "ts", "ms": 1790013500000 } }],
+        "desconto": 0, "total": 50, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 50, "qtd": 1 }], "pagamento": "fiado", "pagamentos": [],
+        "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" }, "troco": 0,
+        "criadoEm": { "__tipo": "ts", "ms": 1790013000000 }
+      },
+      "vMesa": {
+        "subtotal": 40, "fiado": false, "desconto": 0, "recebidoDinheiro": 0, "total": 40, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 40, "qtd": 1 }], "pagamento": "pix",
+        "pagamentos": [{ "forma": "pix", "valor": 40 }], "cliente": null, "troco": 0,
+        "mesaFechamento": { "mesaId": "mesaFx3", "mesaNome": "Mesa 3" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790014000000 }
+      },
+      "vOnline": {
+        "subtotal": 58, "fiado": false, "desconto": 0, "recebidoDinheiro": 0, "total": 58, "cupom": null,
+        "itens": [{ "nome": "Lanche Teste", "preco": 50, "qtd": 1 }], "pagamento": "pix",
+        "pagamentos": [{ "forma": "PIX", "valor": 58 }], "cliente": { "nome": "Cliente Teste", "telefone": "34900000000" }, "troco": 0,
+        "pedidoOrigem": { "id": "pDelivery", "numeroPedido": "AB12CD34" },
+        "criadoEm": { "__tipo": "ts", "ms": 1790015000000 }
+      }
+    }
+  }
+}
