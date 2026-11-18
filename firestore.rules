@@ -61,7 +61,17 @@ service cloud.firestore {
                     && request.resource.data.total is number
                     && request.resource.data.total >= 0
                     && request.resource.data.criadoEm is number;
-      allow update, delete: if equipe();
+      allow update: if equipe();
+      allow delete: if dono();
+    }
+
+    // Vendas (PDV, fechamento de mesa, pedido online entregue, fiado): só a equipe lê e grava; só o dono apaga.
+    // create e update porque a mesma venda pode ser regravada com o mesmo id (proteção contra venda em dobro)
+    // e o pagamento de fiado atualiza valorPago/pagamentosFiado.
+    match /vendas/{id} {
+      allow read: if equipe();
+      allow create, update: if equipe();
+      allow delete: if dono();
     }
 
     // Número sequencial dos pedidos (#1, #2, ...): só pode avançar de 1 em 1

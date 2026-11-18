@@ -47,3 +47,31 @@ test('transicao nao muda colecoes compartilhadas', () => {
 test('superadmin certo', () => {
   assert.ok(ler('regras/transicao.rules').includes("'admin@gmail.com'"));
 });
+
+// ---- Regras finais (Fase 5) ----
+const finais = () => ler('firestore.rules');
+const blocoDe = (t, c) => (t.match(new RegExp(String.raw`match\s+/` + c + String.raw`/\{[^}]+\}\s*\{[\s\S]*?\n    \}`)) || [''])[0];
+
+test('regras finais tem vendas', () => {
+  const b = norm(blocoDe(finais(), 'vendas'));
+  assert.ok(b.includes('allow read: if equipe();'), b);
+  assert.ok(b.includes('allow create, update: if equipe();'), b);
+  assert.ok(b.includes('allow delete: if dono();'), b);
+});
+
+test('apagar pedido so dono', () => {
+  const b = norm(blocoDe(finais(), 'pedidos'));
+  assert.ok(b.includes('allow update: if equipe();'), b);
+  assert.ok(b.includes('allow delete: if dono();'), b);
+  assert.ok(!b.includes('update, delete'), b);
+});
+
+test('regras finais sem colecoes da v1', () => {
+  const t = finais();
+  for (const c of ['usuarios', 'configuracoes', 'tiposVariacao', 'gruposAdicionais'])
+    assert.ok(!new RegExp(String.raw`match\s+/` + c + '/').test(t), c);
+});
+
+test('regras finais com o superadmin do Burger House', () => {
+  assert.ok(finais().includes("'admin@gmail.com'"));
+});
