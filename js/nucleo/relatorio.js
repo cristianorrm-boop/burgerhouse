@@ -35,6 +35,8 @@ export function totaisPorDia(vendas, mesISO) {
   return totais;
 }
 
+// Texto livre que começa com = + - @ tab ou CR viraria fórmula no Excel: prefixa apóstrofo.
+const texto = t => (/^[=+\-@\t\r]/.test(String(t)) ? "'" + t : String(t));
 const campo = c => `"${String(c).replace(/"/g, '""')}"`;
 
 export function csvRelatorio(vendas) {
@@ -45,10 +47,10 @@ export function csvRelatorio(vendas) {
     return [
       d ? `${dois(d.getDate())}/${dois(d.getMonth() + 1)}/${d.getFullYear()}` : '',
       d ? `${dois(d.getHours())}:${dois(d.getMinutes())}` : '',
-      v.cliente || '',
-      (v.itens || []).map(i => `${num(i.qtd) || 1}x ${i.nome ?? ''}`).join(' | '),
-      textoPagamento(v),
-      v.cupom || '',
+      texto(v.cliente || ''),
+      texto((v.itens || []).map(i => `${num(i.qtd) || 1}x ${i.nome ?? ''}`).join(' | ')),
+      texto(textoPagamento(v)),
+      texto(v.cupom || ''),
       num(v.subtotal).toFixed(2), num(v.desconto).toFixed(2), num(v.total).toFixed(2)
     ].map(campo).join(';');
   });

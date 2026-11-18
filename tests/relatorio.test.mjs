@@ -60,3 +60,17 @@ test('origem da venda', () => {
   assert.deepEqual(origemVenda({ mesaFechamento: {} }), { tipo: 'mesa', rotulo: 'Mesa' });
   assert.deepEqual(origemVenda({}), { tipo: 'pdv', rotulo: '' });
 });
+
+test('csv neutraliza formula em texto', () => {
+  const venda = (cliente, extra = {}) => ({
+    itens: [{ nome: '@soma', preco: 10, qtd: 1, adicionais: [] }], cliente, cupom: '+X', subtotal: 10, desconto: 0, total: 10,
+    pagamento: 'Pix', criadoEm: new Date(2026, 10, 17, 9, 5).getTime(), ...extra
+  });
+  const linha = csvRelatorio([venda('=1+1')]).split('\r\n')[1];
+  assert.equal(linha, '"17/11/2026";"09:05";"\'=1+1";"1x @soma";"Pix";"\'+X";"10.00";"0.00";"10.00"'.replace('"1x @soma"', '"1x @soma"'));
+  assert.ok(csvRelatorio([venda('-cmd')]).includes('"\'-cmd"'));
+  assert.ok(csvRelatorio([venda('@a')]).includes('"\'@a"'));
+  assert.ok(csvRelatorio([venda('Maria')]).includes('"Maria"'));
+  const itens = csvRelatorio([venda('x', { itens: [{ nome: '=2+2', qtd: 1 }] })]).split('\r\n')[1];
+  assert.ok(itens.includes('"1x =2+2"'), 'itens começam com "1x", sem prefixo');
+});
