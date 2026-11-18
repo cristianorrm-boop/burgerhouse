@@ -1,5 +1,5 @@
 // Pedidos: rótulos e textos legíveis, inclusive para pedidos migrados da V1 (funções puras).
-import { nomeMesa } from './mesas.js?v=2.0.0-f3';
+import { nomeMesa } from './mesas.js?v=2.0.0-f4';
 
 const PAGAMENTOS = {
   dinheiro: 'Dinheiro',

@@ -1,11 +1,11 @@
 // Painel administrativo: login, menu, rotas, dados compartilhados e alertas sonoros.
-import { db, auth } from '../db.js?v=2.0.0-f3';
-import { DEMO } from '../config.js?v=2.0.0-f3';
-import { semear } from '../seed.js?v=2.0.0-f3';
-import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f3';
-import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f3';
-import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f3';
-import { ABAS_PADRAO_ATENDENTE, rotaInicial } from '../nucleo/tema.js?v=2.0.0-f3';
+import { db, auth } from '../db.js?v=2.0.0-f4';
+import { DEMO } from '../config.js?v=2.0.0-f4';
+import { semear } from '../seed.js?v=2.0.0-f4';
+import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f4';
+import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f4';
+import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f4';
+import { ABAS_PADRAO_ATENDENTE, rotaInicial } from '../nucleo/tema.js?v=2.0.0-f4';
 
 const $ = s => document.querySelector(s);
 
@@ -20,18 +20,18 @@ export const salvarConfig = dados => db.set('config', 'loja', dados, true);
 
 /* ================= Rotas ================= */
 const ROTAS = {
-  dashboard: { nome: 'Dashboard', icone: 'ti-layout-dashboard', perfis: ['dono'], mod: () => import('./dashboard.js?v=2.0.0-f3') },
-  pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js?v=2.0.0-f3'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
-  mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js?v=2.0.0-f3'), cont: () => store.mesas.filter(m => m.chamado).length },
-  pdv: { nome: 'PDV', icone: 'ti-cash-register', perfis: ['dono', 'atendente'], mod: () => import('./pdv.js?v=2.0.0-f3') },
-  fiado: { nome: 'Pagamento a Prazo', icone: 'ti-hand-finger', perfis: ['dono'], mod: () => import('./fiado.js?v=2.0.0-f3') },
-  relatorio: { nome: 'Relatório', icone: 'ti-report-analytics', perfis: ['dono'], mod: () => import('./relatorio.js?v=2.0.0-f3') },
-  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono'], mod: () => import('./cardapio.js?v=2.0.0-f3') },
-  cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js?v=2.0.0-f3') },
-  clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js?v=2.0.0-f3') },
-  financeiro: { nome: 'Financeiro', icone: 'ti-wallet', perfis: ['dono'], mod: () => import('./financeiro.js?v=2.0.0-f3') },
-  entrega: { nome: 'Entrega', icone: 'ti-motorbike', perfis: ['dono'], mod: () => import('./entrega.js?v=2.0.0-f3') },
-  loja: { nome: 'Configurações', icone: 'ti-settings', perfis: ['dono'], mod: () => import('./loja.js?v=2.0.0-f3') }
+  dashboard: { nome: 'Dashboard', icone: 'ti-layout-dashboard', perfis: ['dono'], mod: () => import('./dashboard.js?v=2.0.0-f4') },
+  pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js?v=2.0.0-f4'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
+  mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js?v=2.0.0-f4'), cont: () => store.mesas.filter(m => m.chamado).length },
+  pdv: { nome: 'PDV', icone: 'ti-cash-register', perfis: ['dono', 'atendente'], mod: () => import('./pdv.js?v=2.0.0-f4') },
+  fiado: { nome: 'Pagamento a Prazo', icone: 'ti-hand-finger', perfis: ['dono'], mod: () => import('./fiado.js?v=2.0.0-f4') },
+  relatorio: { nome: 'Relatório', icone: 'ti-report-analytics', perfis: ['dono'], mod: () => import('./relatorio.js?v=2.0.0-f4') },
+  cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono'], mod: () => import('./cardapio.js?v=2.0.0-f4') },
+  cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js?v=2.0.0-f4') },
+  clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js?v=2.0.0-f4') },
+  financeiro: { nome: 'Financeiro', icone: 'ti-wallet', perfis: ['dono'], mod: () => import('./financeiro.js?v=2.0.0-f4') },
+  entrega: { nome: 'Entrega', icone: 'ti-motorbike', perfis: ['dono'], mod: () => import('./entrega.js?v=2.0.0-f4') },
+  loja: { nome: 'Configurações', icone: 'ti-settings', perfis: ['dono'], mod: () => import('./loja.js?v=2.0.0-f4') }
 };
 export const ABAS_PAINEL = Object.entries(ROTAS).map(([k, r]) => [k, r.nome, ABAS_PADRAO_ATENDENTE.includes(k)]);
 // Dono vê tudo; atendente vê as abas liberadas no cadastro (sem lista, usa o padrão: Pedidos, Mesas e PDV)
@@ -122,7 +122,7 @@ function verificarNovidades() {
         const mp = Object.fromEntries(store.mesas.map(m => [m.id, m]));
         notificar(`Novo pedido ${rotuloPedido(p, mp)}`, `${p.cliente?.nome || ''} · ${p.tipo === 'mesa' ? mesaDoPedido(p, mp) : p.tipo}`);
         toast(`Novo pedido ${rotuloPedido(p, mp)}`);
-        if (impressaoAutomatica() && conectada()) import('./acoes.js?v=2.0.0-f3').then(m => m.imprimir(p));
+        if (impressaoAutomatica() && conectada()) import('./acoes.js?v=2.0.0-f4').then(m => m.imprimir(p));
       }
     }
   }

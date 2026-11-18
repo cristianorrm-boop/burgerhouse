@@ -1,12 +1,12 @@
 // Relatório de vendas: filtro por mês/dia, resumo, gráfico de barras por dia, tabela e exportação em CSV.
-import { db } from '../db.js?v=2.0.0-f3';
-import { store } from './app.js?v=2.0.0-f3';
-import { moeda, esc, toast, confirmar, hojeISO, horaBR } from '../utils.js?v=2.0.0-f3';
-import { msDe } from '../nucleo/faturamento.js?v=2.0.0-f3';
-import { textoPagamento } from '../nucleo/recibo.js?v=2.0.0-f3';
-import { saldoFiado } from '../nucleo/fiado.js?v=2.0.0-f3';
-import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda } from '../nucleo/relatorio.js?v=2.0.0-f3';
-import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f3';
+import { db } from '../db.js?v=2.0.0-f4';
+import { store } from './app.js?v=2.0.0-f4';
+import { moeda, esc, toast, confirmar, hojeISO, horaBR } from '../utils.js?v=2.0.0-f4';
+import { msDe } from '../nucleo/faturamento.js?v=2.0.0-f4';
+import { textoPagamento } from '../nucleo/recibo.js?v=2.0.0-f4';
+import { saldoFiado } from '../nucleo/fiado.js?v=2.0.0-f4';
+import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda } from '../nucleo/relatorio.js?v=2.0.0-f4';
+import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f4';
 
 const CLASSE_ORIGEM = { online: 'badge-info', mesa: 'badge-pri' };
 const dois = n => String(n).padStart(2, '0');
