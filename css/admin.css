@@ -201,7 +201,9 @@
 .pdv-linha.sub { font-size: 13px; color: var(--txt2); }
 .pdv-linha.total { font-size: 20px; font-weight: 800; }
 .pdv-linha.total span:last-child { color: var(--pri); }
-.pdv-carrinho .btn-bloco { justify-content: center; margin-bottom: 8px; }
+.pdv-carrinho .btn-bloco { justify-content: center; margin-bottom: 8px; white-space: normal; text-align: center; }
+.pdv-salvando .pdv-produtos { opacity: .55; pointer-events: none; }
+.pdv-salvando #pdv-itens { opacity: .7; }
 .pdv-atalhos { font-size: 12px; color: var(--txt3); text-align: center; margin: 4px 0 0; }
 .pdv-atalhos kbd { font: inherit; font-weight: 700; padding: 1px 5px; border: 1px solid var(--borda2); border-radius: 4px; background: var(--card2); }
 .pdv-col-itens { max-width: 280px; font-size: 13px; color: var(--txt2); }

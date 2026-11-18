@@ -3,6 +3,7 @@ import { db } from '../db.js?v=2.0.0-f3';
 import { DEMO } from '../config.js?v=2.0.0-f3';
 import { semear } from '../seed.js?v=2.0.0-f3';
 import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.0-f3';
+import { codigoDuplicado } from '../nucleo/pdv.js?v=2.0.0-f3';
 
 const SELOS = ['Mais vendido', 'Promoção', 'Novo', 'Vegano', 'Picante', 'Mais pedido'];
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
@@ -158,6 +159,11 @@ export function render(el) {
       if (!f.nome.value.trim()) { f.nome.closest('.campo').classList.add('erro'); f.nome.focus(); return; }
       if (!(preco >= 0) || f.preco.value === '') { f.preco.closest('.campo').classList.add('erro'); f.preco.focus(); return; }
       if (promo !== null && promo >= preco) { toast('O preço promocional deve ser menor que o preço normal', 'erro'); return; }
+      const jaUsado = codigoDuplicado(E.prods, f.codigoBarras.value, p.id);
+      if (jaUsado) {
+        f.codigoBarras.closest('.campo').classList.add('erro'); f.codigoBarras.focus();
+        toast(`Este código de barras já está no produto "${jaUsado.nome}".`, 'erro'); return;
+      }
       const dados = {
         nome: f.nome.value.trim(), categoriaId: f.categoriaId.value, descricao: f.descricao.value.trim(),
         preco, precoPromo: promo, emoji: f.emoji.value.trim(), foto,

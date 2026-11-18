@@ -1,6 +1,8 @@
 // Regras do PDV (balcão). Módulo puro: sem db, DOM ou localStorage.
 // A venda sai no formato da V1 (ver nucleo/vendas.js): itens na convenção V1, sem produtoId.
 
+import { msDe } from './faturamento.js?v=2.0.0-f3';
+
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const arred = n => Math.round(n * 100) / 100;
 const brl = v => 'R$ ' + num(v).toFixed(2).replace('.', ',');
@@ -129,4 +131,23 @@ let seqId = 0;
 export function novoIdVendaPDV() {
   seqId = (seqId + 1) % 1296;
   return 'pdv-' + Date.now().toString(36) + seqId.toString(36).padStart(2, '0') + Math.random().toString(36).slice(2, 8);
+}
+
+/** Produto (outro que não idAtual) que já usa este código de barras, ou null. */
+export function codigoDuplicado(produtos, codigo, idAtual) {
+  const c = String(codigo ?? '').trim();
+  if (!c) return null;
+  return (produtos || []).find(p => p.codigoBarras === c && p.id !== idAtual) || null;
+}
+
+/**
+ * Vendas que merecem o aviso "Nova venda registrada!": criadas a partir de `desde` (ms),
+ * não gravadas por esta aba (idsMeus) e ainda não vistas. Vendas antigas que chegam
+ * depois (cache → servidor) não avisam.
+ */
+export function vendasNovasDeOutroAparelho(vendas, idsMeus, desde, jaVistas = new Set()) {
+  return (vendas || []).filter(v => {
+    const t = msDe(v.criadoEm);
+    return t !== null && t >= desde && !idsMeus.has(v.id) && !jaVistas.has(v.id);
+  });
 }

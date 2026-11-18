@@ -196,7 +196,7 @@ test('tela do pdv: textos e regras da v1 (verificacao de fonte)', () => {
   for (const f of ['produtoPorCodigo', 'validarVendaPDV', 'montarVendaPDV', 'validarCupomPDV', 'novoIdVendaPDV', 'msDe', 'bip(']) {
     assert.ok(src.includes(f), `falta: ${f}`);
   }
-  assert.match(src, /db\.set\('vendas',\s*idVenda,/);
+  assert.match(src, /db\.set\('vendas',\s*idVenda\w*,/);
   assert.ok(!src.includes("db.add('vendas'"), 'venda gravada com id fixo, nunca db.add');
   assert.match(src, /db\.get\('cupons',/);
   assert.match(src, /db\.update\('cupons',\s*[^,]+,\s*\{\s*usos:\s*inc\(1\)\s*\}\)/);
@@ -208,4 +208,45 @@ test('produto tem campo codigo de barras', () => {
   const src = ler('js/admin/cardapio.js');
   assert.ok(src.includes('Código de barras'));
   assert.match(src, /codigoBarras:\s*f\.codigoBarras\.value\.trim\(\)\s*\|\|\s*null/);
+});
+
+/* ===== Rodada de correção 1 ===== */
+import { codigoDuplicado, vendasNovasDeOutroAparelho } from '../js/nucleo/pdv.js';
+
+test('codigo de barras repetido e recusado (ignora o proprio produto)', () => {
+  const lista = [{ id: 'a', nome: 'X-Bacon', codigoBarras: '789' }, { id: 'b', nome: 'Coca', codigoBarras: null }];
+  assert.equal(codigoDuplicado(lista, '789', 'b').nome, 'X-Bacon');
+  assert.equal(codigoDuplicado(lista, ' 789 ', undefined).id, 'a');
+  assert.equal(codigoDuplicado(lista, '789', 'a'), null);
+  assert.equal(codigoDuplicado(lista, '', 'b'), null);
+  assert.equal(codigoDuplicado(lista, null, 'b'), null);
+  assert.equal(codigoDuplicado(lista, '111', 'b'), null);
+});
+
+test('aviso de venda de outro aparelho: so vendas novas, de fora e nao vistas', () => {
+  const abertura = 1_000_000;
+  const desde = abertura - 5000;
+  const vendas = [
+    { id: 'velha', criadoEm: abertura - 60000 },            // já existia (veio do servidor depois do cache)
+    { id: 'minha', criadoEm: abertura + 1000 },             // gravada nesta aba
+    { id: 'nova', criadoEm: abertura + 2000 },              // outro aparelho
+    { id: 'ts', criadoEm: { seconds: (abertura + 3000) / 1000 } }, // Timestamp do Firestore
+    { id: 'vista', criadoEm: abertura + 4000 },
+    { id: 'semdata', criadoEm: null }
+  ];
+  const r = vendasNovasDeOutroAparelho(vendas, new Set(['minha']), desde, new Set(['vista']));
+  assert.deepEqual(r.map(v => v.id), ['nova', 'ts']);
+  assert.deepEqual(vendasNovasDeOutroAparelho(vendas, new Set(), abertura + 10000).map(v => v.id), []);
+});
+
+test('pdv trava o carrinho enquanto grava e conta o cupom capturado antes (fonte)', () => {
+  const src = ler('js/admin/pdv.js');
+  assert.ok(src.includes('Salvando…'));
+  assert.ok(src.includes('Sem conexão? A venda será enviada assim que a internet voltar.'));
+  assert.match(src, /const cupomId = cupom\?\.id \|\| null/);
+  assert.match(src, /db\.update\('cupons',\s*cupomId,\s*\{\s*usos:\s*inc\(1\)\s*\}\)/);
+  assert.ok(src.includes('vendasNovasDeOutroAparelho('));
+  const card = ler('js/admin/cardapio.js');
+  assert.ok(card.includes('codigoDuplicado('));
+  assert.ok(card.includes('Este código de barras já está no produto'));
 });

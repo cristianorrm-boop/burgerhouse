@@ -6,7 +6,8 @@ import { moeda, esc, toast, modal, confirmar, bip, hojeISO, horaBR, inicioDoDia 
 import { msDe } from '../nucleo/faturamento.js?v=2.0.0-f3';
 import {
   ROTULOS_PDV, adicionarAoCarrinho, alterarQtd, removerLinha, precoUnitario, subtotalCarrinho, descontoPDV,
-  validarCupomPDV, pagamentosPDV, dinheiroNecessario, montarVendaPDV, validarVendaPDV, produtoPorCodigo, novoIdVendaPDV
+  validarCupomPDV, pagamentosPDV, dinheiroNecessario, montarVendaPDV, validarVendaPDV, produtoPorCodigo, novoIdVendaPDV,
+  vendasNovasDeOutroAparelho
 } from '../nucleo/pdv.js?v=2.0.0-f3';
 
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
@@ -25,6 +26,7 @@ export function render(el) {
   const minhas = new Set();       // vendas gravadas por esta aba (não tocam o aviso)
   const conhecidas = new Set();   // vendas já vistas
   let primeiraCarga = true;
+  const abertura = Date.now();
 
   el.innerHTML = `
     <div class="metricas">
@@ -105,11 +107,13 @@ export function render(el) {
   }
 
   function escolherProduto(p) {
+    if (salvando) { toast('Aguarde: a venda anterior ainda está sendo salva.', 'erro'); return; }
     if (gruposDe(p).length) abrirAdicionais(p);
     else adicionar(p, [], '');
   }
 
   function adicionar(p, adicionais, observacao) {
+    if (salvando) { toast('Aguarde: a venda anterior ainda está sendo salva.', 'erro'); return; }
     carrinho = adicionarAoCarrinho(carrinho, p, adicionais, observacao);
     atualizarCarrinho();
     focarBusca();
@@ -185,6 +189,7 @@ export function render(el) {
     ev.preventDefault();
     const codigo = busca.value.trim();
     if (!codigo) return;
+    if (salvando) { toast('Aguarde: a venda anterior ainda está sendo salva.', 'erro'); return; } // o código fica no campo
     const p = produtoPorCodigo(E.prods, codigo);
     busca.value = '';
     desenharGrade();
@@ -209,6 +214,11 @@ export function render(el) {
       total, forma1: $('#pdv-forma1').value, dividir: dividir(), forma2: $('#pdv-forma2').value, valor2: numero($('#pdv-valor2').value)
     });
     return { subtotal, desconto, total, pagamentos, recebido: numero($('#pdv-recebido').value) };
+  }
+
+  function rotuloBotao() {
+    btnFinalizar.innerHTML = salvando ? '<i class="ti ti-loader-2"></i>Salvando…'
+      : fiado() ? '<i class="ti ti-heart-handshake"></i>Registrar pagamento a prazo' : '<i class="ti ti-check"></i>Finalizar venda';
   }
 
   function atualizarCarrinho() {
@@ -240,7 +250,7 @@ export function render(el) {
     $('#pdv-aviso-fiado').hidden = !f;
     $('#pdv-area-2').hidden = !dividir();
     $('#pdv-cliente-rot').textContent = f ? 'Cliente *' : 'Cliente (opcional)';
-    btnFinalizar.innerHTML = f ? '<i class="ti ti-heart-handshake"></i>Registrar pagamento a prazo' : '<i class="ti ti-check"></i>Finalizar venda';
+    rotuloBotao();
 
     $('#pdv-divisao').innerHTML = !f && dividir()
       ? c.pagamentos.map(p => `<div class="pdv-linha sub"><span>${esc(ROTULOS_PDV[p.forma] || p.forma)}</span><span>${moeda(p.valor)}</span></div>`).join('') : '';
@@ -258,7 +268,7 @@ export function render(el) {
 
   $('#pdv-itens').onclick = ev => {
     const b = ev.target.closest('button');
-    if (!b) return;
+    if (!b || salvando) return;
     if (b.dataset.menos !== undefined) carrinho = alterarQtd(carrinho, +b.dataset.menos, -1);
     else if (b.dataset.mais !== undefined) carrinho = alterarQtd(carrinho, +b.dataset.mais, 1);
     else if (b.dataset.rem !== undefined) carrinho = removerLinha(carrinho, +b.dataset.rem);
@@ -268,13 +278,14 @@ export function render(el) {
   };
   el.querySelector('.pdv-carrinho').addEventListener('input', ev => { if (ev.target.id !== 'pdv-cupom' && ev.target.id !== 'pdv-cliente') atualizarCarrinho(); });
   el.querySelector('.pdv-carrinho').addEventListener('change', ev => { if (ev.target.matches('select, [type=checkbox]')) atualizarCarrinho(); });
-  $('#pdv-cupom-ok').onclick = ev => { if (ev.target.closest('[data-tirar-cupom]')) { cupom = null; $('#pdv-cupom').value = ''; atualizarCarrinho(); } };
+  $('#pdv-cupom-ok').onclick = ev => { if (!salvando && ev.target.closest('[data-tirar-cupom]')) { cupom = null; $('#pdv-cupom').value = ''; atualizarCarrinho(); } };
 
   async function aplicarCupom() {
     const codigo = $('#pdv-cupom').value.trim().toUpperCase();
-    if (!codigo) return;
+    if (!codigo || salvando) return;
     let c = null;
     try { c = await db.get('cupons', codigo); } catch (e) { console.error('Falha ao buscar cupom', e); }
+    if (salvando) return; // a venda começou a gravar enquanto o cupom era buscado
     const r = validarCupomPDV(c, subtotalCarrinho(carrinho), hojeISO());
     if (!r.ok) { toast(r.erro, 'erro'); return; }
     cupom = c;
@@ -296,31 +307,49 @@ export function render(el) {
     atualizarCarrinho();
     focarBusca();
   }
-  $('[data-limpar]').onclick = () => { limparCarrinho(); busca.focus(); };
+  $('[data-limpar]').onclick = () => { if (salvando) return; limparCarrinho(); busca.focus(); };
+
+  /** Enquanto a venda grava, nada no carrinho muda (senão a limpeza do fim apagaria a próxima venda). */
+  let avisoLento = null;
+  function travar(sim) {
+    salvando = sim;
+    clearTimeout(avisoLento);
+    el.querySelector('.pdv-layout').classList.toggle('pdv-salvando', sim);
+    el.querySelectorAll('.pdv-carrinho input, .pdv-carrinho select, .pdv-carrinho textarea, .pdv-carrinho button')
+      .forEach(x => { x.disabled = sim; });
+    rotuloBotao();
+    if (sim) {
+      avisoLento = setTimeout(() => {
+        if (salvando) btnFinalizar.innerHTML = '<i class="ti ti-wifi-off"></i>Sem conexão? A venda será enviada assim que a internet voltar.';
+      }, 8000);
+    }
+  }
 
   async function finalizar() {
     if (salvando) return; // F4 repetido ou clique duplo enquanto grava
-    salvando = true;
-    btnFinalizar.disabled = true;
+    const f = fiado();
+    const cliente = $('#pdv-cliente').value.trim();
+    const c = calculo();
+    const erro = validarVendaPDV({ carrinho, fiado: f, cliente, pagamentos: c.pagamentos, recebido: c.recebido, dividir: !f && dividir() });
+    if (erro) { toast(erro, 'erro'); return; }
+    if (cupom) {
+      const r = validarCupomPDV(cupom, c.subtotal, hojeISO());
+      if (!r.ok) { toast(r.erro, 'erro'); return; }
+    }
+    // Tudo o que a venda usa é capturado antes do await: depois dele só valem estas constantes.
+    const cupomId = cupom?.id || null;
+    idVenda ||= novoIdVendaPDV();
+    const idVendaGravando = idVenda;
+    const venda = montarVendaPDV({
+      carrinho, desconto: c.desconto, cupomCodigo: cupomId, fiado: f, pagamentos: c.pagamentos,
+      recebido: c.recebido, cliente, agora: Date.now()
+    });
+    travar(true);
     try {
-      const f = fiado();
-      const cliente = $('#pdv-cliente').value.trim();
-      const c = calculo();
-      const erro = validarVendaPDV({ carrinho, fiado: f, cliente, pagamentos: c.pagamentos, recebido: c.recebido, dividir: !f && dividir() });
-      if (erro) { toast(erro, 'erro'); return; }
-      if (cupom) {
-        const r = validarCupomPDV(cupom, c.subtotal, hojeISO());
-        if (!r.ok) { toast(r.erro, 'erro'); return; }
-      }
-      idVenda ||= novoIdVendaPDV();
-      const venda = montarVendaPDV({
-        carrinho, desconto: c.desconto, cupomCodigo: cupom?.id || null, fiado: f, pagamentos: c.pagamentos,
-        recebido: c.recebido, cliente, agora: Date.now()
-      });
-      minhas.add(idVenda);
-      await db.set('vendas', idVenda, venda);
-      if (cupom) {
-        try { await db.update('cupons', cupom.id, { usos: inc(1) }); } catch (e) { console.error('Falha ao contar uso do cupom', cupom.id, e); }
+      minhas.add(idVendaGravando);
+      await db.set('vendas', idVendaGravando, venda);
+      if (cupomId) {
+        try { await db.update('cupons', cupomId, { usos: inc(1) }); } catch (e) { console.error('Falha ao contar uso do cupom', cupomId, e); }
       }
       toast(f ? 'Pagamento a prazo registrado!' : 'Venda finalizada com sucesso!');
       limparCarrinho();
@@ -328,8 +357,7 @@ export function render(el) {
       console.error('Falha ao finalizar venda', e);
       toast('Não foi possível finalizar a venda. Tente de novo.', 'erro');
     } finally {
-      salvando = false;
-      btnFinalizar.disabled = false;
+      travar(false);
     }
   }
   btnFinalizar.onclick = finalizar;
@@ -398,8 +426,9 @@ export function render(el) {
     primeiraCarga = true;
     pararVendas = db.watch('vendas', { where: [['criadoEm', '>=', diaAtual]], orderBy: ['criadoEm', 'desc'] }, l => {
       E.vendas = l;
-      // Venda nova que não saiu desta aba = outro aparelho: som + aviso (nunca na primeira carga)
-      const deFora = l.filter(v => !conhecidas.has(v.id) && !minhas.has(v.id));
+      // Venda nova que não saiu desta aba = outro aparelho: som + aviso. Nunca na primeira carga, e só para
+      // vendas criadas depois da abertura (o 2º snapshot do servidor pode trazer vendas antigas que o cache não tinha).
+      const deFora = vendasNovasDeOutroAparelho(l, minhas, abertura - 5000, conhecidas);
       l.forEach(v => conhecidas.add(v.id));
       if (!primeiraCarga && deFora.length) { bip(1); toast('Nova venda registrada!'); }
       primeiraCarga = false;
@@ -413,7 +442,7 @@ export function render(el) {
     if (ev.key === 'F2') { ev.preventDefault(); busca.focus(); busca.select(); }
     else if (ev.key === 'F4') { ev.preventDefault(); finalizar(); }
     else if (ev.key === 'Escape' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-      if (carrinho.length) limparCarrinho();
+      if (carrinho.length && !salvando) limparCarrinho();
     }
   }
   document.addEventListener('keydown', atalhos);
