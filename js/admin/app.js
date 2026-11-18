@@ -5,7 +5,7 @@ import { semear } from '../seed.js?v=2.0.0-f4';
 import { impressaoAutomatica, conectada, reconectar } from './impressora.js?v=2.0.0-f4';
 import { aplicarTema, mesclarConfig, statusLoja, bip, liberarSom, somLiberado, toast, esc, registrarSW } from '../utils.js?v=2.0.0-f4';
 import { rotuloPedido, mesaDoPedido } from '../nucleo/pedidos.js?v=2.0.0-f4';
-import { ABAS_PADRAO_ATENDENTE, rotaInicial } from '../nucleo/tema.js?v=2.0.0-f4';
+import { ABAS_PADRAO_ATENDENTE, rotaInicial, hashDaRotaAberta } from '../nucleo/tema.js?v=2.0.0-f4';
 
 const $ = s => document.querySelector(s);
 
@@ -45,7 +45,10 @@ function renderMenu() {
 }
 const rotaAtual = () => {
   const r = location.hash.replace('#/', '').split('?')[0];
-  return rotaInicial(permitidas().map(([k]) => k), r);
+  const lista = permitidas().map(([k]) => k);
+  const novo = hashDaRotaAberta(lista, r);
+  if (novo) history.replaceState(null, '', novo); // replaceState não dispara hashchange
+  return rotaInicial(lista, r);
 };
 
 let limpar = null;

@@ -5,7 +5,7 @@ import { moeda, esc, toast, confirmar, hojeISO, horaBR } from '../utils.js?v=2.0
 import { msDe } from '../nucleo/faturamento.js?v=2.0.0-f4';
 import { textoPagamento } from '../nucleo/recibo.js?v=2.0.0-f4';
 import { saldoFiado } from '../nucleo/fiado.js?v=2.0.0-f4';
-import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda } from '../nucleo/relatorio.js?v=2.0.0-f4';
+import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda, mostrarRotuloDia } from '../nucleo/relatorio.js?v=2.0.0-f4';
 import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f4';
 
 const CLASSE_ORIGEM = { online: 'badge-info', mesa: 'badge-pri' };
@@ -93,8 +93,9 @@ export function render(el) {
 
     const totais = totaisPorDia(vendas, mes());
     const max = Math.max(1, ...totais);
+    const estreito = window.matchMedia('(max-width: 600px)').matches;
     $('#rl-grafico').innerHTML = totais.map((v, i) =>
-      `<div class="gb" title="Dia ${dois(i + 1)}: ${moeda(v)}"><i style="height:${v / max * 100}%"></i><small>${i + 1}</small></div>`).join('');
+      `<div class="gb" title="Dia ${dois(i + 1)}: ${moeda(v)}"><i style="height:${v / max * 100}%"></i><small>${mostrarRotuloDia(i + 1, totais.length, estreito) ? i + 1 : ''}</small></div>`).join('');
 
     const dono = ehDono();
     $('#rl-vendas').innerHTML = vendas.length ? vendas.map(v => {

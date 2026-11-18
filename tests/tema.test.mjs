@@ -42,3 +42,12 @@ test('Equipe valida abas marcadas antes de somar o pdv', () => {
   const l = ler('js/admin/loja.js');
   assert.ok(l.indexOf('Libere ao menos uma aba') < l.indexOf("abas.push('pdv')"));
 });
+
+import { hashDaRotaAberta } from '../js/nucleo/tema.js';
+
+test('hashDaRotaAberta: so troca o hash quando a rota aberta difere da pedida', () => {
+  assert.equal(hashDaRotaAberta(['pedidos', 'pdv'], 'relatorio'), '#/pedidos');
+  assert.equal(hashDaRotaAberta(['pedidos', 'pdv'], 'pdv'), null);
+  assert.equal(hashDaRotaAberta([], 'pdv'), null);
+  assert.equal(hashDaRotaAberta(['pedidos'], ''), '#/pedidos');
+});

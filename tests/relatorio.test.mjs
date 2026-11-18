@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda } from '../js/nucleo/relatorio.js';
+import { periodoRelatorio, diasDoMes, resumoRelatorio, totaisPorDia, csvRelatorio, origemVenda, mostrarRotuloDia } from '../js/nucleo/relatorio.js';
 
 const local = (a, m, d, h = 12, mi = 0) => new Date(a, m - 1, d, h, mi).getTime();
 
@@ -73,4 +73,12 @@ test('csv neutraliza formula em texto', () => {
   assert.ok(csvRelatorio([venda('Maria')]).includes('"Maria"'));
   const itens = csvRelatorio([venda('x', { itens: [{ nome: '=2+2', qtd: 1 }] })]).split('\r\n')[1];
   assert.ok(itens.includes('"1x =2+2"'), 'itens começam com "1x", sem prefixo');
+});
+
+test('mostrarRotuloDia: tela larga mostra todos; estreita so 1,5,10,15,20,25 e o ultimo', () => {
+  assert.equal(mostrarRotuloDia(3, 30, false), true);
+  const dias = Array.from({ length: 30 }, (_, i) => i + 1).filter(d => mostrarRotuloDia(d, 30, true));
+  assert.deepEqual(dias, [1, 5, 10, 15, 20, 25, 30]);
+  const fev = Array.from({ length: 28 }, (_, i) => i + 1).filter(d => mostrarRotuloDia(d, 28, true));
+  assert.deepEqual(fev, [1, 5, 10, 15, 20, 25, 28]);
 });

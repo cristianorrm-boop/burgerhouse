@@ -19,7 +19,7 @@ function decodificar(link) {
 
 test('linhas do recibo somam o subtotal', () => {
   const p = payloadRecibo(vendaComAdicional, 'Burger House');
-  assert.deepEqual(p.itens[0], { n: 'X-Bacon', q: 2, p: 38 });
+  assert.deepEqual(p.itens[0], { n: 'X-Bacon (+ Bacon)', q: 2, p: 38 });
   const soma = p.itens.reduce((s, i) => s + i.q * i.p, 0);
   assert.equal(Math.round(soma * 100) / 100, p.subtotal);
 });
@@ -61,4 +61,14 @@ test('venda antiga sem pagamentos usa o texto', () => {
   assert.deepEqual(p.pagamentos, [{ forma: 'Pix', valor: 80 }]);
   assert.equal(textoPagamento({ pagamento: 'dinheiro' }), 'Dinheiro');
   assert.equal(textoPagamento({}), '–');
+});
+
+test('payloadRecibo: texto do item inclui adicionais e observacao', () => {
+  const it = (extra) => payloadRecibo({ itens: [{ nome: 'X-Bacon', preco: 20, qtd: 1, adicionais: [], observacao: null, ...extra }], total: 20 }, 'L').itens[0];
+  assert.equal(it({}).n, 'X-Bacon');
+  assert.equal(it({ adicionais: [{ nome: 'Bacon extra', preco: 0 }, { nome: 'Cheddar', preco: 0 }] }).n, 'X-Bacon (+ Bacon extra, Cheddar)');
+  assert.equal(it({ adicionais: [{ nome: 'Bacon extra', preco: 0 }], observacao: 'sem cebola' }).n, 'X-Bacon (+ Bacon extra; obs: sem cebola)');
+  assert.equal(it({ observacao: 'sem cebola' }).n, 'X-Bacon (obs: sem cebola)');
+  assert.equal(it({ adicionais: [{ opcaoNome: 'Queijo', preco: 3 }] }).n, 'X-Bacon (+ Queijo)');
+  assert.equal(it({ adicionais: [{ opcaoNome: 'Queijo', preco: 3 }], qtd: 2 }).p, 23);
 });

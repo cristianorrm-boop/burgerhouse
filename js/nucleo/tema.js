@@ -25,3 +25,9 @@ export function rotaInicial(permitidas, desejada) {
   const lista = Array.isArray(permitidas) ? permitidas : [];
   return lista.includes(desejada) ? desejada : (lista[0] ?? null);
 }
+
+/** Hash a gravar na barra quando a rota pedida não é a aberta ('#/rota'); null se não há o que trocar. */
+export function hashDaRotaAberta(permitidas, desejada) {
+  const aberta = rotaInicial(permitidas, desejada);
+  return aberta && aberta !== desejada ? '#/' + aberta : null;
+}

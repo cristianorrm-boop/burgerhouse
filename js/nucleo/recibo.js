@@ -18,6 +18,17 @@ export function textoPagamento(venda) {
   return rotulo(venda.pagamento);
 }
 
+/** "X-Bacon (+ Bacon extra, Cheddar; obs: sem cebola)": nome do item com adicionais e observação. */
+function textoItem(i) {
+  const nome = i.nome ?? '';
+  const adic = (Array.isArray(i.adicionais) ? i.adicionais : []).map(a => a?.nome || a?.opcaoNome).filter(Boolean);
+  const obs = String(i.observacao ?? '').trim();
+  const partes = [];
+  if (adic.length) partes.push('+ ' + adic.join(', '));
+  if (obs) partes.push('obs: ' + obs);
+  return partes.length ? `${nome} (${partes.join('; ')})` : nome;
+}
+
 /** Mesmas chaves da V1, as que o recibo.html lê. `p` = valor da linha / qtd, para as linhas somarem o subtotal. */
 export function payloadRecibo(venda, nomeLoja) {
   const t = msDe(venda.criadoEm);
@@ -28,7 +39,7 @@ export function payloadRecibo(venda, nomeLoja) {
     cliente: venda.cliente || null,
     itens: (venda.itens || []).map(i => {
       const q = num(i.qtd) || 1;
-      return { n: i.nome ?? '', q, p: arred(valorLinhaItem({ ...i, qtd: q }) / q) };
+      return { n: textoItem(i), q, p: arred(valorLinhaItem({ ...i, qtd: q }) / q) };
     }),
     subtotal: num(venda.subtotal),
     desconto: num(venda.desconto),

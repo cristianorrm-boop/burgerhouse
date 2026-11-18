@@ -63,3 +63,9 @@ export function origemVenda(v) {
   if (v.mesaFechamento) return { tipo: 'mesa', rotulo: v.mesaFechamento.mesaNome || 'Mesa' };
   return { tipo: 'pdv', rotulo: '' };
 }
+
+/** Rótulo do dia no gráfico: todos em tela larga; em tela estreita só 1, 5, 10, 15, 20, 25 e o último dia. */
+export function mostrarRotuloDia(dia, ultimoDia, estreito) {
+  if (!estreito) return true;
+  return dia === ultimoDia || dia === 1 || (dia % 5 === 0 && dia <= 25);
+}
