@@ -1,12 +1,12 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
-import { db, inc } from '../db.js?v=2.0.0';
-import { store, onStore } from './app.js?v=2.0.0';
-import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.0';
-import { detalhe } from './pedidos.js?v=2.0.0';
-import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.0';
-import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.0';
-import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.0';
-import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar, podeFecharConta } from '../nucleo/vendas.js?v=2.0.0';
+import { db, inc } from '../db.js?v=2.0.1';
+import { store, onStore } from './app.js?v=2.0.1';
+import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.1';
+import { detalhe } from './pedidos.js?v=2.0.1';
+import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.1';
+import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.1';
+import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.1';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar, podeFecharConta } from '../nucleo/vendas.js?v=2.0.1';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');

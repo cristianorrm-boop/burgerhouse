@@ -1,8 +1,8 @@
 // Recibo da venda: impressão (janela, como a comanda) e link do WhatsApp.
-import { store } from './app.js?v=2.0.0';
-import { moeda, esc, toast } from '../utils.js?v=2.0.0';
-import { valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0';
-import { textoPagamento, payloadRecibo, linkRecibo } from '../nucleo/recibo.js?v=2.0.0';
+import { store } from './app.js?v=2.0.1';
+import { moeda, esc, toast } from '../utils.js?v=2.0.1';
+import { valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.1';
+import { textoPagamento, payloadRecibo, linkRecibo } from '../nucleo/recibo.js?v=2.0.1';
 
 const nomeLoja = () => store.cfg?.nome || 'Loja';
 

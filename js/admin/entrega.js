@@ -1,7 +1,7 @@
 // Entrega: delivery/retirada, tempos, pedido mínimo e taxas por bairro.
-import { db } from '../db.js?v=2.0.0';
-import { store, salvarConfig } from './app.js?v=2.0.0';
-import { moeda, esc, modal, confirmar, toast } from '../utils.js?v=2.0.0';
+import { db } from '../db.js?v=2.0.1';
+import { store, salvarConfig } from './app.js?v=2.0.1';
+import { moeda, esc, modal, confirmar, toast } from '../utils.js?v=2.0.1';
 
 export function render(el) {
   const e = store.cfg.entrega;

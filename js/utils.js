@@ -1,6 +1,6 @@
 // Funções compartilhadas entre cardápio, acompanhamento e painel admin.
-import { VERSAO } from './versao.js?v=2.0.0';
-import { corTextoSobre } from './nucleo/tema.js?v=2.0.0';
+import { VERSAO } from './versao.js?v=2.0.1';
+import { corTextoSobre } from './nucleo/tema.js?v=2.0.1';
 
 export const moeda = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

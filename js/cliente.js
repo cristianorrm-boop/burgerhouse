@@ -1,15 +1,16 @@
 // Cardápio do cliente: catálogo, sacola, upsell, cupom, fidelidade, checkout,
 // modo mesa (QR Code) e acompanhamento de pedidos em tempo real.
-import { db } from './db.js?v=2.0.0';
-import { DEMO } from './config.js?v=2.0.0';
-import { semear } from './seed.js?v=2.0.0';
+import { db } from './db.js?v=2.0.1';
+import { DEMO } from './config.js?v=2.0.1';
+import { semear } from './seed.js?v=2.0.1';
 import {
   moeda, esc, soDigitos, mascaraTelefone, hojeISO, statusLoja, aplicarTema, mesclarConfig,
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
-} from './utils.js?v=2.0.0';
-import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.0';
-import { taxaEntrega } from './nucleo/entrega.js?v=2.0.0';
-import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.0';
+} from './utils.js?v=2.0.1';
+import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.1';
+import { taxaEntrega } from './nucleo/entrega.js?v=2.0.1';
+import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.1';
+import { emDestaque } from './nucleo/produtos.js?v=2.0.1';
 
 const $= s => document.querySelector(s);
 const E = {
@@ -178,7 +179,7 @@ function renderCardapio() {
   const visiveis = E.prods.filter(p => !termo || normalizar(p.nome + ' ' + p.descricao).includes(termo));
 
   // Destaques
-  const dest = E.prods.filter(p => p.disponivel !== false && ((p.selos || []).some(s => ['Mais vendido', 'Promoção', 'Novo', 'Mais pedido'].includes(s)) || p.precoPromo));
+  const dest = E.prods.filter(emDestaque);
   $('#destaques').classList.toggle('oculto', !!termo || dest.length === 0);
   $('#lista-destaques').innerHTML = dest.slice(0, 10).map(p => `
     <button class="dest" data-prod="${p.id}">

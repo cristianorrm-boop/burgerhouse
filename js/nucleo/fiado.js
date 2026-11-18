@@ -1,5 +1,5 @@
 // Pagamento a prazo (fiado) da V1: saldo, quitação, pagamento parcial e filtros. Módulo puro: sem db ou DOM.
-import { msDe } from './faturamento.js?v=2.0.0';
+import { msDe } from './faturamento.js?v=2.0.1';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const arred = n => Math.round(n * 100) / 100;

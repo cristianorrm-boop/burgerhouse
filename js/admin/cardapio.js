@@ -1,9 +1,9 @@
 // Cardápio: produtos (foto, preço, promoção, selos, adicionais, upsell, esgotado), categorias e grupos de adicionais.
-import { db } from '../db.js?v=2.0.0';
-import { DEMO } from '../config.js?v=2.0.0';
-import { semear } from '../seed.js?v=2.0.0';
-import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.0';
-import { codigoDuplicado } from '../nucleo/pdv.js?v=2.0.0';
+import { db } from '../db.js?v=2.0.1';
+import { DEMO } from '../config.js?v=2.0.1';
+import { semear } from '../seed.js?v=2.0.1';
+import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.1';
+import { codigoDuplicado } from '../nucleo/pdv.js?v=2.0.1';
 
 const SELOS = ['Mais vendido', 'Promoção', 'Novo', 'Vegano', 'Picante', 'Mais pedido'];
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
@@ -128,6 +128,8 @@ export function render(el) {
         <div class="campo"><span>Grupos de adicionais</span>
           ${E.adic.length ? `<div class="chips">${E.adic.map(a => `<label><input type="checkbox" name="adicionais" value="${a.id}" ${(p.adicionais || []).includes(a.id) ? 'checked' : ''}><span>${esc(a.nome)}</span></label>`).join('')}</div>` : '<small>Crie grupos na aba “Adicionais e opções”.</small>'}
         </div>
+        <div class="linha-cfg"><div><strong><i class="ti ti-star"></i> Destaque</strong><small>Aparece no carrossel “Destaques” do cardápio</small></div>
+          <label class="switch"><input type="checkbox" name="destaque" ${p.destaque === true ? 'checked' : ''}><i></i></label></div>
         <div class="linha-cfg"><div><strong><i class="ti ti-sparkles"></i> Sugerir na sacola (upsell)</strong><small>Aparece em “Que tal completar seu pedido?”</small></div>
           <label class="switch"><input type="checkbox" name="upsell" ${p.upsell ? 'checked' : ''}><i></i></label></div>
         <div class="linha-cfg"><div><strong>Disponível</strong><small>Desligue quando acabar o estoque</small></div>
@@ -170,6 +172,7 @@ export function render(el) {
         codigoBarras: f.codigoBarras.value.trim() || null,
         selos: [...f.querySelectorAll('[name=selos]:checked')].map(i => i.value),
         adicionais: [...f.querySelectorAll('[name=adicionais]:checked')].map(i => i.value),
+        destaque: f.destaque.checked,
         upsell: f.upsell.checked, disponivel: f.disponivel.checked
       };
       try {

@@ -1,7 +1,7 @@
 // Acompanhamento do pedido em tempo real (status atualiza sozinho).
-import { db } from './db.js?v=2.0.0';
-import { rotuloPedido, mesaDoPedido, enderecoTexto, valorLinhaItem } from './nucleo/pedidos.js?v=2.0.0';
-import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js?v=2.0.0';
+import { db } from './db.js?v=2.0.1';
+import { rotuloPedido, mesaDoPedido, enderecoTexto, valorLinhaItem } from './nucleo/pedidos.js?v=2.0.1';
+import { moeda, esc, soDigitos, aplicarTema, mesclarConfig, STATUS, TIPOS, PAGAMENTOS, fluxoStatus, horaBR, bip, registrarSW } from './utils.js?v=2.0.1';
 
 const $ = s => document.querySelector(s);
 const id = new URLSearchParams(location.search).get('id');
