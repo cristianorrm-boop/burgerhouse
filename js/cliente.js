@@ -1,16 +1,16 @@
 // Cardápio do cliente: catálogo, sacola, upsell, cupom, fidelidade, checkout,
 // modo mesa (QR Code) e acompanhamento de pedidos em tempo real.
-import { db } from './db.js?v=2.0.1';
-import { DEMO } from './config.js?v=2.0.1';
-import { semear } from './seed.js?v=2.0.1';
+import { db } from './db.js?v=2.0.2';
+import { DEMO } from './config.js?v=2.0.2';
+import { semear } from './seed.js?v=2.0.2';
 import {
   moeda, esc, soDigitos, mascaraTelefone, hojeISO, statusLoja, aplicarTema, mesclarConfig,
   toast, modal, registrarSW, STATUS, PAGAMENTOS, DIAS, fluxoStatus, debounce
-} from './utils.js?v=2.0.1';
-import { idMesaDoLink, nomeMesa } from './nucleo/mesas.js?v=2.0.1';
-import { taxaEntrega } from './nucleo/entrega.js?v=2.0.1';
-import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.1';
-import { emDestaque } from './nucleo/produtos.js?v=2.0.1';
+} from './utils.js?v=2.0.2';
+import { idMesaDoLink, nomeMesa, mesaLivrePara } from './nucleo/mesas.js?v=2.0.2';
+import { taxaEntrega } from './nucleo/entrega.js?v=2.0.2';
+import { rotuloPedido } from './nucleo/pedidos.js?v=2.0.2';
+import { emDestaque } from './nucleo/produtos.js?v=2.0.2';
 
 const $= s => document.querySelector(s);
 const E = {
@@ -656,6 +656,12 @@ function renderCheckout() {
     const btn = box.querySelector('#btn-enviar');
     btn.disabled = true;
     btn.innerHTML = '<i class="ti ti-loader-2"></i>Enviando…';
+    if (mesa && !(await reservarMesa())) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-send"></i>Enviar pedido';
+      toast('Esta mesa já está aberta em outro celular. Chame o garçom.', 'erro');
+      return;
+    }
     const b = bairroAtual();
     const agora = Date.now();
     const pedido = {
@@ -738,6 +744,32 @@ function renderAcompanhar() {
 }
 
 /* ================= Modo mesa (QR Code) ================= */
+// Identidade deste celular: o primeiro que pedir na mesa fica com ela até a conta ser fechada.
+function meuDispositivo() {
+  let d = null;
+  try { d = localStorage.getItem('co_disp'); } catch {}
+  if (!d) {
+    d = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    try { localStorage.setItem('co_disp', d); } catch {}
+  }
+  return d;
+}
+const mesaEmOutroCelular = () => !!E.mesaDoc && !mesaLivrePara(E.mesaDoc, meuDispositivo());
+/** Ocupa a mesa para este celular (ou confirma que já é dele). Falso se outro celular já ocupou. */
+async function reservarMesa() {
+  const eu = meuDispositivo();
+  try {
+    return await db.transacao(async t => {
+      const m = await t.get('mesas', String(E.mesa));
+      if (!m || !mesaLivrePara(m, eu)) return false;
+      if (m.dispositivo !== eu) t.update('mesas', String(E.mesa), { dispositivo: eu, dispositivoEm: Date.now() });
+      return true;
+    });
+  } catch (e) {
+    console.error('Falha ao reservar a mesa', e);
+    return false;
+  }
+}
 function iniciarMesa() {
   db.watchDoc('mesas', String(E.mesa), d => {
     E.mesaDoc = d;
@@ -754,6 +786,19 @@ function renderMesa() {
   const box = $('#mesa-box');
   box.classList.remove('oculto');
   const chamado = d.chamado;
+  if (mesaEmOutroCelular()) {
+    box.innerHTML = `<div class="mesa-card">
+    <i class="ti ti-lock" aria-hidden="true"></i>
+    <div class="mt"><strong>${esc(nomeMesa(d))} em uso</strong><small>Esta mesa já está aberta em outro celular. Peça por ele ou chame o garçom.</small></div>
+    <button class="btn ${chamado === 'garcom' ? 'ativo' : ''}" data-garcom><i class="ti ti-bell-ringing"></i>${chamado === 'garcom' ? 'Garçom a caminho' : 'Chamar garçom'}</button>
+  </div>`;
+    box.querySelector('[data-garcom]').onclick = async () => {
+      if (chamado === 'garcom') return toast('O garçom já foi chamado');
+      await db.update('mesas', String(E.mesa), { chamado: 'garcom', chamadoEm: Date.now() });
+      toast('Garçom chamado');
+    };
+    return;
+  }
   box.innerHTML = `<div class="mesa-card">
     <i class="ti ti-armchair" aria-hidden="true"></i>
     <div class="mt"><strong>${esc(nomeMesa(d))}</strong><small>Peça por aqui. Levamos até você.</small></div>

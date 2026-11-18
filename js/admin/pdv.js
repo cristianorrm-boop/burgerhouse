@@ -1,17 +1,17 @@
 // PDV (balcão): grade de produtos com leitor de código de barras, carrinho, cupom, pagamento a prazo,
 // pagamento dividido, troco e as vendas de hoje em tempo real. A venda é gravada no formato da V1.
-import { db, inc } from '../db.js?v=2.0.1';
-import { store } from './app.js?v=2.0.1';
-import { moeda, esc, toast, modal, confirmar, bip, hojeISO, horaBR, inicioDoDia } from '../utils.js?v=2.0.1';
-import { msDe } from '../nucleo/faturamento.js?v=2.0.1';
+import { db, inc } from '../db.js?v=2.0.2';
+import { store } from './app.js?v=2.0.2';
+import { moeda, esc, toast, modal, confirmar, bip, hojeISO, horaBR, inicioDoDia } from '../utils.js?v=2.0.2';
+import { msDe } from '../nucleo/faturamento.js?v=2.0.2';
 import {
   ROTULOS_PDV, adicionarAoCarrinho, alterarQtd, removerLinha, precoUnitario, subtotalCarrinho, descontoPDV,
   validarCupomPDV, pagamentosPDV, dinheiroNecessario, montarVendaPDV, validarVendaPDV, produtoPorCodigo, novoIdVendaPDV,
   vendasNovasDeOutroAparelho
-} from '../nucleo/pdv.js?v=2.0.1';
-import { saldoFiado } from '../nucleo/fiado.js?v=2.0.1';
-import { origemVenda } from '../nucleo/relatorio.js?v=2.0.1';
-import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.1';
+} from '../nucleo/pdv.js?v=2.0.2';
+import { saldoFiado } from '../nucleo/fiado.js?v=2.0.2';
+import { origemVenda } from '../nucleo/relatorio.js?v=2.0.2';
+import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.2';
 
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
 const numero = v => { const n = Number(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };

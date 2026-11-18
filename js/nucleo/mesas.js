@@ -27,3 +27,8 @@ export function proximaMesa(mesas) {
   for (let n = 2; ids.has(id); n++) id = `${numero}-${n}`;
   return { id, numero };
 }
+
+/** Mesa aberta por um celular fica travada para ele até a equipe fechar a conta (ou liberar no painel). */
+export function mesaLivrePara(mesa, dispositivo) {
+  return !mesa?.dispositivo || mesa.dispositivo === dispositivo;
+}

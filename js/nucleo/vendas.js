@@ -5,8 +5,8 @@
 // - Item V1 = sem produtoId (pedidos da V1 convertidos pela Fase 2 não têm produtoId):
 //   preco é o base e cada adicional tem o seu preço à parte.
 // - A venda grava sempre na convenção V1 (itemDaVenda); valorLinhaItem (nucleo/pedidos.js) lê as duas.
-import { nomeMesa } from './mesas.js?v=2.0.1';
-import { pagamentoRotulo } from './pedidos.js?v=2.0.1';
+import { nomeMesa } from './mesas.js?v=2.0.2';
+import { pagamentoRotulo } from './pedidos.js?v=2.0.2';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 

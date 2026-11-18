@@ -1,12 +1,12 @@
 // Mesas: chamados de garçom/conta em tempo real, conta da mesa e QR Codes para imprimir.
-import { db, inc } from '../db.js?v=2.0.1';
-import { store, onStore } from './app.js?v=2.0.1';
-import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.1';
-import { detalhe } from './pedidos.js?v=2.0.1';
-import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.1';
-import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.1';
-import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.1';
-import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar, podeFecharConta } from '../nucleo/vendas.js?v=2.0.1';
+import { db, inc } from '../db.js?v=2.0.2';
+import { store, onStore } from './app.js?v=2.0.2';
+import { imprimir, statusBadge, mesasPorId } from './acoes.js?v=2.0.2';
+import { detalhe } from './pedidos.js?v=2.0.2';
+import { moeda, esc, PAGAMENTOS, tempoDesde, modal, confirmar, toast } from '../utils.js?v=2.0.2';
+import { rotuloPedido } from '../nucleo/pedidos.js?v=2.0.2';
+import { nomeMesa, urlMesa, proximaMesa } from '../nucleo/mesas.js?v=2.0.2';
+import { pedidosParaFechar, vendaDeFechamentoMesa, idVendaFechamento, cuponsAContar, podeFecharConta } from '../nucleo/vendas.js?v=2.0.2';
 
 export function qrDataURL(texto, cel = 8) {
   const qr = window.qrcode(0, 'M');
@@ -92,6 +92,7 @@ export function render(el) {
           <td>${statusBadge(p.status)}</td><td class="num">${moeda(p.total)}</td></tr>`).join('')}
           <tr><td colspan="2"><strong>Total da mesa</strong></td><td class="num"><strong>${moeda(total)}</strong></td></tr></table>
           ${m.contaPagamento ? `<p style="margin-top:10px;color:var(--txt2)">Cliente vai pagar com ${esc(PAGAMENTOS[m.contaPagamento.forma] || '')}${m.contaPagamento.troco ? ` · troco para ${moeda(m.contaPagamento.troco)}` : ''}</p>` : ''}
+          ${m.dispositivo ? `<p style="margin-top:10px;color:var(--txt2)"><i class="ti ti-device-mobile"></i> Mesa aberta no celular de um cliente; outros celulares não conseguem pedir. <button class="btn btn-s btn-ghost" data-liberar>Liberar para outro celular</button></p>` : ''}
           ${abertos ? `<div class="aviso aviso-warn" style="margin-top:10px;padding:10px;border-radius:8px;background:var(--warn-bg);color:var(--warn)">${abertos} pedido(s) ainda não servido(s).</div>` : ''}`
         : '<p class="vazio">Nenhum pedido aberto nesta mesa.</p>'}
         <div class="linha-btns">
@@ -108,6 +109,10 @@ export function render(el) {
         await db.update('mesas', id, { nome });
         toast('Nome salvo');
       };
+      e.querySelector('[data-liberar]')?.addEventListener('click', async () => {
+        await db.update('mesas', id, { dispositivo: null, dispositivoEm: null });
+        toast('Mesa liberada. O próximo celular que pedir fica com ela.');
+      });
       e.querySelector('[data-ativa]').onclick = () => db.update('mesas', id, { ativa: m.ativa === false });
       e.querySelector('[data-excluir]')?.addEventListener('click', async () => {
         if (await confirmar(`Excluir "${nomeMesa(m)}"? O QR Code dela deixará de funcionar.`, { ok: 'Excluir', perigo: true })) {
@@ -167,7 +172,7 @@ function fecharConta(id, fecharContaModal) {
         for (const p of relidos) t.update('pedidos', p.id, {
           ...(p.status !== 'entregue' ? { status: 'entregue', historico: [...(p.historico || []), { status: 'entregue', em: agora }] } : {}),
           contaFechada: true, pagamento: { forma, troco: null }, vendaId });
-        t.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null });
+        t.update('mesas', id, { chamado: null, chamadoEm: null, contaPagamento: null, clienteAtual: null, dispositivo: null, dispositivoEm: null });
         return relidos;
       });
       for (const { pedidoId, cupom } of cuponsAContar(fechados)) { // fora da transação: cupom apagado não pode travar o fechamento

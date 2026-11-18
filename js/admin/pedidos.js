@@ -1,9 +1,9 @@
 // Pedidos em tempo real (kanban): aceitar, avançar status, cancelar, imprimir.
-import { db } from '../db.js?v=2.0.1';
-import { store, onStore } from './app.js?v=2.0.1';
-import { rotuloPedido, mesaDoPedido, filtroHistorico, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.1';
-import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge, mesasPorId } from './acoes.js?v=2.0.1';
-import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, confirmar, toast, inicioDoDia, soDigitos } from '../utils.js?v=2.0.1';
+import { db } from '../db.js?v=2.0.2';
+import { store, onStore } from './app.js?v=2.0.2';
+import { rotuloPedido, mesaDoPedido, filtroHistorico, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.2';
+import { proximoStatus, rotuloAcao, mudarStatus, cancelar, imprimir, enderecoTexto, pagamentoTexto, statusBadge, mesasPorId } from './acoes.js?v=2.0.2';
+import { moeda, esc, TIPOS, tempoDesde, dataHoraBR, horaBR, mascaraTelefone, modal, confirmar, toast, inicioDoDia, soDigitos } from '../utils.js?v=2.0.2';
 
 const COLUNAS = [
   ['novo', 'Novos', s => s === 'novo'],

@@ -1,8 +1,8 @@
 // Cardápio de exemplo. Carregado automaticamente no modo demo
 // e disponível no painel (Loja › Dados de exemplo) quando usar o Firebase.
-import { db } from './db.js?v=2.0.1';
-import { DEMO } from './config.js?v=2.0.1';
-import { CONFIG_PADRAO, hojeISO } from './utils.js?v=2.0.1';
+import { db } from './db.js?v=2.0.2';
+import { DEMO } from './config.js?v=2.0.2';
+import { CONFIG_PADRAO, hojeISO } from './utils.js?v=2.0.2';
 
 const categorias = [
   ['lanches', 'Lanches', '🍔'],

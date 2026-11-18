@@ -1,10 +1,10 @@
 // Pagamento a Prazo (fiado): lista das vendas a prazo, registro de pagamentos parciais e recibo.
-import { db } from '../db.js?v=2.0.1';
-import { store } from './app.js?v=2.0.1';
-import { moeda, esc, toast, modal, confirmar, hojeISO } from '../utils.js?v=2.0.1';
-import { msDe } from '../nucleo/faturamento.js?v=2.0.1';
-import { saldoFiado, quitado, aplicarPagamentoFiado, filtrarFiados } from '../nucleo/fiado.js?v=2.0.1';
-import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.1';
+import { db } from '../db.js?v=2.0.2';
+import { store } from './app.js?v=2.0.2';
+import { moeda, esc, toast, modal, confirmar, hojeISO } from '../utils.js?v=2.0.2';
+import { msDe } from '../nucleo/faturamento.js?v=2.0.2';
+import { saldoFiado, quitado, aplicarPagamentoFiado, filtrarFiados } from '../nucleo/fiado.js?v=2.0.2';
+import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.2';
 
 export function render(el) {
   let vendas = [];

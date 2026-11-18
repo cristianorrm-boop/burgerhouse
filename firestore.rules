@@ -48,6 +48,11 @@ service cloud.firestore {
       allow write: if equipe();
       allow update: if soMudou(['chamado', 'chamadoEm', 'contaPagamento'])
                     && request.resource.data.chamado in ['garcom', 'conta'];
+      // O primeiro celular que pede ocupa a mesa; outro celular não consegue tomar (a equipe libera ao fechar a conta)
+      allow update: if soMudou(['dispositivo', 'dispositivoEm'])
+                    && (resource.data.get('dispositivo', null) == null || resource.data.dispositivo == request.resource.data.dispositivo)
+                    && request.resource.data.dispositivo is string
+                    && request.resource.data.dispositivo.size() <= 40;
     }
 
     // Pedidos: qualquer um cria (status "novo"); quem tem o link acompanha; só a equipe lista e altera

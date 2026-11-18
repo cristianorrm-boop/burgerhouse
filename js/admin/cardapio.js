@@ -1,9 +1,9 @@
 // Cardápio: produtos (foto, preço, promoção, selos, adicionais, upsell, esgotado), categorias e grupos de adicionais.
-import { db } from '../db.js?v=2.0.1';
-import { DEMO } from '../config.js?v=2.0.1';
-import { semear } from '../seed.js?v=2.0.1';
-import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.1';
-import { codigoDuplicado } from '../nucleo/pdv.js?v=2.0.1';
+import { db } from '../db.js?v=2.0.2';
+import { DEMO } from '../config.js?v=2.0.2';
+import { semear } from '../seed.js?v=2.0.2';
+import { moeda, esc, modal, confirmar, toast, comprimirImagem } from '../utils.js?v=2.0.2';
+import { codigoDuplicado } from '../nucleo/pdv.js?v=2.0.2';
 
 const SELOS = ['Mais vendido', 'Promoção', 'Novo', 'Vegano', 'Picante', 'Mais pedido'];
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');

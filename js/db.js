@@ -1,7 +1,7 @@
 // Camada de dados única: usa o Firestore quando configurado,
 // ou o localStorage no modo demo. Todo o resto do sistema só fala com este arquivo.
-import { DEMO, firebaseConfig, FIREBASE_SDK, SUPERADMIN_EMAIL } from './config.js?v=2.0.1';
-import { comId } from './nucleo/documento.js?v=2.0.1';
+import { DEMO, firebaseConfig, FIREBASE_SDK, SUPERADMIN_EMAIL } from './config.js?v=2.0.2';
+import { comId } from './nucleo/documento.js?v=2.0.2';
 
 const INC = '__inc';
 /** Incrementa um campo numérico de forma atômica: db.update('x', id, { total: inc(1) }) */

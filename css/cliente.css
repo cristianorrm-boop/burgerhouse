@@ -16,11 +16,10 @@ body { padding-bottom: 96px; }
 .hero-acoes { display: flex; gap: 8px; padding-bottom: 4px; }
 @media (min-width: 720px) { .hero-txt h1 { font-size: 28px; } .hero-capa { border-radius: 0 0 var(--r) var(--r); } }
 @media (max-width: 600px) {
-  .hero { position: relative; }
-  .hero-acoes { position: absolute; top: -52px; right: 16px; }
-  .hero-acoes .btn { background: rgb(255 255 255 / .9); border-color: transparent; color: #1C1917; }
+  /* celular: ícones no espaço ao lado da logo (não cobrem o banner); nome e textos embaixo */
+  .hero-acoes { margin-left: auto; align-self: center; padding-bottom: 0; }
   .logo { width: 76px; height: 76px; }
-  .hero-txt { flex-basis: 100%; }
+  .hero-txt { flex-basis: 100%; order: 3; }
 }
 
 /* ===== Mesa e acompanhamento ===== */

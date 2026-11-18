@@ -1,7 +1,7 @@
 // Recibo da venda (V1): texto de pagamento, payload e link que o recibo.html decodifica. Módulo puro.
-import { valorLinhaItem } from './pedidos.js?v=2.0.1';
-import { msDe } from './faturamento.js?v=2.0.1';
-import { saldoFiado } from './fiado.js?v=2.0.1';
+import { valorLinhaItem } from './pedidos.js?v=2.0.2';
+import { msDe } from './faturamento.js?v=2.0.2';
+import { saldoFiado } from './fiado.js?v=2.0.2';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const arred = n => Math.round(n * 100) / 100;

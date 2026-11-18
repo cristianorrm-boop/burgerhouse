@@ -1,6 +1,6 @@
 // Impressora térmica Bluetooth (BLE, comandos ESC/POS) via Web Bluetooth. A configuração fica neste aparelho.
-import { rotuloPedido, enderecoTexto, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.1';
-import { moeda, dataHoraBR, TIPOS } from '../utils.js?v=2.0.1';
+import { rotuloPedido, enderecoTexto, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.2';
+import { moeda, dataHoraBR, TIPOS } from '../utils.js?v=2.0.2';
 
 // Serviços BLE mais comuns em impressoras térmicas 58/80 mm
 const SERVICOS = [
