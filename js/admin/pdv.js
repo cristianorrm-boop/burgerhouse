@@ -10,6 +10,7 @@ import {
   vendasNovasDeOutroAparelho
 } from '../nucleo/pdv.js?v=2.0.0-f3';
 import { saldoFiado } from '../nucleo/fiado.js?v=2.0.0-f3';
+import { origemVenda } from '../nucleo/relatorio.js?v=2.0.0-f3';
 import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f3';
 
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
@@ -380,10 +381,10 @@ export function render(el) {
     return esc(ROTULOS_PDV[v.pagamento] || v.pagamento || '–');
   }
 
+  const CLASSE_ORIGEM = { online: 'badge-info', mesa: 'badge-pri' };
   function seloOrigem(v) {
-    if (v.pedidoOrigem) return ` <span class="badge badge-info">Online · ${v.pedidoOrigem.origem === 'delivery' ? 'Entrega' : 'Retirada'}</span>`;
-    if (v.mesaFechamento) return ` <span class="badge badge-pri">${esc(v.mesaFechamento.mesaNome || 'Mesa')}</span>`;
-    return '';
+    const o = origemVenda(v);
+    return o.tipo === 'pdv' ? '' : ` <span class="badge ${CLASSE_ORIGEM[o.tipo]}">${esc(o.rotulo)}</span>`;
   }
 
   function desenharVendas() {
