@@ -72,3 +72,13 @@ test('payloadRecibo: texto do item inclui adicionais e observacao', () => {
   assert.equal(it({ adicionais: [{ opcaoNome: 'Queijo', preco: 3 }] }).n, 'X-Bacon (+ Queijo)');
   assert.equal(it({ adicionais: [{ opcaoNome: 'Queijo', preco: 3 }], qtd: 2 }).p, 23);
 });
+
+test('recibo.html escapa os textos do link antes do innerHTML', async () => {
+  const { readFileSync } = await import('node:fs');
+  const h = readFileSync(new URL('../recibo.html', import.meta.url), 'utf8');
+  assert.match(h, /const esc = /);
+  for (const expr of ['r.loja', 'r.cliente', 'i.n', 'r.cupom', 'PAG_LABEL[p.forma] || p.forma']) {
+    assert.ok(h.includes('esc(' + expr), `${expr} deve passar por esc(`);
+  }
+  assert.ok(!/\$\{i\.n\}|\$\{r\.cliente\}|\$\{r\.cupom\}|<h1>\$\{r\.loja/.test(h), 'sem interpolação crua');
+});

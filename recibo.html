@@ -52,6 +52,7 @@
 
 <script>
 const PAG_LABEL = { dinheiro: "Dinheiro", pix: "Pix", debito: "Débito", credito: "Crédito" };
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 const fmt = (v) => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
 
 function decodificarRecibo() {
@@ -76,23 +77,23 @@ function renderizarRecibo(r) {
   const dt = r.data ? new Date(r.data) : null;
   const dataTexto = dt ? `${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : "";
   const itensHtml = (r.itens || []).map(i => `
-    <div class="recibo-item"><span>${i.q}x ${i.n}</span><span>${fmt(i.q * i.p)}</span></div>
+    <div class="recibo-item"><span>${Number(i.q) || 1}x ${esc(i.n)}</span><span>${fmt(i.q * i.p)}</span></div>
   `).join("");
   const pagamentoTexto = Array.isArray(r.pagamentos)
-    ? r.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma}: ${fmt(p.valor)}`).join(" + ")
+    ? r.pagamentos.map(p => `${esc(PAG_LABEL[p.forma] || p.forma)}: ${fmt(p.valor)}`).join(" + ")
     : "";
 
   document.title = `Recibo · ${r.loja || "Loja"}`;
   document.getElementById("recibo-card").innerHTML = `
-    <h1>${r.loja || "Loja"}</h1>
+    <h1>${esc(r.loja || "Loja")}</h1>
     <p class="recibo-sub">Recibo de compra</p>
     ${dataTexto ? `<p class="recibo-info">${dataTexto}</p>` : ""}
-    ${r.cliente ? `<p class="recibo-info">Cliente: ${r.cliente}</p>` : ""}
+    ${r.cliente ? `<p class="recibo-info">Cliente: ${esc(r.cliente)}</p>` : ""}
     <hr class="recibo-hr">
     ${itensHtml}
     <hr class="recibo-hr">
     <div class="recibo-item"><span>Subtotal</span><span>${fmt(r.subtotal)}</span></div>
-    ${r.desconto ? `<div class="recibo-item"><span>Desconto${r.cupom ? ` (${r.cupom})` : ""}</span><span>-${fmt(r.desconto)}</span></div>` : ""}
+    ${r.desconto ? `<div class="recibo-item"><span>Desconto${r.cupom ? ` (${esc(r.cupom)})` : ""}</span><span>-${fmt(r.desconto)}</span></div>` : ""}
     <div class="recibo-item recibo-total"><span>Total</span><span>${fmt(r.total)}</span></div>
     <hr class="recibo-hr">
     ${r.fiado ? `
