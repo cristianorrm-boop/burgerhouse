@@ -24,6 +24,7 @@ const ROTAS = {
   pedidos: { nome: 'Pedidos', icone: 'ti-receipt', perfis: ['dono', 'atendente'], mod: () => import('./pedidos.js?v=2.0.0-f3'), cont: () => store.pedidos.filter(p => p.status === 'novo').length },
   mesas: { nome: 'Mesas e QR Code', icone: 'ti-armchair', perfis: ['dono', 'atendente'], mod: () => import('./mesas.js?v=2.0.0-f3'), cont: () => store.mesas.filter(m => m.chamado).length },
   pdv: { nome: 'PDV', icone: 'ti-cash-register', perfis: ['dono', 'atendente'], mod: () => import('./pdv.js?v=2.0.0-f3') },
+  fiado: { nome: 'Pagamento a Prazo', icone: 'ti-hand-finger', perfis: ['dono'], mod: () => import('./fiado.js?v=2.0.0-f3') },
   cardapio: { nome: 'Cardápio', icone: 'ti-tools-kitchen-2', perfis: ['dono'], mod: () => import('./cardapio.js?v=2.0.0-f3') },
   cupons: { nome: 'Cupons', icone: 'ti-discount-2', perfis: ['dono'], mod: () => import('./cupons.js?v=2.0.0-f3') },
   clientes: { nome: 'Clientes e fidelidade', icone: 'ti-heart-handshake', perfis: ['dono'], mod: () => import('./clientes.js?v=2.0.0-f3') },

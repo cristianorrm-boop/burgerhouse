@@ -9,6 +9,7 @@ import {
   validarCupomPDV, pagamentosPDV, dinheiroNecessario, montarVendaPDV, validarVendaPDV, produtoPorCodigo, novoIdVendaPDV,
   vendasNovasDeOutroAparelho
 } from '../nucleo/pdv.js?v=2.0.0-f3';
+import { saldoFiado } from '../nucleo/fiado.js?v=2.0.0-f3';
 import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f3';
 
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
@@ -365,7 +366,6 @@ export function render(el) {
 
   /* ---------- Vendas de hoje ---------- */
   const ehDono = () => store.user?.perfil === 'dono';
-  const saldoFiado = v => Math.max(0, Math.round(((Number(v.total) || 0) - (Number(v.valorPago) || 0)) * 100) / 100);
 
   function pagamentoTexto(v) {
     if (v.fiado === true) {

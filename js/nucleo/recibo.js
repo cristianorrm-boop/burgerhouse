@@ -1,6 +1,7 @@
 // Recibo da venda (V1): texto de pagamento, payload e link que o recibo.html decodifica. Módulo puro.
 import { valorLinhaItem } from './pedidos.js?v=2.0.0-f3';
 import { msDe } from './faturamento.js?v=2.0.0-f3';
+import { saldoFiado } from './fiado.js?v=2.0.0-f3';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const arred = n => Math.round(n * 100) / 100;
@@ -38,7 +39,7 @@ export function payloadRecibo(venda, nomeLoja) {
     troco: venda.troco ?? null,
     fiado,
     pago: fiado ? num(venda.valorPago) : null,
-    deve: fiado ? Math.max(0, arred(num(venda.total) - num(venda.valorPago))) : null // saldo do fiado (a Task 4 pode centralizar)
+    deve: fiado ? saldoFiado(venda) : null
   };
 }
 
