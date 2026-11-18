@@ -9,6 +9,7 @@ import {
   validarCupomPDV, pagamentosPDV, dinheiroNecessario, montarVendaPDV, validarVendaPDV, produtoPorCodigo, novoIdVendaPDV,
   vendasNovasDeOutroAparelho
 } from '../nucleo/pdv.js?v=2.0.0-f3';
+import { imprimirRecibo, compartilharRecibo } from './recibo.js?v=2.0.0-f3';
 
 const urlSegura = u => String(u || '').replace(/["'()\\\s]/g, '');
 const numero = v => { const n = Number(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
@@ -391,7 +392,6 @@ export function render(el) {
     const dono = ehDono();
     $('#pdv-vendas').innerHTML = E.vendas.length ? E.vendas.map(v => {
       const t = msDe(v.criadoEm);
-      // .pdv-recibos: lugar dos botões de recibo (imprimir / WhatsApp), que entram na Task 3
       return `<tr>
         <td>${t !== null ? horaBR(t) : '–'}</td>
         <td>${esc(v.cliente || '–')}${seloOrigem(v)}</td>
@@ -399,13 +399,22 @@ export function render(el) {
         <td>${pagamentoTexto(v)}</td>
         <td class="num"><strong>${moeda(v.total)}</strong></td>
         <td class="acoes">
-          <span class="pdv-recibos" data-recibos="${esc(v.id)}"></span>
+          <span class="pdv-recibos">
+            <button class="btn btn-ghost btn-s" data-recibo="imprimir" data-id="${esc(v.id)}" title="Imprimir recibo" aria-label="Imprimir recibo"><i class="ti ti-printer"></i></button>
+            <button class="btn btn-ghost btn-s" data-recibo="whatsapp" data-id="${esc(v.id)}" title="Enviar recibo pelo WhatsApp" aria-label="Enviar recibo pelo WhatsApp"><i class="ti ti-brand-whatsapp"></i></button>
+          </span>
           ${dono ? `<button class="btn btn-ghost btn-s" data-excluir="${esc(v.id)}" title="Excluir venda" aria-label="Excluir venda" style="color:var(--danger)"><i class="ti ti-trash"></i></button>` : ''}
         </td></tr>`;
     }).join('') : '<tr><td colspan="6"><div class="vazio"><i class="ti ti-cash-register"></i>Nenhuma venda registrada hoje.</div></td></tr>';
   }
 
   $('#pdv-vendas').onclick = async ev => {
+    const r = ev.target.closest('[data-recibo]');
+    if (r) {
+      const venda = E.vendas.find(x => x.id === r.dataset.id);
+      if (venda) (r.dataset.recibo === 'imprimir' ? imprimirRecibo : compartilharRecibo)(venda);
+      return;
+    }
     const b = ev.target.closest('[data-excluir]');
     if (!b || !ehDono()) return;
     if (!(await confirmar('Excluir esta venda? Esta ação não pode ser desfeita.', { ok: 'Excluir', perigo: true }))) return;

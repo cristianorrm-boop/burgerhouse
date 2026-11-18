@@ -207,7 +207,7 @@
 .pdv-atalhos { font-size: 12px; color: var(--txt3); text-align: center; margin: 4px 0 0; }
 .pdv-atalhos kbd { font: inherit; font-weight: 700; padding: 1px 5px; border: 1px solid var(--borda2); border-radius: 4px; background: var(--card2); }
 .pdv-col-itens { max-width: 280px; font-size: 13px; color: var(--txt2); }
-.pdv-recibos:empty { display: none; }
+.pdv-recibos { display: inline-flex; gap: 2px; }
 .pdv-grupo { margin-top: 14px; border-radius: var(--r-s); }
 .pdv-grupo-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card2); padding: 8px 12px; border-radius: var(--r-s); margin-bottom: 4px; }
 .pdv-grupo-cab small { display: block; color: var(--txt3); font-size: 12px; }
