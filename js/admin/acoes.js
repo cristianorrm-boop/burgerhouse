@@ -1,10 +1,10 @@
 // Ações sobre pedidos usadas em Pedidos e Mesas: mudar status, finalizar, cancelar, imprimir.
-import { db, inc } from '../db.js?v=2.0.0-f4';
-import { store } from './app.js?v=2.0.0-f4';
-import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0-f4';
-import { acaoDeStatus, rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0-f4';
-import { deveGerarVendaAoEntregar, vendaDePedidoOnline, idVendaPedido } from '../nucleo/vendas.js?v=2.0.0-f4';
-import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0-f4';
+import { db, inc } from '../db.js?v=2.0.0';
+import { store } from './app.js?v=2.0.0';
+import { conectada, imprimirBluetooth } from './impressora.js?v=2.0.0';
+import { acaoDeStatus, rotuloPedido, mesaDoPedido, enderecoTexto as enderecoTextoPuro, pagamentoRotulo, valorLinhaItem } from '../nucleo/pedidos.js?v=2.0.0';
+import { deveGerarVendaAoEntregar, vendaDePedidoOnline, idVendaPedido } from '../nucleo/vendas.js?v=2.0.0';
+import { moeda, esc, STATUS, TIPOS, fluxoStatus, dataHoraBR, mascaraTelefone, toast } from '../utils.js?v=2.0.0';
 
 export function proximoStatus(p) {
   const f = fluxoStatus(p.tipo);

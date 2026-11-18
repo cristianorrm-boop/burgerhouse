@@ -28,7 +28,8 @@ const casos = [
   [`/css/base.css?v=${versao}`, 200, REVALIDA],
   ['/assets/hamburgueria/x-bacon.jpeg', 200, /max-age=86400/],
   ['/admin.html', 307, null],
-  ['/recibo.html', 200, REVALIDA]
+  ['/recibo.html', 200, REVALIDA],
+  ['/p/10', 200, null]
 ];
 
 let falhas = 0;
@@ -38,7 +39,15 @@ for (const [caminho, status, cache] of casos) {
   const okStatus = r.status === status;
   const okCache = !cache || cache.test(cc);
   let extra = '';
-  if (caminho === '/admin.html') extra = ` → ${r.headers.get('location')}`;
+  if (caminho === '/admin.html') {
+    const destino = r.headers.get('location') || '';
+    extra = ` → ${destino}`;
+    if (!/\/admin\/$/.test(destino)) { extra += ' (esperado /admin/)'; falhas++; }
+  }
+  if (caminho === '/p/10' && okStatus) {
+    const html = await r.text();
+    if (!html.includes('/assets/hamburgueria/x-bacon.jpeg')) { extra = ' sem a foto do X-Bacon no og:image (variáveis da Vercel?)'; falhas++; }
+  }
   if (caminho === '/versao.json' && okStatus) {
     const v = (await r.json()).versao;
     if (v !== versao) { extra = ` versão publicada ${v} ≠ local ${versao}`; falhas++; }

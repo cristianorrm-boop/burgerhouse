@@ -1,7 +1,7 @@
 // Financeiro: resumo do mês, contas a pagar e contas a receber (com parcelas, recorrência e CSV).
-import { db } from '../db.js?v=2.0.0-f4';
-import { caixaRecebido, fiadoEmAberto, msDe } from '../nucleo/faturamento.js?v=2.0.0-f4';
-import { moeda, esc, modal, confirmar, toast, hojeISO, dataBR } from '../utils.js?v=2.0.0-f4';
+import { db } from '../db.js?v=2.0.0';
+import { caixaRecebido, fiadoEmAberto, msDe } from '../nucleo/faturamento.js?v=2.0.0';
+import { moeda, esc, modal, confirmar, toast, hojeISO, dataBR } from '../utils.js?v=2.0.0';
 
 const CATS = {
   contas_pagar: ['Fornecedores', 'Insumos', 'Aluguel', 'Contas de consumo', 'Salários', 'Impostos', 'Manutenção', 'Marketing', 'Outros'],

@@ -1,8 +1,8 @@
 // Dashboard: vendas, pedidos, ticket médio, gráfico, mais vendidos e alertas do financeiro.
-import { db } from '../db.js?v=2.0.0-f4';
-import { store, onStore } from './app.js?v=2.0.0-f4';
-import { resumoVendas, msDe } from '../nucleo/faturamento.js?v=2.0.0-f4';
-import { moeda, esc, inicioDoDia, TIPOS, PAGAMENTOS, hojeISO, debounce } from '../utils.js?v=2.0.0-f4';
+import { db } from '../db.js?v=2.0.0';
+import { store, onStore } from './app.js?v=2.0.0';
+import { resumoVendas, msDe } from '../nucleo/faturamento.js?v=2.0.0';
+import { moeda, esc, inicioDoDia, TIPOS, PAGAMENTOS, hojeISO, debounce } from '../utils.js?v=2.0.0';
 
 export function render(el) {
   let dias = 1;

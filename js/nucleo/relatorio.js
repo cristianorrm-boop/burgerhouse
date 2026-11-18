@@ -1,6 +1,6 @@
 // Relatório de vendas (V1): período, resumo, totais por dia, CSV e origem da venda. Módulo puro.
-import { msDe } from './faturamento.js?v=2.0.0-f4';
-import { textoPagamento } from './recibo.js?v=2.0.0-f4';
+import { msDe } from './faturamento.js?v=2.0.0';
+import { textoPagamento } from './recibo.js?v=2.0.0';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const dois = n => String(n).padStart(2, '0');

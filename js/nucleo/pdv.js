@@ -1,7 +1,7 @@
 // Regras do PDV (balcão). Módulo puro: sem db, DOM ou localStorage.
 // A venda sai no formato da V1 (ver nucleo/vendas.js): itens na convenção V1, sem produtoId.
 
-import { msDe } from './faturamento.js?v=2.0.0-f4';
+import { msDe } from './faturamento.js?v=2.0.0';
 
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const arred = n => Math.round(n * 100) / 100;
