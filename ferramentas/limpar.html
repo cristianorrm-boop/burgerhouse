@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Limpeza dos testes</title>
+<link rel="stylesheet" href="/ferramentas/estilo.css">
+<style>
+  main { max-width: 760px; }
+  .marcar { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+  .marcar input { width: auto; }
+  .perigo { background: #b42318; color: #fff; }
+  .perigo:disabled { background: #e6e6e6; color: #777; }
+  .secundario { background: #e6e6e6; margin-bottom: 12px; }
+  ul.notas { padding-left: 20px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Limpeza dos pedidos e vendas de teste</h1>
+
+  <form id="login">
+    <label>E-mail <input id="email" type="email" autocomplete="username" required></label>
+    <label>Senha <input id="senha" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Entrar</button>
+    <p id="msgLogin" class="erro" role="alert"></p>
+  </form>
+
+  <section id="painel" hidden>
+    <div class="caixa">
+      <p>Apaga <strong>todos</strong> os pedidos e todas as vendas (eram de teste) e zera o contador de usos
+        dos cupons. <strong>Não mexe</strong> em produtos, fotos, categorias, adicionais, mesas, configuração da loja
+        nem nos cupons em si. Não tem como desfazer: faça um backup novo antes.</p>
+      <button id="ler" class="secundario" type="button">Ler banco e montar plano</button>
+      <p id="estadoLeitura" role="status"></p>
+    </div>
+
+    <div id="plano" class="caixa" hidden>
+      <h2>Plano</h2>
+      <table>
+        <thead><tr><th>O que</th><th>Quantidade</th></tr></thead>
+        <tbody id="resumo"></tbody>
+      </table>
+      <label class="marcar"><input id="backup" type="checkbox"> Fiz o backup novo e guardei na pasta <code>backups</code></label>
+      <label>Para confirmar, digite <strong>APAGAR</strong> <input id="palavra" autocomplete="off" spellcheck="false"></label>
+      <button id="aplicar" class="perigo" type="button" disabled>Apagar</button>
+      <p id="estadoAplicar" role="status"></p>
+      <ul id="notas" class="notas"></ul>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { exigirLocalhost, conectar, entrar } from '/ferramentas/firebase.mjs';
+import { planejarLimpeza, conferirLimpeza } from '/ferramentas/limpeza.mjs';
+
+exigirLocalhost();
+
+const $ = id => document.getElementById(id);
+const LOTE = 400;
+const LER = ['pedidos', 'vendas', 'cupons'];
+let planoAtual = null;
+let aplicando = false;
+
+const msgErro = err => err && err.code ? `${err.code}: ${err.message}` : String(err && err.message || err);
+function estado(el, texto, classe = '') { el.className = classe; el.textContent = texto; }
+function nota(texto) { const li = document.createElement('li'); li.textContent = texto; $('notas').append(li); }
+
+$('login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('msgLogin').textContent = '';
+  try {
+    await entrar($('email').value.trim(), $('senha').value);
+    $('login').hidden = true;
+    $('painel').hidden = false;
+  } catch (err) {
+    $('msgLogin').textContent = 'Não foi possível entrar: ' + (err.code || err.message);
+  }
+});
+
+async function lerBanco() {
+  const { fs, F } = await conectar();
+  const atual = {};
+  for (const nome of LER) {
+    try {
+      const snap = await F.getDocs(F.collection(fs, nome));
+      const docs = {};
+      snap.forEach(d => { docs[d.id] = d.data(); });
+      atual[nome] = docs;
+    } catch (err) {
+      throw new Error(`Não consegui ler "${nome}" (${msgErro(err)}). Nada foi alterado.`);
+    }
+  }
+  return atual;
+}
+
+function mostrarPlano(plano) {
+  planoAtual = plano;
+  const { resumo, operacoes } = plano;
+  $('resumo').textContent = '';
+  for (const [rotulo, n] of [['Pedidos a apagar', resumo.pedidos], ['Vendas a apagar', resumo.vendas], ['Cupons com usos a zerar', resumo.cupons]]) {
+    const tr = document.createElement('tr');
+    for (const v of [rotulo, n]) { const td = document.createElement('td'); td.textContent = v; tr.append(td); }
+    $('resumo').append(tr);
+  }
+  const apagar = operacoes.filter(o => o.tipo === 'apagar').length;
+  $('aplicar').textContent = operacoes.length ? `Apagar ${apagar} documentos de teste` : 'Nada para apagar';
+  $('backup').checked = false;
+  $('palavra').value = '';
+  atualizarBotao();
+  $('plano').hidden = false;
+}
+
+function atualizarBotao() {
+  const n = planoAtual ? planoAtual.operacoes.length : 0;
+  $('aplicar').disabled = aplicando || n === 0 || !$('backup').checked || $('palavra').value.trim() !== 'APAGAR';
+}
+$('backup').addEventListener('change', atualizarBotao);
+$('palavra').addEventListener('input', atualizarBotao);
+
+$('ler').addEventListener('click', async () => {
+  $('ler').disabled = true;
+  $('plano').hidden = true;
+  $('notas').textContent = '';
+  estado($('estadoAplicar'), '');
+  estado($('estadoLeitura'), 'Lendo o banco…');
+  try {
+    mostrarPlano(planejarLimpeza(await lerBanco()));
+    estado($('estadoLeitura'), 'Plano montado. Confira antes de apagar.', 'ok');
+  } catch (err) {
+    estado($('estadoLeitura'), msgErro(err), 'erro');
+  } finally {
+    $('ler').disabled = false;
+  }
+});
+
+$('aplicar').addEventListener('click', async () => {
+  if (!planoAtual || aplicando) return;
+  if (!$('backup').checked || $('palavra').value.trim() !== 'APAGAR') return;
+  const ops = planoAtual.operacoes;
+  conferirLimpeza(ops); // trava final antes de gravar
+  aplicando = true;
+  atualizarBotao();
+  $('ler').disabled = true;
+  $('notas').textContent = '';
+  try {
+    const { fs, F } = await conectar();
+    for (let i = 0; i < ops.length; i += LOTE) {
+      const lote = ops.slice(i, i + LOTE);
+      const batch = F.writeBatch(fs);
+      for (const op of lote) {
+        const ref = F.doc(fs, op.colecao, op.id);
+        if (op.tipo === 'apagar') batch.delete(ref);
+        else batch.update(ref, { usos: 0 });
+      }
+      estado($('estadoAplicar'), `Gravando lote ${i / LOTE + 1} (${lote.length} operações)…`);
+      try {
+        await batch.commit();
+      } catch (err) {
+        throw new Error(`O lote ${i / LOTE + 1} falhou (${msgErro(err)}). Os lotes anteriores já foram aplicados; monte o plano de novo para continuar.`);
+      }
+    }
+    estado($('estadoAplicar'), 'Apagado. Relendo o banco…');
+    const novo = planejarLimpeza(await lerBanco());
+    mostrarPlano(novo);
+    if (novo.operacoes.length === 0) estado($('estadoAplicar'), `Feito: ${ops.length} operação(ões). Banco relido: não sobrou nada de teste.`, 'ok');
+    else { estado($('estadoAplicar'), `Banco relido: ainda há ${novo.operacoes.length} operação(ões). Avise antes de repetir.`, 'erro'); nota('Algum documento novo pode ter chegado durante a limpeza.'); }
+  } catch (err) {
+    estado($('estadoAplicar'), msgErro(err), 'erro');
+    planoAtual = null;
+  } finally {
+    aplicando = false;
+    $('ler').disabled = false;
+    atualizarBotao();
+  }
+});
+</script>
+</body>
+</html>
