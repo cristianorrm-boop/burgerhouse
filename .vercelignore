@@ -1,0 +1,12 @@
+docs/
+tests/
+scripts/
+package.json
+README.md
+firestore.rules
+.superpowers/
+.impeccable/
+ferramentas/
+regras/
+backups/
+js/package.json

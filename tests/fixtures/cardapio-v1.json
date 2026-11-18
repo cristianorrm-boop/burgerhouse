@@ -1,0 +1,1022 @@
+{
+ "colecoes": {
+  "produtos": {
+   "9": {
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821004878
+    },
+    "descricao": "Pão brioche, hambúrguer artesanal 150g, queijo cheddar, alface, tomate e molho da casa.",
+    "preco": 22,
+    "variacoes": [],
+    "nome": "X-Burger Clássico",
+    "entrega": true,
+    "id": 9,
+    "categoria": "lanches",
+    "imagem": "./assets/hamburgueria/x-burguer-tradicional.jpg",
+    "destaque": false,
+    "codigoBarras": null
+   },
+   "10": {
+    "imagem": "./assets/hamburgueria/x-bacon.jpeg",
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821004972
+    },
+    "categoria": "lanches",
+    "preco": 28,
+    "id": 10,
+    "destaque": false,
+    "nome": "X-Bacon",
+    "descricao": "Pão brioche, hambúrguer 150g, cheddar derretido, fatias crocantes de bacon e molho barbecue.",
+    "codigoBarras": null,
+    "variacoes": [],
+    "entrega": true
+   },
+   "11": {
+    "codigoBarras": null,
+    "destaque": false,
+    "descricao": "Pão, hambúrguer 150g, ovo, presunto, queijo, bacon, alface, tomate, milho e batata palha.",
+    "variacoes": [],
+    "nome": "X-Tudo",
+    "imagem": "./assets/hamburgueria/x-tudo.avif",
+    "ativo": true,
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "categoria": "lanches",
+    "entrega": true,
+    "preco": 35,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005053
+    },
+    "id": 11
+   },
+   "12": {
+    "preco": 24,
+    "destaque": false,
+    "codigoBarras": null,
+    "entrega": true,
+    "categoria": "lanches",
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "id": 12,
+    "imagem": "./assets/hamburgueria/x-salada.jpeg",
+    "ativo": true,
+    "nome": "X-Salada",
+    "descricao": "Pão, hambúrguer 150g, queijo mussarela, alface, tomate e maionese da casa.",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005115
+    },
+    "variacoes": []
+   },
+   "13": {
+    "ativo": true,
+    "categoria": "lanches",
+    "entrega": true,
+    "imagem": "./assets/hamburgueria/x-egg.jpeg",
+    "destaque": false,
+    "nome": "X-Egg",
+    "preco": 26,
+    "descricao": "Pão, hambúrguer 150g, queijo, ovo frito e molho especial.",
+    "variacoes": [],
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005185
+    },
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "codigoBarras": null,
+    "id": 13
+   },
+   "14": {
+    "ativo": true,
+    "descricao": "Pão, hambúrguer 150g, queijo, calabresa fatiada grelhada e cebola caramelizada.",
+    "variacoes": [],
+    "destaque": false,
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "codigoBarras": null,
+    "preco": 27,
+    "categoria": "lanches",
+    "id": 14,
+    "imagem": "./assets/hamburgueria/x-calabresa.jpeg",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005264
+    },
+    "entrega": true,
+    "nome": "X-Calabresa"
+   },
+   "15": {
+    "codigoBarras": null,
+    "imagem": "./assets/hamburgueria/x-frango-catupiry.jpeg",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005322
+    },
+    "entrega": true,
+    "variacoes": [],
+    "id": 15,
+    "descricao": "Pão, filé de frango grelhado, catupiry cremoso, alface e tomate.",
+    "ativo": true,
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "destaque": false,
+    "nome": "Frango Catupiry",
+    "preco": 29,
+    "categoria": "lanches"
+   },
+   "16": {
+    "descricao": "Pão, hambúrguer de grão-de-bico, queijo, alface, tomate, cenoura ralada e molho especial.",
+    "variacoes": [],
+    "codigoBarras": null,
+    "entrega": true,
+    "adicionaisGrupos": [
+     "Trsm6CCEesEcxp6eVQaj",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "nome": "Vegetariano",
+    "destaque": false,
+    "categoria": "lanches",
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005389
+    },
+    "id": 16,
+    "imagem": "./assets/hamburgueria/x-vegetariano.jpg",
+    "preco": 25
+   },
+   "17": {
+    "imagem": "./assets/hamburgueria/batata-frita.jpg",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005441
+    },
+    "adicionaisGrupos": [
+     "LjdVgkpWhUqUebOY8rin",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "id": 17,
+    "codigoBarras": null,
+    "descricao": "Porção de batata frita crocante, sequinha, com sal e orégano.",
+    "entrega": true,
+    "variacoes": [],
+    "ativo": true,
+    "nome": "Batata Frita Simples",
+    "categoria": "porcoes",
+    "preco": 20,
+    "destaque": false
+   },
+   "18": {
+    "id": 18,
+    "nome": "Batata Frita com Cheddar e Bacon",
+    "categoria": "porcoes",
+    "imagem": "./assets/hamburgueria/batata-frita-cheddar-bacon.jpg",
+    "destaque": false,
+    "adicionaisGrupos": [
+     "LjdVgkpWhUqUebOY8rin",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "preco": 35,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005512
+    },
+    "entrega": true,
+    "variacoes": [],
+    "codigoBarras": null,
+    "descricao": "Batata frita coberta com cheddar cremoso e bacon crocante picado.",
+    "ativo": true
+   },
+   "19": {
+    "imagem": "./assets/hamburgueria/batata-frita-completa.jpeg",
+    "codigoBarras": null,
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005560
+    },
+    "nome": "Batata Frita Completa",
+    "preco": 40,
+    "categoria": "porcoes",
+    "destaque": false,
+    "id": 19,
+    "adicionaisGrupos": [
+     "LjdVgkpWhUqUebOY8rin",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "variacoes": [],
+    "descricao": "Batata frita com cheddar, catupiry, bacon, calabresa e cebola crispy.",
+    "entrega": true
+   },
+   "20": {
+    "descricao": "Pedacinhos de frango fritos com alho crocante e tempero da casa, acompanha limão.",
+    "variacoes": [],
+    "destaque": false,
+    "preco": 38,
+    "ativo": true,
+    "codigoBarras": null,
+    "adicionaisGrupos": [
+     "LjdVgkpWhUqUebOY8rin",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "categoria": "porcoes",
+    "entrega": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005619
+    },
+    "imagem": "./assets/hamburgueria/frango-a-passarinho.webp",
+    "nome": "Frango a Passarinho",
+    "id": 20
+   },
+   "21": {
+    "variacoes": [],
+    "nome": "Calabresa Acebolada",
+    "adicionaisGrupos": [
+     "LjdVgkpWhUqUebOY8rin",
+     "uvdhZSamOqe63pXMj9QY"
+    ],
+    "descricao": "Calabresa fatiada grelhada com cebola caramelizada e pão francês.",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005665
+    },
+    "id": 21,
+    "entrega": true,
+    "preco": 35,
+    "destaque": false,
+    "categoria": "porcoes",
+    "imagem": "./assets/hamburgueria/calabresa-acebolada.jpg",
+    "ativo": true,
+    "codigoBarras": null
+   },
+   "22": {
+    "entrega": true,
+    "codigoBarras": null,
+    "destaque": false,
+    "variacoes": [],
+    "descricao": "Refrigerante Coca-Cola gelado em lata 350ml.",
+    "preco": 8,
+    "imagem": "./assets/hamburgueria/bebidas/coca-cola-lata-350ml.webp",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005707
+    },
+    "nome": "Coca-Cola Lata 350ml",
+    "ativo": true,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "id": 22,
+    "categoria": "bebidas"
+   },
+   "23": {
+    "descricao": "Refrigerante Coca-Cola gelado em garrafa 1 litro.",
+    "nome": "Coca-Cola 1 Litro",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005744
+    },
+    "variacoes": [],
+    "imagem": "./assets/hamburgueria/bebidas/coca-cola-1-litro.jpeg",
+    "codigoBarras": null,
+    "categoria": "bebidas",
+    "preco": 14,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "id": 23,
+    "entrega": true,
+    "destaque": false,
+    "ativo": true
+   },
+   "24": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005785
+    },
+    "imagem": "./assets/hamburgueria/bebidas/guarana-antarctica-lata-350ml.jpeg",
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "id": 24,
+    "codigoBarras": null,
+    "descricao": "Refrigerante Guaraná Antarctica gelado em lata 350ml.",
+    "variacoes": [],
+    "entrega": true,
+    "ativo": true,
+    "nome": "Guaraná Antarctica Lata 350ml",
+    "categoria": "bebidas",
+    "preco": 7,
+    "destaque": false
+   },
+   "25": {
+    "codigoBarras": null,
+    "preco": 12,
+    "ativo": true,
+    "entrega": true,
+    "id": 25,
+    "nome": "Guaraná Antarctica 1 Litro",
+    "categoria": "bebidas",
+    "destaque": false,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005824
+    },
+    "variacoes": [],
+    "imagem": "./assets/hamburgueria/bebidas/guarana-antarctica-1-litro.jpeg",
+    "descricao": "Refrigerante Guaraná Antarctica gelado em garrafa 1 litro."
+   },
+   "26": {
+    "destaque": false,
+    "preco": 10,
+    "entrega": true,
+    "id": 26,
+    "codigoBarras": null,
+    "descricao": "Cerveja Antarctica gelada em lata 350ml.",
+    "variacoes": [],
+    "ativo": true,
+    "nome": "Cerveja Antarctica Lata 350ml",
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-antarctica-lata-350ml.jpeg",
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "categoria": "bebidas",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005887
+    }
+   },
+   "27": {
+    "variacoes": [],
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-antarctica-600ml.webp",
+    "descricao": "Cerveja Antarctica gelada em garrafa 600ml.",
+    "nome": "Cerveja Antarctica 600ml",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005926
+    },
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "preco": 15,
+    "destaque": false,
+    "categoria": "bebidas",
+    "ativo": true,
+    "id": 27,
+    "codigoBarras": null,
+    "entrega": true
+   },
+   "28": {
+    "id": 28,
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-heineken-long-neck-330ml.webp",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821005965
+    },
+    "nome": "Cerveja Heineken Long Neck 330ml",
+    "categoria": "bebidas",
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "ativo": true,
+    "destaque": false,
+    "variacoes": [],
+    "entrega": true,
+    "codigoBarras": null,
+    "preco": 15,
+    "descricao": "Cerveja Heineken gelada em long neck 330ml."
+   },
+   "29": {
+    "variacoes": [],
+    "nome": "Cerveja Heineken 600ml",
+    "codigoBarras": null,
+    "descricao": "Cerveja Heineken gelada em garrafa 600ml.",
+    "ativo": true,
+    "preco": 22,
+    "destaque": false,
+    "id": 29,
+    "entrega": true,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006013
+    },
+    "categoria": "bebidas",
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-heineken-600ml.png"
+   },
+   "30": {
+    "id": 30,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "nome": "Cerveja Brahma Lata 350ml",
+    "categoria": "bebidas",
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-brahma-lata-350ml.webp",
+    "destaque": false,
+    "preco": 10,
+    "codigoBarras": null,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006050
+    },
+    "entrega": true,
+    "variacoes": [],
+    "descricao": "Cerveja Brahma gelada em lata 350ml.",
+    "ativo": true
+   },
+   "31": {
+    "id": 31,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "variacoes": [],
+    "nome": "Cerveja Brahma 600ml",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006083
+    },
+    "descricao": "Cerveja Brahma gelada em garrafa 600ml.",
+    "imagem": "./assets/hamburgueria/bebidas/cerveja-brahma-600ml.webp",
+    "preco": 18,
+    "categoria": "bebidas",
+    "entrega": true,
+    "codigoBarras": null,
+    "destaque": false,
+    "ativo": true
+   },
+   "32": {
+    "imagem": "./assets/hamburgueria/bebidas/agua-mineral-500ml.jpeg",
+    "codigoBarras": null,
+    "descricao": "Água mineral sem gás gelada.",
+    "destaque": false,
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "variacoes": [],
+    "nome": "Água Mineral 500ml",
+    "id": 32,
+    "categoria": "bebidas",
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006121
+    },
+    "preco": 5,
+    "entrega": true
+   },
+   "33": {
+    "codigoBarras": null,
+    "variacoes": [],
+    "destaque": false,
+    "descricao": "Água mineral com gás gelada.",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006156
+    },
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "imagem": "./assets/hamburgueria/bebidas/agua-com-gas-500ml.webp",
+    "ativo": true,
+    "nome": "Água com Gás 500ml",
+    "id": 33,
+    "preco": 6,
+    "entrega": true,
+    "categoria": "bebidas"
+   },
+   "34": {
+    "nome": "Suco Natural 500ml",
+    "adicionaisGrupos": [
+     "7LltEp45xUDBNRtroGcX"
+    ],
+    "categoria": "bebidas",
+    "entrega": true,
+    "id": 34,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006205
+    },
+    "preco": 12,
+    "destaque": false,
+    "descricao": "Suco natural da fruta (laranja, limão ou abacaxi), feito na hora.",
+    "codigoBarras": null,
+    "variacoes": [],
+    "imagem": "./assets/hamburgueria/bebidas/suco-natural-500ml.jpeg",
+    "ativo": true
+   },
+   "35": {
+    "preco": 35,
+    "entrega": true,
+    "codigoBarras": null,
+    "destaque": false,
+    "ativo": true,
+    "categoria": "combos",
+    "imagem": "./assets/hamburgueria/combos/combo-classico.jpeg",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006244
+    },
+    "id": 35,
+    "variacoes": [],
+    "nome": "Combo Clássico",
+    "descricao": "X-Burger Clássico + Batata Frita Simples + Refrigerante Lata 350ml. Economia de R$ 5,00 em relação ao pedido separado.",
+    "adicionaisGrupos": []
+   },
+   "36": {
+    "preco": 45,
+    "destaque": false,
+    "entrega": true,
+    "codigoBarras": null,
+    "descricao": "X-Bacon + Batata Frita com Cheddar e Bacon + Refrigerante Lata 350ml. Economia de R$ 6,00.",
+    "ativo": true,
+    "variacoes": [],
+    "id": 36,
+    "nome": "Combo Bacon",
+    "categoria": "combos",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006297
+    },
+    "adicionaisGrupos": [],
+    "imagem": "./assets/hamburgueria/combos/combo-bacon.jpeg"
+   },
+   "37": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006337
+    },
+    "id": 37,
+    "variacoes": [],
+    "descricao": "2 X-Burger Clássico + 1 Batata Frita Completa + 1 Refrigerante 1 Litro. Ideal pra dividir — economia de R$ 10,00.",
+    "ativo": true,
+    "nome": "Combo Casal",
+    "adicionaisGrupos": [],
+    "entrega": true,
+    "preco": 75,
+    "imagem": "./assets/hamburgueria/combos/combo-casal.jpeg",
+    "codigoBarras": null,
+    "categoria": "combos",
+    "destaque": false
+   },
+   "38": {
+    "ativo": true,
+    "preco": 42,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006394
+    },
+    "variacoes": [],
+    "entrega": true,
+    "imagem": "./assets/hamburgueria/combos/combo-frango.webp",
+    "descricao": "Frango Catupiry + Batata Frita Simples + Refrigerante Lata 350ml. Economia de R$ 5,00.",
+    "nome": "Combo Frango",
+    "codigoBarras": null,
+    "destaque": false,
+    "id": 38,
+    "categoria": "combos",
+    "adicionaisGrupos": []
+   },
+   "39": {
+    "entrega": true,
+    "categoria": "combos",
+    "destaque": false,
+    "ativo": true,
+    "nome": "Combo Cerveja",
+    "preco": 55,
+    "imagem": "./assets/hamburgueria/combos/combo-cerveja.jpeg",
+    "adicionaisGrupos": [],
+    "descricao": "X-Bacon + Porção de Calabresa Acebolada + Cerveja Heineken Long Neck. Perfeito pra happy hour — economia de R$ 8,00.",
+    "variacoes": [],
+    "codigoBarras": null,
+    "id": 39,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006440
+    }
+   },
+   "40": {
+    "ativo": true,
+    "adicionaisGrupos": [
+     "7XX76kJnmR7YSw3kJpUE"
+    ],
+    "variacoes": [],
+    "descricao": "Açaí cremoso no copo de 300ml, acompanha granola e banana.",
+    "id": 40,
+    "entrega": true,
+    "codigoBarras": null,
+    "preco": 18,
+    "destaque": false,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006503
+    },
+    "categoria": "sobremesas",
+    "imagem": "./assets/hamburgueria/sobremesas/acai-300ml.jpeg",
+    "nome": "Açaí 300ml"
+   },
+   "41": {
+    "descricao": "Açaí cremoso no copo de 500ml, acompanha granola, banana e leite condensado.",
+    "preco": 25,
+    "variacoes": [],
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006545
+    },
+    "imagem": "./assets/hamburgueria/sobremesas/acai-500ml.jpeg",
+    "id": 41,
+    "categoria": "sobremesas",
+    "codigoBarras": null,
+    "destaque": false,
+    "entrega": true,
+    "nome": "Açaí 500ml",
+    "adicionaisGrupos": [
+     "7XX76kJnmR7YSw3kJpUE"
+    ]
+   },
+   "42": {
+    "categoria": "sobremesas",
+    "adicionaisGrupos": [
+     "7XX76kJnmR7YSw3kJpUE"
+    ],
+    "preco": 22,
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006591
+    },
+    "descricao": "Bolinho quente de chocolate com recheio cremoso, acompanha bola de sorvete de creme.",
+    "id": 42,
+    "destaque": false,
+    "imagem": "./assets/hamburgueria/sobremesas/petit-gateau.webp",
+    "variacoes": [],
+    "codigoBarras": null,
+    "entrega": true,
+    "nome": "Petit Gateau"
+   },
+   "43": {
+    "id": 43,
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790821006625
+    },
+    "entrega": true,
+    "categoria": "sobremesas",
+    "adicionaisGrupos": [
+     "7XX76kJnmR7YSw3kJpUE"
+    ],
+    "preco": 20,
+    "imagem": "./assets/hamburgueria/sobremesas/brownie-com-sorvete.jpg",
+    "codigoBarras": null,
+    "descricao": "Brownie de chocolate servido quente com bola de sorvete de creme.",
+    "destaque": false,
+    "nome": "Brownie com Sorvete",
+    "variacoes": []
+   }
+  },
+  "categorias": {
+   "bebidas": {
+    "icone": "fa-glass-water",
+    "ordem": 3,
+    "id": "bebidas",
+    "nome": "Bebidas"
+   },
+   "combos": {
+    "nome": "Combos",
+    "id": "combos",
+    "icone": "fa-box-open",
+    "ordem": 4
+   },
+   "lanches": {
+    "id": "lanches",
+    "nome": "Lanches",
+    "ordem": 1,
+    "icone": "fa-burger"
+   },
+   "porcoes": {
+    "id": "porcoes",
+    "nome": "Porções",
+    "ordem": 2,
+    "icone": "fa-utensils"
+   },
+   "sobremesas": {
+    "nome": "Sobremesas",
+    "id": "sobremesas",
+    "icone": "fa-ice-cream",
+    "ordem": 5
+   }
+  },
+  "gruposAdicionais": {
+   "7LltEp45xUDBNRtroGcX": {
+    "opcoes": [
+     {
+      "nome": "Gelo extra",
+      "preco": 2
+     },
+     {
+      "preco": 2,
+      "nome": "Limão"
+     }
+    ],
+    "nome": "Bebidas - Adicionais"
+   },
+   "7XX76kJnmR7YSw3kJpUE": {
+    "opcoes": [
+     {
+      "nome": "Calda de chocolate",
+      "preco": 6
+     },
+     {
+      "preco": 6,
+      "nome": "Calda de morango"
+     },
+     {
+      "preco": 5,
+      "nome": "Granulado"
+     },
+     {
+      "preco": 5,
+      "nome": "Leite condensado"
+     }
+    ],
+    "nome": "Sobremesa - Coberturas"
+   },
+   "LjdVgkpWhUqUebOY8rin": {
+    "nome": "Adicionais Porção",
+    "opcoes": [
+     {
+      "nome": "Cheddar extra",
+      "preco": 6
+     },
+     {
+      "preco": 6,
+      "nome": "Catupiry"
+     },
+     {
+      "nome": "Bacon extra",
+      "preco": 10
+     },
+     {
+      "nome": "Calabresa",
+      "preco": 10
+     }
+    ]
+   },
+   "Trsm6CCEesEcxp6eVQaj": {
+    "nome": "Adicionais Lanche",
+    "opcoes": [
+     {
+      "nome": "Bacom",
+      "preco": 10
+     },
+     {
+      "preco": 15,
+      "nome": "Batata"
+     },
+     {
+      "nome": "Ovo",
+      "preco": 10
+     },
+     {
+      "preco": 10,
+      "nome": "Queijo"
+     },
+     {
+      "nome": "Tomate / Alface",
+      "preco": 5
+     }
+    ]
+   },
+   "uvdhZSamOqe63pXMj9QY": {
+    "nome": "Molhos Extras",
+    "opcoes": [
+     {
+      "nome": "Maionese da casa",
+      "preco": 5
+     },
+     {
+      "nome": "Barbecue",
+      "preco": 5
+     },
+     {
+      "preco": 5,
+      "nome": "Cheddar cremoso"
+     },
+     {
+      "preco": 5,
+      "nome": "Picante"
+     }
+    ]
+   }
+  },
+  "configuracoes": {
+   "geral": {
+    "corSecundaria": "#1c1c1c",
+    "taxaEntrega": 0,
+    "whatsapp": "5534999999999",
+    "retiradaHoraFim": "22:00",
+    "corDestaque": "#e8a33d",
+    "funcionamentoDias": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "retiradaIntervalo": 60,
+    "retiradaDias": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "corPrimaria": "#d4af37",
+    "bannerUrl": "",
+    "logoUrl": "./assets/logo-burger-house.png",
+    "funcionamentoHoraFim": "23:00",
+    "retiradaHoraInicio": "10:00",
+    "funcionamentoHoraInicio": "06:00",
+    "nomeLoja": "Burger House"
+   }
+  },
+  "cupons": {
+   "BEMVINDO10": {
+    "ativo": true,
+    "validade": null,
+    "valorMinimo": 0,
+    "codigo": "BEMVINDO10",
+    "tipo": "percentual",
+    "valor": 10
+   }
+  },
+  "mesas": {
+   "0T0IAUJFCzRUchfFR7a3": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636338752
+    },
+    "ativo": true,
+    "nome": "Mesa 6"
+   },
+   "4K4fn2aAQ9vpkA0LSjRA": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181885655
+    },
+    "clienteAtual": null,
+    "nome": "Comanda 11",
+    "ativo": true
+   },
+   "8tijU84ZNZzXtSbKVPjJ": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636322709
+    },
+    "nome": "Mesa 4",
+    "ativo": true
+   },
+   "DtlVSHXuQhfxiYu289c9": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181905289
+    },
+    "ativo": true,
+    "clienteAtual": null,
+    "nome": "Comanda 13"
+   },
+   "DvoXQ2DAGXLJM8j17AhU": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181841829
+    },
+    "ativo": true,
+    "clienteAtual": null,
+    "nome": "Mesa 8"
+   },
+   "GOZKk3Otm1d1bbcR7tBA": {
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636313895
+    },
+    "clienteAtual": null,
+    "ativo": true,
+    "nome": "Mesa 3"
+   },
+   "OAlgWkvLNZ5gtyKgm4Vj": {
+    "ativo": true,
+    "nome": "Comanda 12",
+    "clienteAtual": null,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181894003
+    }
+   },
+   "PV5OKEXgg9B9O2YK4jaD": {
+    "ativo": true,
+    "nome": "Mesa 9",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181852617
+    },
+    "clienteAtual": null
+   },
+   "S0529dAR3izsBiXNcgCi": {
+    "nome": "Mesa 10",
+    "ativo": true,
+    "clienteAtual": null,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181867298
+    }
+   },
+   "SfyFdUBaBRDchD1MlFFK": {
+    "clienteAtual": null,
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636252893
+    },
+    "nome": "Mesa 1"
+   },
+   "XT6iO2dCBe7bPruPk0v2": {
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636266690
+    },
+    "nome": "Mesa 2",
+    "clienteAtual": null
+   },
+   "dyVutey06rqFTPnxVJKa": {
+    "nome": "Mesa 7",
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636349576
+    }
+   },
+   "tLgtoEF8n1nTUpZprFeU": {
+    "ativo": true,
+    "nome": "Comanda 14",
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181913567
+    },
+    "clienteAtual": null
+   },
+   "xKdj7eCGkuDTQXQOAzlA": {
+    "nome": "Comanda 15",
+    "ativo": true,
+    "clienteAtual": null,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1792181955321
+    }
+   },
+   "yIf5aX93UFgClrcFh0dc": {
+    "nome": "Mesa 5",
+    "ativo": true,
+    "criadoEm": {
+     "__tipo": "ts",
+     "ms": 1790636328694
+    }
+   }
+  }
+ }
+}

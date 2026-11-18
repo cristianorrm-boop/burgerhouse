@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /pedido.html
+
+# Troque pelo seu domínio depois de publicar
+Sitemap: https://burgerhouse-nine.vercel.app/sitemap.xml

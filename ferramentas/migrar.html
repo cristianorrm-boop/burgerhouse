@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Migração aditiva</title>
+<link rel="stylesheet" href="/ferramentas/estilo.css">
+<style>
+  main { max-width: 900px; }
+  .detalhe { max-height: 60vh; overflow: auto; }
+  .detalhe td { vertical-align: top; font-size: .85rem; }
+  .detalhe td:last-child { text-align: left; }
+  .detalhe code { white-space: pre-wrap; word-break: break-word; }
+  .marcar { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+  .marcar input { width: auto; }
+  ul.avisos, ul.notas { padding-left: 20px; margin: 8px 0; }
+  .secundario { background: #e6e6e6; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Migração aditiva V1 → V2</h1>
+
+  <form id="login">
+    <label>E-mail <input id="email" type="email" autocomplete="username" required></label>
+    <label>Senha <input id="senha" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Entrar</button>
+    <p id="msgLogin" class="erro" role="alert"></p>
+  </form>
+
+  <section id="painel" hidden>
+    <div class="caixa">
+      <p>Lê o banco ao vivo e monta a lista do que falta. Só acrescenta campos que ainda
+        não existem e cria documentos que ainda não existem. Nada é apagado nem sobrescrito.
+        Faça um backup novo antes de aplicar.</p>
+      <button id="ler" class="secundario" type="button">Ler banco e montar plano</button>
+      <p id="estadoLeitura" role="status"></p>
+    </div>
+
+    <div id="plano" class="caixa" hidden>
+      <h2>Plano</h2>
+      <table>
+        <thead><tr><th>Coleção</th><th>Criar</th><th>Completar</th></tr></thead>
+        <tbody id="resumo"></tbody>
+      </table>
+      <p id="total"></p>
+
+      <h3>Avisos</h3>
+      <ul id="avisos" class="avisos"></ul>
+
+      <details>
+        <summary>Ver todas as operações</summary>
+        <div class="detalhe">
+          <table>
+            <thead><tr><th>Coleção</th><th>Id</th><th>Tipo</th><th>Campos</th></tr></thead>
+            <tbody id="detalhe"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <label class="marcar"><input id="conferi" type="checkbox"> Conferi o plano</label>
+      <button id="aplicar" type="button" disabled>Aplicar</button>
+      <p id="estadoAplicar" role="status"></p>
+      <ul id="notas" class="notas"></ul>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { exigirLocalhost, conectar, entrar } from '/ferramentas/firebase.mjs';
+import { serializar } from '/ferramentas/serializar.mjs';
+import { planejarAditivos } from '/ferramentas/plano.mjs';
+
+exigirLocalhost();
+
+const $ = id => document.getElementById(id);
+const LOTE = 400;
+// Origens V1 (somente leitura) e destinos V2 (para saber o que já existe).
+const LER = ['produtos', 'categorias', 'mesas', 'cupons', 'configuracoes', 'gruposAdicionais', 'usuarios',
+  'config', 'adicionais', 'equipe'];
+const ORDEM_RESUMO = ['produtos', 'categorias', 'mesas', 'cupons', 'config', 'adicionais', 'equipe'];
+
+let planoAtual = null;
+let aplicando = false;
+
+function estado(el, texto, classe = '') {
+  el.className = classe;
+  el.textContent = texto;
+}
+const msgErro = err => err && err.code ? `${err.code}: ${err.message}` : String(err && err.message || err);
+
+$('login').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('msgLogin').textContent = '';
+  try {
+    await entrar($('email').value.trim(), $('senha').value);
+    $('login').hidden = true;
+    $('painel').hidden = false;
+  } catch (err) {
+    $('msgLogin').textContent = 'Não foi possível entrar: ' + (err.code || err.message);
+  }
+});
+
+async function lerBanco() {
+  const { fs, F } = await conectar();
+  const atual = {};
+  for (const nome of LER) {
+    try {
+      const snap = await F.getDocs(F.collection(fs, nome));
+      const docs = {};
+      snap.forEach(d => { docs[d.id] = d.data(); });
+      atual[nome] = docs;
+    } catch (err) {
+      throw new Error(`Não consegui ler "${nome}" (${msgErro(err)}). Nada foi alterado.`);
+    }
+  }
+  return atual;
+}
+
+function mostrarPlano(plano) {
+  planoAtual = plano;
+  const { operacoes, avisos } = plano;
+
+  const cont = {};
+  for (const c of ORDEM_RESUMO) cont[c] = { criar: 0, completar: 0 };
+  for (const op of operacoes) cont[op.colecao][op.tipo]++;
+  $('resumo').textContent = '';
+  for (const c of ORDEM_RESUMO) {
+    const tr = document.createElement('tr');
+    for (const v of [c, cont[c].criar, cont[c].completar]) {
+      const td = document.createElement('td'); td.textContent = v; tr.append(td);
+    }
+    $('resumo').append(tr);
+  }
+  estado($('total'), `${operacoes.length} operação(ões) no total.`, operacoes.length ? '' : 'ok');
+
+  $('avisos').textContent = '';
+  if (!avisos.length) {
+    const li = document.createElement('li'); li.textContent = 'Nenhum aviso.'; $('avisos').append(li);
+  }
+  for (const a of avisos) {
+    const li = document.createElement('li'); li.textContent = a; $('avisos').append(li);
+  }
+
+  $('detalhe').textContent = '';
+  for (const op of operacoes) {
+    const tr = document.createElement('tr');
+    for (const v of [op.colecao, op.id, op.tipo]) {
+      const td = document.createElement('td'); td.textContent = v; tr.append(td);
+    }
+    const td = document.createElement('td');
+    const code = document.createElement('code');
+    code.textContent = JSON.stringify(serializar(op.campos));
+    td.append(code); tr.append(td);
+    $('detalhe').append(tr);
+  }
+
+  $('conferi').checked = false;
+  $('conferi').disabled = operacoes.length === 0;
+  $('aplicar').textContent = `Aplicar ${operacoes.length} operações`;
+  atualizarBotao();
+  $('plano').hidden = false;
+}
+
+function atualizarBotao() {
+  const n = planoAtual ? planoAtual.operacoes.length : 0;
+  $('aplicar').disabled = aplicando || n === 0 || !$('conferi').checked;
+}
+$('conferi').addEventListener('change', atualizarBotao);
+
+async function montarPlano() {
+  const atual = await lerBanco();
+  return planejarAditivos(atual);
+}
+
+$('ler').addEventListener('click', async () => {
+  $('ler').disabled = true;
+  $('plano').hidden = true;
+  $('notas').textContent = '';
+  estado($('estadoAplicar'), '');
+  estado($('estadoLeitura'), 'Lendo o banco…');
+  try {
+    mostrarPlano(await montarPlano());
+    estado($('estadoLeitura'), 'Plano montado. Confira antes de aplicar.', 'ok');
+  } catch (err) {
+    estado($('estadoLeitura'), msgErro(err), 'erro');
+  } finally {
+    $('ler').disabled = false;
+  }
+});
+
+function nota(texto) {
+  const li = document.createElement('li'); li.textContent = texto; $('notas').append(li);
+}
+
+// Monta um lote conferindo cada documento na hora, no próprio banco:
+// criar  -> só se o destino ainda não existe (set sem merge);
+// completar -> só os campos planejados que ainda estão ausentes (update).
+async function montarLote(F, fs, ops) {
+  const lidos = await Promise.all(ops.map(op => F.getDoc(F.doc(fs, op.colecao, op.id))));
+  const batch = F.writeBatch(fs);
+  let n = 0;
+  ops.forEach((op, i) => {
+    const snap = lidos[i];
+    const ref = F.doc(fs, op.colecao, op.id);
+    if (op.tipo === 'criar') {
+      if (snap.exists()) { nota(`${op.colecao}/${op.id} já existe agora: pulado.`); return; }
+      batch.set(ref, op.campos);
+      n++;
+    } else {
+      if (!snap.exists()) { nota(`${op.colecao}/${op.id} não existe mais: pulado.`); return; }
+      const doc = snap.data();
+      const campos = {};
+      for (const k of Object.keys(op.campos)) if (!(k in doc)) campos[k] = op.campos[k];
+      const pulados = Object.keys(op.campos).filter(k => !(k in campos));
+      if (pulados.length) nota(`${op.colecao}/${op.id}: ${pulados.join(', ')} já existe(m) agora, não mexi.`);
+      if (!Object.keys(campos).length) return;
+      batch.update(ref, campos);
+      n++;
+    }
+  });
+  return { batch, n };
+}
+
+$('aplicar').addEventListener('click', async () => {
+  if (!planoAtual || !$('conferi').checked) return;
+  const ops = planoAtual.operacoes;
+  aplicando = true;
+  atualizarBotao();
+  $('ler').disabled = true;
+  $('conferi').disabled = true;
+  $('notas').textContent = '';
+  const lotes = [];
+  for (let i = 0; i < ops.length; i += LOTE) lotes.push(ops.slice(i, i + LOTE));
+  let gravadas = 0;
+  try {
+    const { fs, F } = await conectar();
+    for (let i = 0; i < lotes.length; i++) {
+      estado($('estadoAplicar'), `Lote ${i + 1} de ${lotes.length}: conferindo e gravando… (${gravadas} gravadas até agora)`);
+      try {
+        const { batch, n } = await montarLote(F, fs, lotes[i]);
+        if (n) await batch.commit();
+        gravadas += n;
+      } catch (err) {
+        throw new Error(`O lote ${i + 1} de ${lotes.length} falhou (${msgErro(err)}). ` +
+          `Os lotes anteriores (${gravadas} operações) já foram gravados; este lote não foi. ` +
+          `Pode montar o plano de novo e aplicar outra vez com segurança.`);
+      }
+    }
+    estado($('estadoAplicar'), `${gravadas} operação(ões) gravadas. Relendo o banco…`, 'ok');
+    const novo = await montarPlano();
+    mostrarPlano(novo);
+    const fim = novo.operacoes.length
+      ? `Gravado (${gravadas}). O novo plano ainda tem ${novo.operacoes.length} operação(ões): confira.`
+      : `Gravado (${gravadas}). Banco relido: o novo plano tem 0 operações.`;
+    estado($('estadoAplicar'), fim, novo.operacoes.length ? 'erro' : 'ok');
+  } catch (err) {
+    estado($('estadoAplicar'), msgErro(err), 'erro');
+  } finally {
+    aplicando = false;
+    $('ler').disabled = false;
+    if (planoAtual) $('conferi').disabled = planoAtual.operacoes.length === 0;
+    atualizarBotao();
+  }
+});
+</script>
+</body>
+</html>
