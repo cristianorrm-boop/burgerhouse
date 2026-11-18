@@ -166,3 +166,46 @@ test('sem undefined', () => {
   assert.equal(Object.values(v).some(x => x === undefined), false);
   assert.equal(JSON.stringify(v).includes('NaN'), false);
 });
+
+/* ===== Task 2: tela do PDV ===== */
+import { readFileSync } from 'node:fs';
+import { novoIdVendaPDV } from '../js/nucleo/pdv.js';
+
+const ler = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+
+test('id da venda do pdv: prefixo pdv- e unico', () => {
+  const ids = new Set(Array.from({ length: 2000 }, () => novoIdVendaPDV()));
+  assert.equal(ids.size, 2000);
+  for (const id of ids) assert.match(id, /^pdv-[a-z0-9]+$/);
+});
+
+test('rota pdv registrada para dono e atendente', () => {
+  const app = ler('js/admin/app.js');
+  assert.match(app, /pdv:\s*\{\s*nome:\s*'PDV',\s*icone:\s*'ti-cash-register',\s*perfis:\s*\['dono',\s*'atendente'\],\s*mod:\s*\(\)\s*=>\s*import\('\.\/pdv\.js\?v=[^']+'\)/);
+});
+
+test('tela do pdv: textos e regras da v1 (verificacao de fonte)', () => {
+  const src = ler('js/admin/pdv.js');
+  for (const t of [
+    'Vendas hoje', 'Total vendido hoje', 'Código de barras não encontrado.', ' adicionado!',
+    'Pagamento a Prazo (cliente paga depois)', 'Dividir em 2 formas de pagamento', 'Valor recebido', 'Troco', 'faltam ',
+    'Finalizar venda', 'Limpar carrinho', 'Venda finalizada com sucesso!', 'Pagamento a prazo registrado!',
+    'Vendas de hoje', 'Nova venda registrada!', "'F2'", "'F4'", "'Escape'",
+    'Essa venda vai ficar registrada como pagamento a prazo, sem pagamento agora. Informe o nome do cliente pra não perder o controle.'
+  ]) assert.ok(src.includes(t), `falta: ${t}`);
+  for (const f of ['produtoPorCodigo', 'validarVendaPDV', 'montarVendaPDV', 'validarCupomPDV', 'novoIdVendaPDV', 'msDe', 'bip(']) {
+    assert.ok(src.includes(f), `falta: ${f}`);
+  }
+  assert.match(src, /db\.set\('vendas',\s*idVenda,/);
+  assert.ok(!src.includes("db.add('vendas'"), 'venda gravada com id fixo, nunca db.add');
+  assert.match(src, /db\.get\('cupons',/);
+  assert.match(src, /db\.update\('cupons',\s*[^,]+,\s*\{\s*usos:\s*inc\(1\)\s*\}\)/);
+  assert.match(src, /perfil\s*===\s*'dono'/);
+  assert.match(src, /db\.watch\('vendas',\s*\{\s*where:\s*\[\['criadoEm',\s*'>=',/);
+});
+
+test('produto tem campo codigo de barras', () => {
+  const src = ler('js/admin/cardapio.js');
+  assert.ok(src.includes('Código de barras'));
+  assert.match(src, /codigoBarras:\s*f\.codigoBarras\.value\.trim\(\)\s*\|\|\s*null/);
+});

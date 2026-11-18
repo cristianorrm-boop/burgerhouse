@@ -11,7 +11,7 @@ const ESSENCIAIS = [
   '/', '/index.html', '/pedido.html', '/admin/', '/admin/index.html', '/offline.html',
   '/css/base.css?v=2.0.0-f3', '/css/cliente.css?v=2.0.0-f3', '/css/admin.css?v=2.0.0-f3',
   '/js/config.js?v=2.0.0-f3', '/js/versao.js?v=2.0.0-f3', '/js/db.js?v=2.0.0-f3', '/js/utils.js?v=2.0.0-f3', '/js/seed.js?v=2.0.0-f3', '/js/cliente.js?v=2.0.0-f3', '/js/pedido.js?v=2.0.0-f3',
-  '/js/admin/app.js?v=2.0.0-f3', '/js/admin/acoes.js?v=2.0.0-f3', '/js/admin/pedidos.js?v=2.0.0-f3', '/js/admin/mesas.js?v=2.0.0-f3', '/js/admin/cardapio.js?v=2.0.0-f3',
+  '/js/admin/app.js?v=2.0.0-f3', '/js/admin/acoes.js?v=2.0.0-f3', '/js/admin/pedidos.js?v=2.0.0-f3', '/js/admin/mesas.js?v=2.0.0-f3', '/js/admin/pdv.js?v=2.0.0-f3','/js/admin/cardapio.js?v=2.0.0-f3',
   '/js/admin/cupons.js?v=2.0.0-f3', '/js/admin/clientes.js?v=2.0.0-f3', '/js/admin/financeiro.js?v=2.0.0-f3', '/js/admin/dashboard.js?v=2.0.0-f3',
   '/js/admin/entrega.js?v=2.0.0-f3', '/js/admin/loja.js?v=2.0.0-f3', '/js/admin/impressora.js?v=2.0.0-f3',
   '/manifest.json', '/admin/manifest.json', '/assets/icon.svg', '/assets/icon-192.png', '/assets/icon-512.png'

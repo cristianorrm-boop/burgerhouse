@@ -122,6 +122,7 @@ export function render(el) {
           <label class="campo"><span>Preço promocional</span><input name="precoPromo" type="number" step="0.01" min="0" value="${p.precoPromo ?? ''}"><small>Deixe vazio se não houver</small></label>
           <label class="campo"><span>Emoji (sem foto)</span><input name="emoji" maxlength="4" value="${esc(p.emoji || '🍔')}"></label>
         </div>
+        <label class="campo"><span>Código de barras</span><input name="codigoBarras" maxlength="40" autocomplete="off" value="${esc(p.codigoBarras || '')}"><small>Opcional. Usado pelo leitor de código de barras no PDV</small></label>
         <div class="campo"><span>Selos</span><div class="chips">${SELOS.map(s => `<label><input type="checkbox" name="selos" value="${s}" ${(p.selos || []).includes(s) ? 'checked' : ''}><span>${s}</span></label>`).join('')}</div></div>
         <div class="campo"><span>Grupos de adicionais</span>
           ${E.adic.length ? `<div class="chips">${E.adic.map(a => `<label><input type="checkbox" name="adicionais" value="${a.id}" ${(p.adicionais || []).includes(a.id) ? 'checked' : ''}><span>${esc(a.nome)}</span></label>`).join('')}</div>` : '<small>Crie grupos na aba “Adicionais e opções”.</small>'}
@@ -160,6 +161,7 @@ export function render(el) {
       const dados = {
         nome: f.nome.value.trim(), categoriaId: f.categoriaId.value, descricao: f.descricao.value.trim(),
         preco, precoPromo: promo, emoji: f.emoji.value.trim(), foto,
+        codigoBarras: f.codigoBarras.value.trim() || null,
         selos: [...f.querySelectorAll('[name=selos]:checked')].map(i => i.value),
         adicionais: [...f.querySelectorAll('[name=adicionais]:checked')].map(i => i.value),
         upsell: f.upsell.checked, disponivel: f.disponivel.checked

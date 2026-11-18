@@ -123,3 +123,10 @@ export function produtoPorCodigo(produtos, codigo) {
   if (!c) return null;
   return (produtos || []).find(p => p.codigoBarras === c && p.disponivel !== false) || null;
 }
+
+/** Id da venda, gerado uma vez por carrinho: repetir o envio regrava o mesmo documento em vez de duplicar a venda. */
+let seqId = 0;
+export function novoIdVendaPDV() {
+  seqId = (seqId + 1) % 1296;
+  return 'pdv-' + Date.now().toString(36) + seqId.toString(36).padStart(2, '0') + Math.random().toString(36).slice(2, 8);
+}

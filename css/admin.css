@@ -160,6 +160,66 @@
 .qr-card strong { display: block; margin-top: 6px; }
 .status-pag { cursor: pointer; border: 0; }
 
+/* ===== PDV ===== */
+.pdv-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; margin-bottom: 16px; }
+.pdv-produtos { padding: 14px; min-width: 0; }
+.pdv-produtos .inp { width: 100%; margin-bottom: 12px; }
+.pdv-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; max-height: calc(100dvh - 260px); min-height: 200px; overflow-y: auto; align-content: start; padding: 2px; }
+.pdv-prod { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 8px; border: 1px solid var(--borda); border-radius: var(--r-s); background: var(--card); color: var(--txt); text-align: left; cursor: pointer; font: inherit; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+.pdv-prod:hover, .pdv-prod:focus-visible { border-color: var(--pri); box-shadow: 0 0 0 3px var(--pri-soft2); outline: none; }
+.pdv-prod:active { transform: scale(.98); }
+.pdv-prod-foto { aspect-ratio: 4 / 3; border-radius: 8px; background: var(--pri-soft) center/cover no-repeat; display: grid; place-items: center; font-size: 34px; }
+.pdv-prod-adic { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; background: var(--pri); color: var(--on-pri); display: grid; place-items: center; font-size: 13px; }
+.pdv-prod-nome { font-weight: 700; font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+.pdv-prod-preco { font-weight: 800; font-size: 14px; color: var(--pri); margin-top: auto; }
+.pdv-carrinho { padding: 16px; position: sticky; top: 76px; max-height: calc(100dvh - 92px); overflow-y: auto; }
+.pdv-carrinho h2 { font-size: 16px; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pdv-vazio { padding: 18px 8px; text-align: center; color: var(--txt3); font-size: 14px; border: 1px dashed var(--borda2); border-radius: var(--r-s); margin-bottom: 12px; }
+#pdv-itens { margin-bottom: 12px; }
+.pdv-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--borda); }
+.pdv-item-info { min-width: 0; }
+.pdv-item-info strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.pdv-item-info small { display: block; font-size: 12px; color: var(--txt3); overflow-wrap: anywhere; }
+.pdv-item-total { font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pdv-qtd { display: flex; align-items: center; gap: 4px; }
+.pdv-qtd button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--borda2); background: var(--card2); color: var(--txt); font-size: 16px; font-weight: 700; cursor: pointer; }
+.pdv-qtd button:hover { border-color: var(--pri); }
+.pdv-qtd span { min-width: 20px; text-align: center; font-weight: 700; }
+.pdv-rem { color: var(--danger); padding: 4px 6px; }
+.pdv-cupom { display: flex; gap: 8px; margin-bottom: 8px; }
+.pdv-cupom .inp { flex: 1; min-width: 0; }
+.pdv-cupom-aplicado { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; padding: 4px 4px 4px 10px; border-radius: var(--r-s); background: var(--ok-bg); color: var(--ok); margin-bottom: 10px; }
+.pdv-cupom-aplicado span { display: flex; align-items: center; gap: 6px; }
+.pdv-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin: 4px 0 12px; cursor: pointer; }
+.pdv-check input { width: 18px; height: 18px; accent-color: var(--pri); flex-shrink: 0; }
+.pdv-aviso-fiado { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 10px 12px; border-radius: var(--r-s); background: var(--warn-bg); color: var(--warn); margin-bottom: 12px; }
+.pdv-aviso-fiado[hidden] { display: none; }
+.pdv-aviso-fiado .ti { font-size: 18px; margin-top: 1px; }
+.pdv-totais { border-top: 1px dashed var(--borda2); padding-top: 8px; margin-bottom: 12px; }
+.pdv-linha { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; padding: 3px 0; font-variant-numeric: tabular-nums; }
+.pdv-linha.forte { font-weight: 800; margin-bottom: 12px; }
+.pdv-linha.sub { font-size: 13px; color: var(--txt2); }
+.pdv-linha.total { font-size: 20px; font-weight: 800; }
+.pdv-linha.total span:last-child { color: var(--pri); }
+.pdv-carrinho .btn-bloco { justify-content: center; margin-bottom: 8px; }
+.pdv-atalhos { font-size: 12px; color: var(--txt3); text-align: center; margin: 4px 0 0; }
+.pdv-atalhos kbd { font: inherit; font-weight: 700; padding: 1px 5px; border: 1px solid var(--borda2); border-radius: 4px; background: var(--card2); }
+.pdv-col-itens { max-width: 280px; font-size: 13px; color: var(--txt2); }
+.pdv-recibos:empty { display: none; }
+.pdv-grupo { margin-top: 14px; border-radius: var(--r-s); }
+.pdv-grupo-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--card2); padding: 8px 12px; border-radius: var(--r-s); margin-bottom: 4px; }
+.pdv-grupo-cab small { display: block; color: var(--txt3); font-size: 12px; }
+.pdv-adic { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--borda); cursor: pointer; }
+.pdv-adic:last-child { border-bottom: 0; }
+.pdv-adic .an { flex: 1; }
+.pdv-adic .ap { color: var(--txt2); font-size: 14px; }
+.pdv-adic input { width: 20px; height: 20px; accent-color: var(--pri); }
+@media (max-width: 1000px) {
+  .pdv-layout { grid-template-columns: minmax(0, 1fr); }
+  .pdv-carrinho { position: static; max-height: none; overflow: visible; }
+  .pdv-grade { max-height: 55vh; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+
 /* Impressão de QR codes */
 @media print {
   body * { visibility: hidden; }
